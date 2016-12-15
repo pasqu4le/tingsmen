@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block style %}
+<link href="/static/form.css" rel="stylesheet">
+{% endblock %}
+{% block content %}
+<div class="container">
+    {% if form %}
+    <form class="form" method="POST">
+        {{ form.csrf_token }}
+        <h2 class="form-heading">{{ title }} to the {{ name }} mailing list</h2>
+        {{ form.email(size=20) }}
+        <!-- error displaying -->
+        {% if errors %}
+        <ul>
+            {% for error in errors %}
+            <li class="error">{{ error }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+        <button class="btn btn-lg btn-primary btn-block" type="submit">{{ title }}</button>
+    </form>
+    {% else %}
+    <h2 class="form-heading">You have successfully {{ title }}d to the {{ name }} mailing list!</h2>
+    {% endif %}
+</div>
+{% endblock %}
