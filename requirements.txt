@@ -4,3 +4,6 @@ Jinja2
 MarkupSafe
 Werkzeug
 gunicorn
+flask_sqlalchemy
+Flask-WTF
+psycopg2
