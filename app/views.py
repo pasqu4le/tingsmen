@@ -1,5 +1,6 @@
-from app import app, db
+from app import app, db, user_datastore
 from flask import render_template, abort
+from flask_security import current_user
 import database
 import forms
 
@@ -12,12 +13,23 @@ def before():
         ml = database.MailingList('news')
         db.session.add(ml)
         db.session.commit()
+    if not database.User.query.filter_by(username='matt').first():
+        user_datastore.create_user(username='matt', email='matt@nobien.net', password='password')
+        db.session.commit()
 
 
 # ROUTING
 @app.route('/')
 def home():
     return render_template("index.html", title="Welcome")
+
+
+@app.route('/example/')
+def example():
+    if current_user.is_authenticated:
+        return "you are welcome"
+    else:
+        return "this is not your place"
 
 
 @app.route('/subscribe/<mailing_list>/', methods=('GET', 'POST'))
@@ -41,12 +53,11 @@ def subscribe(mailing_list):
         if not em:
             em = database.Email(mail)
             db.session.add(em)
-        lnk = database.EmailMailingList.query.filter_by(mailing_list_id=ml.id, email_id=em.value).all()
-        if lnk:
+        # check if this email is already associated to this mailing list
+        if em in ml.emails:
             errors.append("This email is already registered to this mailing list")
         else:
-            lnk = database.EmailMailingList(em, ml)
-            db.session.add(lnk)
+            ml.emails.append(em)
             db.session.commit()
             db.session.flush()
             return render_template(template, title=title, name=mailing_list)
@@ -73,11 +84,10 @@ def unsubscribe(mailing_list):
         if not em:
             errors.append("This email is not in the database")
         else:
-            bridge = database.EmailMailingList.query.filter_by(email_id=em.value, mailing_list_id=ml.id).first()
-            if not bridge:
+            if em not in ml.emails:
                 errors.append("This email is already not subscribed to this mailing list")
             else:
-                db.session.delete(bridge)
+                ml.emails.remove(em)
                 db.session.commit()
                 db.session.flush()
                 return render_template(template, title=title, name=mailing_list)
