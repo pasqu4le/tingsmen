@@ -7,3 +7,4 @@ gunicorn
 flask_sqlalchemy
 Flask-WTF
 psycopg2
+flask-security

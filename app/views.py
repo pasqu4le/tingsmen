@@ -4,6 +4,17 @@ import database
 import forms
 
 
+# configure initial value of the database
+@app.before_first_request
+def before():
+    db.create_all()
+    if not database.MailingList.query.filter_by(name='news').first():
+        ml = database.MailingList('news')
+        db.session.add(ml)
+        db.session.commit()
+
+
+# ROUTING
 @app.route('/')
 def home():
     return render_template("index.html", title="Welcome")
