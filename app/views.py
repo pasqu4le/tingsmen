@@ -1,6 +1,7 @@
 from app import app, db, user_datastore
-from flask import render_template, abort
+from flask import render_template, abort, redirect, url_for, request
 from flask_security import current_user
+from flask_admin.contrib import sqla
 import database
 import forms
 
@@ -9,13 +10,6 @@ import forms
 @app.before_first_request
 def before():
     db.create_all()
-    if not database.MailingList.query.filter_by(name='news').first():
-        ml = database.MailingList('news')
-        db.session.add(ml)
-        db.session.commit()
-    if not database.User.query.filter_by(username='matt').first():
-        user_datastore.create_user(username='matt', email='matt@nobien.net', password='password')
-        db.session.commit()
 
 
 # ROUTING
@@ -51,7 +45,7 @@ def subscribe(mailing_list):
         em = database.Email.query.filter_by(value=mail).first()
         # if it's not in the database add it
         if not em:
-            em = database.Email(mail)
+            em = database.Email(value=mail)
             db.session.add(em)
         # check if this email is already associated to this mailing list
         if em in ml.emails:
@@ -93,3 +87,24 @@ def unsubscribe(mailing_list):
                 return render_template(template, title=title, name=mailing_list)
     errors.extend([v for value in form.errors.values() for v in value])
     return render_template(template, title=title, form=form, name=mailing_list, errors=errors)
+
+
+# Custom admin model view class
+class ModelView(sqla.ModelView):
+
+    def is_accessible(self):
+        if not current_user.is_active or not current_user.is_authenticated:
+            return False
+        if current_user.has_role('admin'):
+            return True
+        return False
+
+    def _handle_view(self, name, **kwargs):
+        # Override builtin to redirect users
+        if not self.is_accessible():
+            if current_user.is_authenticated:
+                # permission denied
+                abort(403)
+            else:
+                # login
+                return redirect(url_for('security.login', next=request.url))
