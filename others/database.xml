@@ -41,7 +41,7 @@
 		<type label="Inet CIDR Addr" length="0" sql="CIDR" quote="'"/>
 		<type label="Geometry" length="0" sql="GEOMETRY" quote="'"/>
 	</group>
-</datatypes><table x="139" y="324" name="MailingList">
+</datatypes><table x="53" y="154" name="MailingList">
 <row name="id" null="1" autoincrement="1">
 <datatype>INTEGER</datatype>
 <default>NULL</default></row>
@@ -52,29 +52,32 @@
 <part>id</part>
 </key>
 </table>
-<table x="162" y="78" name="Email">
+<table x="52" y="3" name="Email">
+<row name="id" null="1" autoincrement="0">
+<datatype>INTEGER</datatype>
+<default>NULL</default></row>
 <row name="value" null="1" autoincrement="0">
 <datatype>VARCHAR(120)</datatype>
 <default>NULL</default></row>
 <key type="PRIMARY" name="">
-<part>value</part>
+<part>id</part>
 </key>
 </table>
-<table x="127" y="197" name="EmailMailingList">
+<table x="53" y="76" name="EmailMailingList">
 <row name="email_id" null="1" autoincrement="0">
-<datatype>VARCHAR(120)</datatype>
-<default>NULL</default><relation table="Email" row="value" />
+<datatype>INTEGER</datatype>
+<default>NULL</default><relation table="Email" row="id" />
 </row>
 <row name="mailing_list_id" null="1" autoincrement="0">
 <datatype>INTEGER</datatype>
 <default>NULL</default><relation table="MailingList" row="id" />
 </row>
 <key type="PRIMARY" name="">
-<part>email_id</part>
 <part>mailing_list_id</part>
+<part>email_id</part>
 </key>
 </table>
-<table x="505" y="52" name="User">
+<table x="303" y="5" name="User">
 <row name="id" null="1" autoincrement="1">
 <datatype>INTEGER</datatype>
 <default>NULL</default></row>
@@ -87,11 +90,17 @@
 <row name="password" null="1" autoincrement="0">
 <datatype>VARCHAR(255)</datatype>
 <default>NULL</default></row>
+<row name="active" null="1" autoincrement="0">
+<datatype>BOOLEAN</datatype>
+<default>NULL</default></row>
+<row name="confirmed_at" null="1" autoincrement="0">
+<datatype>DATE</datatype>
+<default>NULL</default></row>
 <key type="PRIMARY" name="">
 <part>id</part>
 </key>
 </table>
-<table x="1254" y="61" name="Post">
+<table x="1203" y="51" name="Post">
 <row name="id" null="1" autoincrement="1">
 <datatype>INTEGER</datatype>
 <default>NULL</default></row>
@@ -101,19 +110,19 @@
 <row name="date" null="1" autoincrement="0">
 <datatype>DATE</datatype>
 <default>NULL</default></row>
-<row name="user_id" null="1" autoincrement="0">
-<datatype>INTEGER</datatype>
-<default>NULL</default><relation table="User" row="id" />
-</row>
 <row name="parent_id" null="1" autoincrement="0">
 <datatype>INTEGER</datatype>
 <default>NULL</default><relation table="Post" row="id" />
 </row>
+<row name="poster_id" null="1" autoincrement="0">
+<datatype>INTEGER</datatype>
+<default>NULL</default><relation table="User" row="id" />
+</row>
 <key type="PRIMARY" name="">
 <part>id</part>
 </key>
 </table>
-<table x="799" y="550" name="Law">
+<table x="503" y="542" name="Law">
 <row name="id" null="1" autoincrement="1">
 <datatype>INTEGER</datatype>
 <default>NULL</default></row>
@@ -126,30 +135,30 @@
 <row name="user_id" null="1" autoincrement="0">
 <datatype>INTEGER</datatype>
 <default>NULL</default><relation table="User" row="id" />
+</row>
+<row name="status_id" null="1" autoincrement="0">
+<datatype>INTEGER</datatype>
+<default>NULL</default><relation table="LawStatus" row="id" />
 </row>
 <row name="topic_id" null="1" autoincrement="0">
 <datatype>INTEGER</datatype>
 <default>NULL</default><relation table="Topic" row="id" />
 </row>
-<row name="id_LawStatus" null="1" autoincrement="0">
-<datatype>INTEGER</datatype>
-<default>NULL</default><relation table="LawStatus" row="id" />
-</row>
 <key type="PRIMARY" name="">
 <part>id</part>
 </key>
 </table>
-<table x="794" y="295" name="Proposal">
+<table x="903" y="302" name="Proposal">
+<row name="poster_id" null="1" autoincrement="0">
+<datatype>INTEGER</datatype>
+<default>NULL</default><relation table="User" row="id" />
+</row>
 <row name="id" null="1" autoincrement="1">
 <datatype>INTEGER</datatype>
 <default>NULL</default></row>
 <row name="description" null="1" autoincrement="0">
 <datatype>VARCHAR(2000)</datatype>
 <default>NULL</default></row>
-<row name="user_id" null="1" autoincrement="0">
-<datatype>INTEGER</datatype>
-<default>NULL</default><relation table="User" row="id" />
-</row>
 <row name="topic_id" null="1" autoincrement="0">
 <datatype>INTEGER</datatype>
 <default>NULL</default><relation table="Topic" row="id" />
@@ -158,21 +167,21 @@
 <part>id</part>
 </key>
 </table>
-<table x="780" y="453" name="LawProposal">
+<table x="702" y="542" name="LawProposal">
 <row name="law_id" null="1" autoincrement="0">
 <datatype>INTEGER</datatype>
 <default>NULL</default><relation table="Law" row="id" />
 </row>
-<row name="law_proposal" null="1" autoincrement="0">
+<row name="proposal_id" null="1" autoincrement="0">
 <datatype>INTEGER</datatype>
 <default>NULL</default><relation table="Proposal" row="id" />
 </row>
 <key type="PRIMARY" name="">
 <part>law_id</part>
-<part>law_proposal</part>
+<part>proposal_id</part>
 </key>
 </table>
-<table x="1234" y="292" name="TopicPost">
+<table x="1203" y="304" name="TopicPost">
 <row name="post_id" null="1" autoincrement="0">
 <datatype>INTEGER</datatype>
 <default>NULL</default><relation table="Post" row="id" />
@@ -186,7 +195,7 @@
 <part>post_id</part>
 </key>
 </table>
-<table x="1254" y="472" name="Topic">
+<table x="1203" y="653" name="Topic">
 <row name="id" null="1" autoincrement="1">
 <datatype>INTEGER</datatype>
 <default>NULL</default></row>
@@ -200,7 +209,7 @@
 <part>id</part>
 </key>
 </table>
-<table x="584" y="632" name="LawStatus">
+<table x="268" y="630" name="LawStatus">
 <row name="id" null="1" autoincrement="1">
 <datatype>INTEGER</datatype>
 <default>NULL</default></row>
@@ -211,18 +220,21 @@
 <part>id</part>
 </key>
 </table>
-<table x="504" y="378" name="Role">
+<table x="303" y="304" name="Role">
 <row name="id" null="1" autoincrement="1">
 <datatype>INTEGER</datatype>
 <default>NULL</default></row>
 <row name="name" null="1" autoincrement="0">
 <datatype>VARCHAR(80)</datatype>
 <default>NULL</default></row>
+<row name="description" null="1" autoincrement="0">
+<datatype>VARCHAR(255)</datatype>
+<default>NULL</default></row>
 <key type="PRIMARY" name="">
 <part>id</part>
 </key>
 </table>
-<table x="495" y="241" name="UserRole">
+<table x="302" y="205" name="UserRole">
 <row name="user_id" null="1" autoincrement="0">
 <datatype>INTEGER</datatype>
 <default>NULL</default><relation table="User" row="id" />
@@ -234,6 +246,62 @@
 <key type="PRIMARY" name="">
 <part>user_id</part>
 <part>role_id</part>
+</key>
+</table>
+<table x="902" y="29" name="PostUpvote">
+<row name="user_id" null="1" autoincrement="0">
+<datatype>INTEGER</datatype>
+<default>NULL</default><relation table="User" row="id" />
+</row>
+<row name="post_id" null="1" autoincrement="0">
+<datatype>INTEGER</datatype>
+<default>NULL</default><relation table="Post" row="id" />
+</row>
+<key type="PRIMARY" name="">
+<part>user_id</part>
+<part>post_id</part>
+</key>
+</table>
+<table x="904" y="179" name="PostDownvote">
+<row name="user_id" null="1" autoincrement="0">
+<datatype>INTEGER</datatype>
+<default>NULL</default><relation table="User" row="id" />
+</row>
+<row name="post_id" null="1" autoincrement="0">
+<datatype>INTEGER</datatype>
+<default>NULL</default><relation table="Post" row="id" />
+</row>
+<key type="PRIMARY" name="">
+<part>user_id</part>
+<part>post_id</part>
+</key>
+</table>
+<table x="552" y="304" name="ProposalUpvote">
+<row name="user_id" null="1" autoincrement="0">
+<datatype>INTEGER</datatype>
+<default>NULL</default><relation table="User" row="id" />
+</row>
+<row name="proposal_id" null="1" autoincrement="0">
+<datatype>INTEGER</datatype>
+<default>NULL</default><relation table="Proposal" row="id" />
+</row>
+<key type="PRIMARY" name="">
+<part>user_id</part>
+<part>proposal_id</part>
+</key>
+</table>
+<table x="552" y="406" name="ProposalDownvote">
+<row name="user_id" null="1" autoincrement="0">
+<datatype>INTEGER</datatype>
+<default>NULL</default><relation table="User" row="id" />
+</row>
+<row name="proposal_id" null="1" autoincrement="0">
+<datatype>INTEGER</datatype>
+<default>NULL</default><relation table="Proposal" row="id" />
+</row>
+<key type="PRIMARY" name="">
+<part>user_id</part>
+<part>proposal_id</part>
 </key>
 </table>
 </sql>

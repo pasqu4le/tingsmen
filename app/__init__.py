@@ -31,7 +31,8 @@ admin.add_view(views.ModelView(database.User, db.session))
 admin.add_view(views.ModelView(database.Role, db.session))
 admin.add_view(views.ModelView(database.Email, db.session))
 admin.add_view(views.ModelView(database.MailingList, db.session))
-
+admin.add_view(views.ModelView(database.Post, db.session))
+admin.add_view(views.ModelView(database.Topic, db.session))
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
