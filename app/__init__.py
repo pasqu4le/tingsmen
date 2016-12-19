@@ -3,14 +3,16 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_security import Security, SQLAlchemyUserDatastore
 from flask_admin import Admin
+from flask_migrate import Migrate
 
 app = Flask(__name__)
 # take configuration keys from environment variables
 app.config['SECRET_KEY'] = os.environ['SECRET_KEY']
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL']
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-# SQLAlchemy setup
+# SQLAlchemy and migration setup
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 
 # imported after app and db creation because of dependencies
 from app import database, forms
