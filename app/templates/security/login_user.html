@@ -5,37 +5,15 @@
 {% block content %}
 {% from "security/_macros.html" import render_field_with_errors, render_field %}
 {% include "security/_messages.html" %}
+{% import "macros.html" as macros %}
 <div class="container top-container">
     <form class="form" action="{{ url_for_security('login') }}" method="POST" name="login_user_form">
-        {{ login_user_form.csrf_token }}
         <h2 class="form-heading">Login</h2>
         {{ login_user_form.hidden_tag() }}
-        {{ login_user_form.email(size=20) }}
-        {% if login_user_form.email.errors %}
-        <ul>
-            {% for error in login_user_form.email.errors %}
-                <li class="error">{{ error }}</li>
-            {% endfor %}
-        </ul>
-        {% endif %}
-        {{ login_user_form.password(size=20) }}
-        {% if login_user_form.password.errors %}
-        <ul>
-            {% for error in login_user_form.password.errors %}
-                <li class="error">{{ error }}</li>
-            {% endfor %}
-        </ul>
-        {% endif %}
-        {{ login_user_form.remember }} {{ login_user_form.remember.label }}
-        {% if login_user_form.remember.errors %}
-        <ul>
-            {% for error in login_user_form.remember.errors %}
-                <li class="error">{{ error }}</li>
-            {% endfor %}
-        </ul>
-        {% endif %}
-        {{ render_field(login_user_form.next) }}
-        {{ render_field(login_user_form.submit) }}
+        {{ macros.render_field(login_user_form.email) }}
+        {{ macros.render_field(login_user_form.password) }}
+        {{ macros.render_field(login_user_form.remember, label_visible=true) }}
+        {{ macros.render_field(login_user_form.submit) }}
     </form>
 </div>
 {% include "security/_menu.html" %}

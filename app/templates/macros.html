@@ -56,3 +56,14 @@
     </ul>
 </div>
 {%- endmacro %}
+
+{% macro render_field(field, label_visible=false) -%}
+     <div class="form-group {% if field.errors %}has-error has-feedback{% endif %} {{ kwargs.pop('class_', '') }}">
+         {{ field(class_='form-control', **kwargs) }}{% if field.type != 'HiddenField' and label_visible %} {{ field.label }}{% endif %}
+         {% if field.errors %}
+         {% for e in field.errors %}
+            <p class="help-block">{{ e }}</p>
+         {% endfor %}
+         {% endif %}
+    </div>
+{%- endmacro %}
