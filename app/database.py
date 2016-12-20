@@ -74,6 +74,9 @@ class Post(db.Model):
     downvotes = db.relationship('User', secondary=post_downvote, backref=db.backref('downvoted', lazy='dynamic'))
     topics = db.relationship('Topic', secondary=post_topic, backref=db.backref('posts', lazy='dynamic'))
 
+    def points(self):
+        return len(self.upvotes) - len(self.downvotes)
+
     def __repr__(self):
         return "Post n." + str(self.id) + " by " + str(self.poster)
 

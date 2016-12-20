@@ -1,0 +1,58 @@
+{% macro render_post(post) -%}
+<div class="panel panel-default">
+    <div class="row panel-body">
+        <div class="col-md-1 .col-xs-1">
+            <h1><span class="glyphicon glyphicon-user"></span></h1>
+            <div class="btn-group-vertical btn-block">
+                <button class="btn btn-success btn-xs btn-block"><span class="glyphicon glyphicon-thumbs-up"></span>
+                </button>
+                <p class="btn btn-default btn-sm btn-block disabled">{{ post.points() }}</p>
+                <button class="btn btn-danger btn-xs btn-block"><span class="glyphicon glyphicon-thumbs-down"></span>
+                </button>
+            </div>
+        </div>
+        <div class="col-md-10 .col-xs-11">
+            <h4 class="text-info"><a href="/user/{{ post.poster.username }}/"> – @{{ post.poster.username }}</a></h4>
+            <h3 class="text-muted">{{ post.content }}</h3>
+        </div>
+    </div>
+    <div class="panel-footer">
+        <p>
+            <a href="/post/{{ post.id }}/" class="text-muted"><span class="glyphicon glyphicon-link"></span> {{ post.date }}</a>
+              –
+            <a href=""><span class="glyphicon glyphicon-comment"></span> {{ post.children|length }} comments</a>
+              –
+            <a href=""><span class="glyphicon glyphicon-share-alt"></span> reply</a>
+        </p>
+        <p><span class="glyphicon glyphicon-tags"></span> -{% for topic in post.topics %}<a
+                href="/topic/{{ topic.name }}/"> #{{ topic.name }}</a>{% endfor %}</p>
+    </div>
+</div>
+{%- endmacro %}
+
+{% macro topics_widget(topics, main_topic=None) -%}
+<div class="panel panel-default">
+    <div class="panel-heading">
+        <p class="panel-title">Topics</p>
+    </div>
+    <ul class="panel-body nav nav-pills nav-stacked">
+        {% for topic in topics %}
+            <li role="presentation" {% if main_topic and topic == main_topic %}class="active"{% endif %}><a href="/topic/{{ topic.name }}/">#{{ topic.name }}</a></li>
+        {% endfor %}
+    </ul>
+
+</div>
+{%- endmacro %}
+
+{% macro user_widget(main_subpage, subpages, user) -%}
+<div class="panel panel-default">
+    <div class="panel-heading">
+        <h1 class="panel-title"><span class="glyphicon glyphicon-user"></span> {{ user.username }}</h1>
+    </div>
+    <ul class="panel-body nav nav-pills nav-stacked">
+        {% for subpage in subpages %}
+            <li role="presentation" {% if main_subpage == subpage %}class="active"{% endif %}><a href="/user/{{ user.username }}/{{ subpage }}/">{{ subpage }}</a></li>
+        {% endfor %}
+    </ul>
+</div>
+{%- endmacro %}

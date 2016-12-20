@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container top-container">
+    <div class="row">
+        <div class="col-md-8">
+            {% block central_column %}{% endblock %}
+        </div>
+        <div class="col-md-4">
+            <div data-spy="affix" data-offset-top="60" data-offset-bottom="200">
+                {% block side_column %}{% endblock %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

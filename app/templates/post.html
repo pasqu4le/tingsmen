@@ -1,0 +1,10 @@
+{% extends "columned.html" %}
+{% import "macros.html" as macros %}
+
+{% block central_column %}
+    {{ macros.render_post(main_post) }}
+{% endblock %}
+
+{% block side_column %}
+    {{ macros.topics_widget(topics) }}
+{% endblock %}

@@ -6,24 +6,71 @@ import database
 import forms
 
 
-# configure initial value of the database
-@app.before_first_request
-def before():
-    db.create_all()
-
-
 # ROUTING
 @app.route('/')
 def home():
+    if current_user.is_authenticated:
+        options = {
+            'title': 'Home',
+            'current_user': current_user,
+            'big_message': "Message Example",
+            'posts': database.Post.query.all(),
+            'topics': database.Topic.query.all()
+        }
+        return render_template("home.html", **options)
     return render_template("index.html", title="Welcome")
 
 
-@app.route('/example/')
-def example():
+@app.route('/topic/<topic_name>/')
+def topic(topic_name):
     if current_user.is_authenticated:
-        return "you are welcome"
-    else:
-        return "this is not your place"
+        main_topic = database.Topic.query.filter_by(name=topic_name).first()
+        options = {
+            'title': '#' + main_topic.name,
+            'current_user': current_user,
+            'main_topic': main_topic,
+            'posts': main_topic.posts,
+            'topics': database.Topic.query.all()
+        }
+        return render_template("topic.html", **options)
+    return redirect("/")
+
+
+@app.route('/user/<username>/')
+def user(username):
+    return redirect("/user/" + username + "/post/")
+
+
+@app.route('/user/<username>/<subpage>/')
+def user_page(username, subpage):
+    if current_user.is_authenticated:
+        user = database.User.query.filter_by(username=username).first()
+        options = {
+            'title': user.username,
+            'current_user': current_user,
+            'user': user,
+            'posts': user.posts,
+            'upvotes': user.upvoted,
+            'downvotes': user.downvoted,
+            'subpage': subpage,
+            'subpages': ['post', 'upvotes', 'downvotes']
+        }
+        return render_template("user.html", **options)
+    return redirect("/")
+
+
+@app.route('/post/<post_id>/')
+def post(post_id):
+    if current_user.is_authenticated:
+        main_post = database.Post.query.filter_by(id=post_id).first()
+        options = {
+            'title': 'Post',
+            'current_user': current_user,
+            'main_post': main_post,
+            'topics': database.Topic.query.all()
+        }
+        return render_template("post.html", **options)
+    return redirect("/")
 
 
 @app.route('/subscribe/<mailing_list>/', methods=('GET', 'POST'))

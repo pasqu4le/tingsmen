@@ -1,0 +1,24 @@
+{% extends "columned.html" %}
+{% import "macros.html" as macros %}
+
+{% block central_column %}
+    {% if subpage == 'post' %}
+    {% for post in posts %}
+        {{ macros.render_post(post) }}
+    {% endfor %}
+    {% endif %}
+    {% if subpage == 'upvotes' %}
+    {% for post in upvotes %}
+        {{ macros.render_post(post) }}
+    {% endfor %}
+    {% endif %}
+    {% if subpage == 'downvotes' %}
+    {% for post in downvotes %}
+        {{ macros.render_post(post) }}
+    {% endfor %}
+    {% endif %}
+{% endblock %}
+
+{% block side_column %}
+    {{ macros.user_widget(subpage, subpages, user) }}
+{% endblock %}
