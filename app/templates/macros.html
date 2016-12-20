@@ -61,6 +61,7 @@
      <div class="form-group {% if field.errors %}has-error has-feedback{% endif %} {{ kwargs.pop('class_', '') }}">
          {{ field(class_='form-control', **kwargs) }}{% if field.type != 'HiddenField' and label_visible %} {{ field.label }}{% endif %}
          {% if field.errors %}
+         <span class="glyphicon glyphicon-remove form-control-feedback" aria-hidden="true"></span>
          {% for e in field.errors %}
             <p class="help-block">{{ e }}</p>
          {% endfor %}
