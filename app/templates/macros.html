@@ -1,7 +1,7 @@
 {% macro render_post(post) -%}
 <div class="panel panel-default">
     <div class="row panel-body">
-        <div class="col-md-1 .col-xs-1">
+        <div class="col-md-1 col-xs-2">
             <h1><span class="glyphicon glyphicon-user"></span></h1>
             <div class="btn-group-vertical btn-block">
                 <button class="btn btn-success btn-xs btn-block"><span class="glyphicon glyphicon-thumbs-up"></span>
@@ -11,7 +11,7 @@
                 </button>
             </div>
         </div>
-        <div class="col-md-10 .col-xs-11">
+        <div class="col-md-10 col-xs-9">
             <h4 class="text-info"><a href="/user/{{ post.poster.username }}/"> – @{{ post.poster.username }}</a></h4>
             <h3 class="text-muted">{{ post.content }}</h3>
         </div>

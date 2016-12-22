@@ -2,16 +2,6 @@
 {% import "macros.html" as macros %}
 
 {% block central_column %}
-    {% if big_message %}
-    <div class="alert alert-dismissible jumbotron">
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span
-                aria-hidden="true">&times;</span></button>
-        <p>{{ big_message }}</p>
-        <p>
-            <a class="btn btn-default btn-large" data-dismiss="alert">Close</a>
-        </p>
-    </div>
-    {% endif %}
     {% for post in posts %}
         {{ macros.render_post(post) }}
     {% endfor %}

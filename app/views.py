@@ -1,5 +1,5 @@
-from app import app, db, user_datastore
-from flask import render_template, abort, redirect, url_for, request
+from app import app, db
+from flask import render_template, abort, redirect, url_for, request, flash
 from flask_security import current_user
 from flask_admin.contrib import sqla
 import database
@@ -13,10 +13,10 @@ def home():
         options = {
             'title': 'Home',
             'current_user': current_user,
-            'big_message': "Message Example",
             'posts': database.Post.query.all(),
             'topics': database.Topic.query.all()
         }
+        flash('You were successfully logged in')
         return render_template("home.html", **options)
     return render_template("index.html", title="Welcome")
 
@@ -44,14 +44,14 @@ def user(username):
 @app.route('/user/<username>/<subpage>/')
 def user_page(username, subpage):
     if current_user.is_authenticated:
-        user = database.User.query.filter_by(username=username).first()
+        main_user = database.User.query.filter_by(username=username).first()
         options = {
-            'title': user.username,
+            'title': main_user.username,
             'current_user': current_user,
-            'user': user,
-            'posts': user.posts,
-            'upvotes': user.upvoted,
-            'downvotes': user.downvoted,
+            'user': main_user,
+            'posts': main_user.posts,
+            'upvotes': main_user.upvoted,
+            'downvotes': main_user.downvoted,
             'subpage': subpage,
             'subpages': ['post', 'upvotes', 'downvotes']
         }
