@@ -1,8 +1,9 @@
 {% macro render_post(post) -%}
 <div class="panel panel-default">
     <div class="row panel-body">
-        <div class="col-md-1 col-xs-2">
-            <h1><span class="glyphicon glyphicon-user"></span></h1>
+        <div class="col-md-2 col-xs-3">
+            <img class="img-rounded img-responsive center-block" src="{{ post.poster.email | gravatar }}">
+            <p></p>
             <div class="btn-group-vertical btn-block">
                 <button class="btn btn-success btn-xs btn-block"><span class="glyphicon glyphicon-thumbs-up"></span>
                 </button>
@@ -45,9 +46,10 @@
 {%- endmacro %}
 
 {% macro user_widget(main_subpage, subpages, user) -%}
-<div class="panel panel-default">
-    <div class="panel-heading">
-        <h1 class="panel-title"><span class="glyphicon glyphicon-user"></span> {{ user.username }}</h1>
+<div class="panel panel-primary">
+    <div class="panel-heading panel-title">
+        <img class="img-rounded img-responsive center-block" src="{{ user.email | gravatar }}">
+        <p class="text-center "> @{{ user.username }}</p>
     </div>
     <ul class="panel-body nav nav-pills nav-stacked">
         {% for subpage in subpages %}
