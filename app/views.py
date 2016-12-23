@@ -4,6 +4,7 @@ from flask_security import current_user
 from flask_admin.contrib import sqla
 import database
 import forms
+from sqlalchemy.sql import func
 
 
 # ROUTING
@@ -14,11 +15,36 @@ def home():
             'title': 'Home',
             'current_user': current_user,
             'posts': database.Post.query.all(),
-            'topics': database.Topic.query.all()
+            'topics': database.Topic.query.all(),
+            'submit_post_form': forms.PostForm(next_url=request.url)
         }
-        flash('You were successfully logged in')
         return render_template("home.html", **options)
     return render_template("index.html", title="Welcome")
+
+
+@app.route('/submit/post/', methods=('GET', 'POST'))
+def submit_post():
+    if not current_user.is_authenticated:
+        return redirect('/')
+    form = forms.PostForm()
+    if form.validate_on_submit():
+        pst = database.Post(content=form.content.data, poster=current_user, poster_id=current_user.id, date=func.now())
+        if form.parent_id.data:
+            pst.parent_id = int(form.parent_id.data)
+        for topic_name in form.topics.data.split():
+            tpc = database.Topic.query.filter_by(name=topic_name).first()
+            if not tpc:
+                tpc = database.Topic(name=topic_name, description='')
+                db.session.add(tpc)
+            pst.topics.append(tpc)
+        db.session.add(pst)
+        db.session.commit()
+        flash("You published your new post")
+        next_url = form.next_url.data
+        if not next_url:
+            next_url = '/'
+        return redirect(next_url)
+    return render_template('submitpost.html', submit_post_form=form, current_user=current_user)
 
 
 @app.route('/topic/<topic_name>/')
@@ -30,7 +56,8 @@ def topic(topic_name):
             'current_user': current_user,
             'main_topic': main_topic,
             'posts': main_topic.posts,
-            'topics': database.Topic.query.all()
+            'topics': database.Topic.query.all(),
+            'submit_post_form': forms.PostForm(next_url=request.url)
         }
         return render_template("topic.html", **options)
     return redirect("/")
@@ -53,7 +80,8 @@ def user_page(username, subpage):
             'upvotes': main_user.upvoted,
             'downvotes': main_user.downvoted,
             'subpage': subpage,
-            'subpages': ['post', 'upvotes', 'downvotes']
+            'subpages': ['post', 'upvotes', 'downvotes'],
+            'submit_post_form': forms.PostForm(next_url=request.url)
         }
         return render_template("user.html", **options)
     return redirect("/")
@@ -67,10 +95,24 @@ def post(post_id):
             'title': 'Post',
             'current_user': current_user,
             'main_post': main_post,
-            'topics': database.Topic.query.all()
+            'children': get_children(main_post),
+            'topics': database.Topic.query.all(),
+            'submit_post_form': forms.PostForm(next_url=request.url)
         }
         return render_template("post.html", **options)
     return redirect("/")
+
+
+def get_children(parent_post, d=0):
+    res = []
+    depth = d
+    if depth < 3:
+        depth = d+1
+    if parent_post.children:
+        for child in parent_post.children:
+            res.append((child, depth))
+            res.extend(get_children(child, d=depth))
+    return res
 
 
 @app.route('/subscribe/<mailing_list>/', methods=('GET', 'POST'))

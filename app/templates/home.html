@@ -2,6 +2,9 @@
 {% import "macros.html" as macros %}
 
 {% block central_column %}
+    {{ macros.post_modal_script() }}
+    {{ macros.post_modal(submit_post_form, current_user) }}
+    {{ macros.new_post_panel(current_user) }}
     {% for post in posts %}
         {{ macros.render_post(post) }}
     {% endfor %}
@@ -10,3 +13,4 @@
 {% block side_column %}
     {{ macros.topics_widget(topics) }}
 {% endblock %}
+

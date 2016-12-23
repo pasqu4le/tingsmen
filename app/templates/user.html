@@ -2,20 +2,23 @@
 {% import "macros.html" as macros %}
 
 {% block central_column %}
+    {{ macros.post_modal_script() }}
+    {{ macros.post_modal(submit_post_form, current_user) }}
     {% if subpage == 'post' %}
-    {% for post in posts %}
-        {{ macros.render_post(post) }}
-    {% endfor %}
+        {{ macros.new_post_panel(current_user) }}
+        {% for post in posts %}
+            {{ macros.render_post(post) }}
+        {% endfor %}
     {% endif %}
     {% if subpage == 'upvotes' %}
-    {% for post in upvotes %}
-        {{ macros.render_post(post) }}
-    {% endfor %}
+        {% for post in upvotes %}
+            {{ macros.render_post(post) }}
+        {% endfor %}
     {% endif %}
-    {% if subpage == 'downvotes' %}
-    {% for post in downvotes %}
-        {{ macros.render_post(post) }}
-    {% endfor %}
+        {% if subpage == 'downvotes' %}
+        {% for post in downvotes %}
+            {{ macros.render_post(post) }}
+        {% endfor %}
     {% endif %}
 {% endblock %}
 

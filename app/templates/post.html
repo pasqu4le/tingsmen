@@ -2,7 +2,19 @@
 {% import "macros.html" as macros %}
 
 {% block central_column %}
+    {{ macros.post_modal_script() }}
+    {{ macros.post_modal(submit_post_form, current_user) }}
     {{ macros.render_post(main_post) }}
+    {% if children %}
+        {% for child, depth in children %}
+            <div class="row">
+                <div class="col-xs-{{ depth }}"></div>
+                <div class="col-xs-{{ 12 - depth }}">
+                    {{ macros.render_post(child) }}
+                </div>
+            </div>
+        {% endfor %}
+    {% endif %}
 {% endblock %}
 
 {% block side_column %}
