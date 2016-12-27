@@ -5,8 +5,10 @@ from flask_security import Security, SQLAlchemyUserDatastore
 from flask_admin import Admin
 from flask_migrate import Migrate
 from flask_gravatar import Gravatar
+from flask_misaka import Misaka
 
 app = Flask(__name__)
+Misaka(app)
 # take configuration keys from environment variables
 app.config['SECRET_KEY'] = os.environ['SECRET_KEY']
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL']

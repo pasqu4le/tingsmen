@@ -1,7 +1,8 @@
 from app import app, db
-from flask import render_template, abort, redirect, url_for, request, flash
+from flask import render_template, abort, redirect, url_for, request, flash, escape
 from flask_security import current_user
 from flask_admin.contrib import sqla
+from flask_misaka import markdown
 import database
 import forms
 from sqlalchemy.sql import func
@@ -28,7 +29,8 @@ def submit_post():
         return redirect('/')
     form = forms.PostForm()
     if form.validate_on_submit():
-        pst = database.Post(content=form.content.data, poster=current_user, poster_id=current_user.id, date=func.now())
+        content = markdown(form.content.data, autolink=True, underline=True, smartypants=True, strikethrough=True, skip_html=True)
+        pst = database.Post(content=content, poster=current_user, poster_id=current_user.id, date=func.now())
         if form.parent_id.data:
             pst.parent_id = int(form.parent_id.data)
         for topic_name in form.topics.data.split():

@@ -47,7 +47,7 @@ class User(db.Model, UserMixin):
     roles = db.relationship('Role', secondary=roles_users, backref=db.backref('users', lazy='dynamic'))
 
     def __repr__(self):
-        return self.username + '(' + self.email + ')'
+        return self.username
 
 post_upvote = db.Table('post_upvote',
                        db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),

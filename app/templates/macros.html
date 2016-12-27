@@ -46,7 +46,7 @@
         </div>
         <div class="col-md-10 col-xs-9">
             <h4 class="text-info"><a href="/user/{{ post.poster.username }}/"> – @{{ post.poster.username }}</a></h4>
-            <h3 class="text-muted">{{ post.content }}</h3>
+            <div class="post-content-text">{{ post.content | safe }}</div>
         </div>
     </div>
     <div class="panel-footer">
