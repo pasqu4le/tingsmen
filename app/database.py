@@ -47,7 +47,7 @@ class User(db.Model, UserMixin):
     roles = db.relationship('Role', secondary=roles_users, backref=db.backref('users', lazy='dynamic'))
 
     def __repr__(self):
-        return self.username + '(' + self.email + ')'
+        return self.username
 
 post_upvote = db.Table('post_upvote',
                        db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
@@ -73,6 +73,9 @@ class Post(db.Model):
     upvotes = db.relationship('User', secondary=post_upvote, backref=db.backref('upvoted', lazy='dynamic'))
     downvotes = db.relationship('User', secondary=post_downvote, backref=db.backref('downvoted', lazy='dynamic'))
     topics = db.relationship('Topic', secondary=post_topic, backref=db.backref('posts', lazy='dynamic'))
+
+    def points(self):
+        return len(self.upvotes) - len(self.downvotes)
 
     def __repr__(self):
         return "Post n." + str(self.id) + " by " + str(self.poster)
