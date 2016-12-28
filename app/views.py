@@ -27,7 +27,8 @@ def home():
 @app.route('/submit/post/', methods=('GET', 'POST'))
 def submit_post():
     if not current_user.is_authenticated:
-        return redirect('/')
+        # permission denied
+        abort(403)
     form = forms.PostForm()
     if form.validate_on_submit():
         content = markdown(form.content.data, autolink=True, underline=True, smartypants=True, strikethrough=True, skip_html=True)
@@ -53,12 +54,13 @@ def submit_post():
 @app.route('/vote/<post_id>/', methods=('GET', 'POST'))
 def vote_post(post_id):
     if not current_user.is_authenticated:
-        return redirect('/')
+        # permission denied
+        abort(403)
     form = forms.VotePostForm()
     pst = database.Post.query.filter_by(id=post_id).first()
     next_url = '/'
     if not pst:
-        abort(503)
+        abort(404)
     if form.validate_on_submit():
         if form.upvote.data:
             if current_user in pst.downvotes:
