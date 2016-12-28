@@ -11,7 +11,7 @@
     {{ macros.post_modal(submit_post_form, current_user) }}
     {{ macros.new_post_panel(current_user) }}
     {% for post in posts %}
-        {{ macros.render_post(post) }}
+        {{ macros.render_post(post, vote_post_form) }}
     {% endfor %}
 {% endblock %}
 

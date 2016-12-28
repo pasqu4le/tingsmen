@@ -1,5 +1,5 @@
 from app import app, db
-from flask import render_template, abort, redirect, url_for, request, flash, escape
+from flask import render_template, abort, redirect, url_for, request, flash
 from flask_security import current_user
 from flask_admin.contrib import sqla
 from flask_misaka import markdown
@@ -17,7 +17,8 @@ def home():
             'current_user': current_user,
             'posts': database.Post.query.all(),
             'topics': database.Topic.query.all(),
-            'submit_post_form': forms.PostForm(next_url=request.url)
+            'submit_post_form': forms.PostForm(next_url=request.url),
+            'vote_post_form': forms.VotePostForm(next_url=request.url)
         }
         return render_template("home.html", **options)
     return render_template("index.html", title="Welcome")
@@ -49,6 +50,34 @@ def submit_post():
     return render_template('submitpost.html', submit_post_form=form, current_user=current_user)
 
 
+@app.route('/vote/<post_id>/', methods=('GET', 'POST'))
+def vote_post(post_id):
+    if not current_user.is_authenticated:
+        return redirect('/')
+    form = forms.VotePostForm()
+    pst = database.Post.query.filter_by(id=post_id).first()
+    next_url = '/'
+    if not pst:
+        abort(503)
+    if form.validate_on_submit():
+        if form.upvote.data:
+            if current_user in pst.downvotes:
+                pst.downvotes.remove(current_user)
+            if current_user not in pst.upvotes:
+                pst.upvotes.append(current_user)
+                flash("Upvoted!")
+        elif form.downvote.data:
+            if current_user in pst.upvotes:
+                pst.upvotes.remove(current_user)
+            if current_user not in pst.downvotes:
+                pst.downvotes.append(current_user)
+                flash("Downvoted!")
+        db.session.commit()
+        if form.next_url.data:
+            next_url = form.next_url.data
+    return redirect(next_url)
+
+
 @app.route('/topic/<topic_name>/')
 def topic(topic_name):
     if current_user.is_authenticated:
@@ -59,7 +88,8 @@ def topic(topic_name):
             'main_topic': main_topic,
             'posts': main_topic.posts,
             'topics': database.Topic.query.all(),
-            'submit_post_form': forms.PostForm(next_url=request.url)
+            'submit_post_form': forms.PostForm(next_url=request.url),
+            'vote_post_form': forms.VotePostForm(next_url=request.url)
         }
         return render_template("topic.html", **options)
     return redirect("/")
@@ -83,7 +113,8 @@ def user_page(username, subpage):
             'downvotes': main_user.downvoted,
             'subpage': subpage,
             'subpages': ['post', 'upvotes', 'downvotes'],
-            'submit_post_form': forms.PostForm(next_url=request.url)
+            'submit_post_form': forms.PostForm(next_url=request.url),
+            'vote_post_form': forms.VotePostForm(next_url=request.url)
         }
         return render_template("user.html", **options)
     return redirect("/")
@@ -99,7 +130,8 @@ def post(post_id):
             'main_post': main_post,
             'children': get_children(main_post),
             'topics': database.Topic.query.all(),
-            'submit_post_form': forms.PostForm(next_url=request.url)
+            'submit_post_form': forms.PostForm(next_url=request.url),
+            'vote_post_form': forms.VotePostForm(next_url=request.url)
         }
         return render_template("post.html", **options)
     return redirect("/")

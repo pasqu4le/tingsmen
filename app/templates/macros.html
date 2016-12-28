@@ -30,19 +30,15 @@
 
 {# --------------------------- Rendering Macros -------------------------------- #}
 
-{% macro render_post(post) -%}
+{% macro render_post(post, vote_post_form=None) -%}
 <div class="panel panel-default">
     <div class="row panel-body">
         <div class="col-md-2 col-xs-3">
             <img class="img-rounded img-responsive center-block" src="{{ post.poster.email | gravatar }}">
             <p></p>
-            <div class="btn-group-vertical btn-block">
-                <button class="btn btn-success btn-xs btn-block"><span class="glyphicon glyphicon-thumbs-up"></span>
-                </button>
-                <p class="btn btn-default btn-sm btn-block disabled">{{ post.points() }}</p>
-                <button class="btn btn-danger btn-xs btn-block"><span class="glyphicon glyphicon-thumbs-down"></span>
-                </button>
-            </div>
+            {% if vote_post_form %}
+            {{ render_vote_form(vote_post_form, post) }}
+            {% endif %}
         </div>
         <div class="col-md-10 col-xs-9">
             <h4 class="text-info"><a href="/user/{{ post.poster.username }}/"> – @{{ post.poster.username }}</a></h4>
@@ -61,6 +57,18 @@
                 href="/topic/{{ topic.name }}/"> #{{ topic.name }}</a>{% endfor %}</p>
     </div>
 </div>
+{%- endmacro %}
+
+{% macro render_vote_form(vote_post_form, post) -%}
+<form class="form" action="/vote/{{ post.id }}/" method="POST" name="vote_post_form">
+    {{ vote_post_form.hidden_tag() }}
+    <div class="btn-group-vertical btn-block">
+        {# rendered without render_field so they can behave as a vertical btn-block #}
+        {{ vote_post_form.upvote }}
+        <a class="btn btn-default btn-sm btn-block disabled" role="button">{{ post.points() }}</a>
+        {{ vote_post_form.downvote }}
+    </div>
+</form>
 {%- endmacro %}
 
 {% macro render_field(field, label_visible=false) -%}

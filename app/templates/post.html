@@ -4,13 +4,13 @@
 {% block central_column %}
     {{ macros.post_modal_script() }}
     {{ macros.post_modal(submit_post_form, current_user) }}
-    {{ macros.render_post(main_post) }}
+    {{ macros.render_post(main_post, vote_post_form) }}
     {% if children %}
         {% for child, depth in children %}
             <div class="row">
                 <div class="col-xs-{{ depth }}"></div>
                 <div class="col-xs-{{ 12 - depth }}">
-                    {{ macros.render_post(child) }}
+                    {{ macros.render_post(child, vote_post_form) }}
                 </div>
             </div>
         {% endfor %}
