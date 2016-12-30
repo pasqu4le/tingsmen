@@ -74,6 +74,14 @@ class Post(db.Model):
     downvotes = db.relationship('User', secondary=post_downvote, backref=db.backref('downvoted', lazy='dynamic'))
     topics = db.relationship('Topic', secondary=post_topic, backref=db.backref('posts', lazy='dynamic'))
 
+    def current_vote_style(self, user):
+        # returns the correct bootstrap class for the text displaying if and how a user voted on this post
+        if user in self.upvotes:
+            return 'text-success'
+        if user in self.downvotes:
+            return 'text-danger'
+        return 'text-muted'
+
     def points(self):
         return len(self.upvotes) - len(self.downvotes)
 

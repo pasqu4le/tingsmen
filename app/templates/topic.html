@@ -1,6 +1,10 @@
 {% extends "columned.html" %}
 {% import "macros.html" as macros %}
 
+{% block head_custom %}
+    {{ macros.sjiax_scripts() }}
+{% endblock %}
+
 {% block central_column %}
     {% if main_topic.description %}
         <div class="jumbotron">
@@ -11,7 +15,7 @@
     {{ macros.post_modal(submit_post_form, current_user) }}
     {{ macros.new_post_panel(current_user) }}
     {% for post in posts %}
-        {{ macros.render_post(post, vote_post_form) }}
+        {{ macros.render_post(post, current_user) }}
     {% endfor %}
 {% endblock %}
 

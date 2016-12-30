@@ -1,3 +1,10 @@
+{% macro sjiax_scripts() -%}
+<script type="text/javascript" src="/static/js/sijax/sijax.js"></script>
+<script type="text/javascript">
+    {{ g.sijax.get_js()|safe }}
+</script>
+{%- endmacro %}
+
 {# --------------------------- Widgets Macros -------------------------------- #}
 
 {% macro topics_widget(topics, main_topic=None) -%}
@@ -30,15 +37,25 @@
 
 {# --------------------------- Rendering Macros -------------------------------- #}
 
-{% macro render_post(post, vote_post_form=None) -%}
+{% macro render_post(post, current_user) -%}
 <div class="panel panel-default">
     <div class="row panel-body">
         <div class="col-md-2 col-xs-3">
             <img class="img-rounded img-responsive center-block" src="{{ post.poster.email | gravatar }}">
             <p></p>
-            {% if vote_post_form %}
-            {{ render_vote_form(vote_post_form, post) }}
-            {% endif %}
+            {# render vote form #}
+            <div class="btn-group-vertical btn-block">
+                {#  #}
+                <button class="btn btn-success btn-xs btn-block" href="javascript://" onclick="Sijax.request('vote_post', ['{{ post.id}}', true]);">
+                    <span class="glyphicon glyphicon-thumbs-up"></span>
+                </button>
+                <a class="btn btn-default btn-block disabled">
+                    <strong class="{{ post.current_vote_style(current_user) }}" id="post_vote_{{ post.id }}">{{ post.points()}}</strong>
+                </a>
+                <button class="btn btn-danger btn-xs btn-block" href="javascript://" onclick="Sijax.request('vote_post', ['{{ post.id}}', false]);">
+                    <span class="glyphicon glyphicon-thumbs-down"></span>
+                </button>
+            </div>
         </div>
         <div class="col-md-10 col-xs-9">
             <h4 class="text-info"><a href="/user/{{ post.poster.username }}/"> – @{{ post.poster.username }}</a></h4>
@@ -57,18 +74,6 @@
                 href="/topic/{{ topic.name }}/"> #{{ topic.name }}</a>{% endfor %}</p>
     </div>
 </div>
-{%- endmacro %}
-
-{% macro render_vote_form(vote_post_form, post) -%}
-<form class="form" action="/vote/{{ post.id }}/" method="POST" name="vote_post_form">
-    {{ vote_post_form.hidden_tag() }}
-    <div class="btn-group-vertical btn-block">
-        {# rendered without render_field so they can behave as a vertical btn-block #}
-        {{ vote_post_form.upvote }}
-        <a class="btn btn-default btn-sm btn-block disabled" role="button">{{ post.points() }}</a>
-        {{ vote_post_form.downvote }}
-    </div>
-</form>
 {%- endmacro %}
 
 {% macro render_field(field, label_visible=false) -%}

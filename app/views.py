@@ -1,5 +1,5 @@
 from app import app, db
-from flask import render_template, abort, redirect, url_for, request, flash
+from flask import g, render_template, abort, redirect, url_for, request, flash
 from flask_security import current_user
 from flask_admin.contrib import sqla
 from flask_misaka import markdown
@@ -8,30 +8,44 @@ import forms
 from sqlalchemy.sql import func
 
 
-# ROUTING
-@app.route('/')
+# ---------------------------------------------- ROUTING FUNCTIONS
+@app.route('/', methods=('GET', 'POST'))
 def home():
-    if current_user.is_authenticated:
-        options = {
-            'title': 'Home',
-            'current_user': current_user,
-            'posts': database.Post.query.all(),
-            'topics': database.Topic.query.all(),
-            'submit_post_form': forms.PostForm(next_url=request.url),
-            'vote_post_form': forms.VotePostForm(next_url=request.url)
-        }
-        return render_template("home.html", **options)
-    return render_template("index.html", title="Welcome")
+    # not allowed user handling:
+    if not current_user.is_authenticated:
+        return render_template("index.html", title="Welcome")
+    # ajax request handling
+    if g.sijax.is_sijax_request:
+        g.sijax.register_callback('vote_post', vote_post)
+        return g.sijax.process_request()
+    # non-ajax handling:
+    options = {
+        'title': 'Home',
+        'current_user': current_user,
+        'posts': database.Post.query.all(),
+        'topics': database.Topic.query.all(),
+        'submit_post_form': forms.PostForm(next_url=request.url),
+    }
+    return render_template("home.html", **options)
 
 
 @app.route('/submit/post/', methods=('GET', 'POST'))
 def submit_post():
+    # not allowed user handling:
     if not current_user.is_authenticated:
-        # permission denied
-        abort(403)
+        abort(403)  # permission denied
+    # non-ajax handling:
     form = forms.PostForm()
     if form.validate_on_submit():
-        content = markdown(form.content.data, autolink=True, underline=True, smartypants=True, strikethrough=True, skip_html=True)
+        # markdown options and content
+        mark_opt = {
+            'autolink': True,
+            'underline': True,
+            'smartypants': True,
+            'strikethrough': True,
+            'skip_html': True
+        }
+        content = markdown(form.content.data, **mark_opt)
         pst = database.Post(content=content, poster=current_user, poster_id=current_user.id, date=func.now())
         if form.parent_id.data:
             pst.parent_id = int(form.parent_id.data)
@@ -51,50 +65,26 @@ def submit_post():
     return render_template('submitpost.html', submit_post_form=form, current_user=current_user)
 
 
-@app.route('/vote/<post_id>/', methods=('GET', 'POST'))
-def vote_post(post_id):
-    if not current_user.is_authenticated:
-        # permission denied
-        abort(403)
-    form = forms.VotePostForm()
-    pst = database.Post.query.filter_by(id=post_id).first()
-    next_url = '/'
-    if not pst:
-        abort(404)
-    if form.validate_on_submit():
-        if form.upvote.data:
-            if current_user in pst.downvotes:
-                pst.downvotes.remove(current_user)
-            if current_user not in pst.upvotes:
-                pst.upvotes.append(current_user)
-                flash("Upvoted!")
-        elif form.downvote.data:
-            if current_user in pst.upvotes:
-                pst.upvotes.remove(current_user)
-            if current_user not in pst.downvotes:
-                pst.downvotes.append(current_user)
-                flash("Downvoted!")
-        db.session.commit()
-        if form.next_url.data:
-            next_url = form.next_url.data
-    return redirect(next_url)
-
-
-@app.route('/topic/<topic_name>/')
+@app.route('/topic/<topic_name>/', methods=('GET', 'POST'))
 def topic(topic_name):
-    if current_user.is_authenticated:
-        main_topic = database.Topic.query.filter_by(name=topic_name).first()
-        options = {
-            'title': '#' + main_topic.name,
-            'current_user': current_user,
-            'main_topic': main_topic,
-            'posts': main_topic.posts,
-            'topics': database.Topic.query.all(),
-            'submit_post_form': forms.PostForm(next_url=request.url),
-            'vote_post_form': forms.VotePostForm(next_url=request.url)
-        }
-        return render_template("topic.html", **options)
-    return redirect("/")
+    # not allowed user handling:
+    if not current_user.is_authenticated:
+        return redirect("/")
+    # ajax request handling
+    if g.sijax.is_sijax_request:
+        g.sijax.register_callback('vote_post', vote_post)
+        return g.sijax.process_request()
+    # non-ajax handling:
+    main_topic = database.Topic.query.filter_by(name=topic_name).first()
+    options = {
+        'title': '#' + main_topic.name,
+        'current_user': current_user,
+        'main_topic': main_topic,
+        'posts': main_topic.posts,
+        'topics': database.Topic.query.all(),
+        'submit_post_form': forms.PostForm(next_url=request.url),
+    }
+    return render_template("topic.html", **options)
 
 
 @app.route('/user/<username>/')
@@ -102,44 +92,55 @@ def user(username):
     return redirect("/user/" + username + "/post/")
 
 
-@app.route('/user/<username>/<subpage>/')
+@app.route('/user/<username>/<subpage>/', methods=('GET', 'POST'))
 def user_page(username, subpage):
-    if current_user.is_authenticated:
-        main_user = database.User.query.filter_by(username=username).first()
-        options = {
-            'title': main_user.username,
-            'current_user': current_user,
-            'user': main_user,
-            'posts': main_user.posts,
-            'upvotes': main_user.upvoted,
-            'downvotes': main_user.downvoted,
-            'subpage': subpage,
-            'subpages': ['post', 'upvotes', 'downvotes'],
-            'submit_post_form': forms.PostForm(next_url=request.url),
-            'vote_post_form': forms.VotePostForm(next_url=request.url)
-        }
-        return render_template("user.html", **options)
-    return redirect("/")
+    # not allowed user handling:
+    if not current_user.is_authenticated:
+        return redirect("/")
+    # ajax request handling
+    if g.sijax.is_sijax_request:
+        g.sijax.register_callback('vote_post', vote_post)
+        return g.sijax.process_request()
+    # non-ajax handling:
+    main_user = database.User.query.filter_by(username=username).first()
+    options = {
+        'title': main_user.username,
+        'current_user': current_user,
+        'user': main_user,
+        'posts': main_user.posts,
+        'upvotes': main_user.upvoted,
+        'downvotes': main_user.downvoted,
+        'subpage': subpage,
+        'subpages': ['post', 'upvotes', 'downvotes'],
+        'submit_post_form': forms.PostForm(next_url=request.url),
+    }
+    return render_template("user.html", **options)
 
 
-@app.route('/post/<post_id>/')
+@app.route('/post/<post_id>/', methods=('GET', 'POST'))
 def post(post_id):
-    if current_user.is_authenticated:
-        main_post = database.Post.query.filter_by(id=post_id).first()
-        options = {
-            'title': 'Post',
-            'current_user': current_user,
-            'main_post': main_post,
-            'children': get_children(main_post),
-            'topics': database.Topic.query.all(),
-            'submit_post_form': forms.PostForm(next_url=request.url),
-            'vote_post_form': forms.VotePostForm(next_url=request.url)
-        }
-        return render_template("post.html", **options)
-    return redirect("/")
+    # not allowed user handling:
+    if not current_user.is_authenticated:
+        return redirect("/")
+    # ajax request handling
+    if g.sijax.is_sijax_request:
+        g.sijax.register_callback('vote_post', vote_post)
+        return g.sijax.process_request()
+    # non-ajax handling:
+    main_post = database.Post.query.filter_by(id=post_id).first()
+    options = {
+        'title': 'Post',
+        'current_user': current_user,
+        'main_post': main_post,
+        'children': get_children(main_post),
+        'topics': database.Topic.query.all(),
+        'submit_post_form': forms.PostForm(next_url=request.url),
+    }
+    return render_template("post.html", **options)
 
 
 def get_children(parent_post, d=0):
+    # utility function to get a post children tree
     res = []
     depth = d
     if depth < 3:
@@ -233,3 +234,25 @@ class ModelView(sqla.ModelView):
             else:
                 # login
                 return redirect(url_for('security.login', next=request.url))
+
+
+# ---------------------------------------------- SIJAX FUNCTIONS
+def vote_post(obj_response, post_id, up):
+    pst = database.Post.query.filter_by(id=post_id).first()
+    if up:
+        if current_user in pst.upvotes:
+            pst.upvotes.remove(current_user)
+        else:
+            if current_user in pst.downvotes:
+                pst.downvotes.remove(current_user)
+            pst.upvotes.append(current_user)
+    else:
+        if current_user in pst.downvotes:
+            pst.downvotes.remove(current_user)
+        else:
+            if current_user in pst.upvotes:
+                pst.upvotes.remove(current_user)
+            pst.downvotes.append(current_user)
+    db.session.commit()
+    obj_response.html('#post_vote_' + post_id, str(pst.points()))
+    obj_response.attr('#post_vote_' + post_id, 'class', pst.current_vote_style(current_user))

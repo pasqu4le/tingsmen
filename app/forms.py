@@ -34,14 +34,6 @@ class PostForm(FlaskForm):
     submit = InlineSubmitField('Post', render_kw={'placeholder': 'Post', 'class': 'btn btn-lg btn-primary btn-block'})
 
 
-class VotePostForm(FlaskForm):
-    next_url = HiddenField('next_url')
-    upvote = InlineSubmitField('<span class="glyphicon glyphicon-thumbs-up"></span>',
-                               render_kw={'placeholder': 'upvote', 'class': 'btn btn-success btn-xs btn-block'})
-    downvote = InlineSubmitField('<span class="glyphicon glyphicon-thumbs-down"></span>',
-                                 render_kw={'placeholder': 'downvote', 'class': 'btn btn-danger btn-xs btn-block'})
-
-
 class CustomLoginForm(flask_security.forms.LoginForm):
     email = StringField('email', validators=[DataRequired()], render_kw={'placeholder': 'Username or Email Address'})
     password = PasswordField('password', validators=[DataRequired()], render_kw={'placeholder': 'Password'})

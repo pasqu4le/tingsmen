@@ -6,13 +6,19 @@ from flask_admin import Admin
 from flask_migrate import Migrate
 from flask_gravatar import Gravatar
 from flask_misaka import Misaka
+import flask_sijax
 
 app = Flask(__name__)
+# use misaka for markdown
 Misaka(app)
 # take configuration keys from environment variables
 app.config['SECRET_KEY'] = os.environ['SECRET_KEY']
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL']
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SIJAX_STATIC_PATH'] = 'app/static/js/sijax/'
+app.config['SIJAX_JSON_URI'] = 'app/static/js/sijax/json2.js'
+# use sijax for ajax requests
+flask_sijax.Sijax(app)
 # Gravatar setup
 gravatar = Gravatar(app, size=150, rating='x', default='retro', force_default=False, force_lower=False, use_ssl=False, base_url=None)
 # SQLAlchemy and migration setup
