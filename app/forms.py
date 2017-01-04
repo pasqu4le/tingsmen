@@ -1,5 +1,7 @@
 import flask_security
 from flask_wtf import FlaskForm
+from flask_wtf.csrf import generate_csrf
+from werkzeug.datastructures import MultiDict
 from wtforms import StringField, PasswordField, BooleanField, TextAreaField, HiddenField
 from wtforms.validators import DataRequired, Email
 from wtforms.widgets.core import html_params
@@ -18,7 +20,7 @@ class InlineSubmitField(BooleanField):
             kwargs.setdefault('value', field.id)
             return HTMLString('<button %s>%s</button>' % (self.html_params(name=field.name, **kwargs), field.label.text))
 
-    # Represents an <button type="submit">, allowing checking if a submit button has been pressed.
+    # Represents a <button type="submit">, allowing checking if a submit button has been pressed.
     widget = InlineButtonWidget()
 
 
@@ -32,6 +34,11 @@ class PostForm(FlaskForm):
     content = TextAreaField('content', validators=[DataRequired()], render_kw={'rows': '8'})
     topics = StringField('topics', render_kw={'placeholder': 'Topics'})
     submit = InlineSubmitField('Post', render_kw={'placeholder': 'Post', 'class': 'btn btn-lg btn-primary btn-block'})
+
+    def reset(self):
+        # allow to reset this form fields
+        blank_data = MultiDict([('csrf', generate_csrf())])
+        self.process(blank_data)
 
 
 class CustomLoginForm(flask_security.forms.LoginForm):

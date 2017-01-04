@@ -1,7 +1,11 @@
-{% macro sjiax_scripts() -%}
+{% macro sjiax_scripts(form_init_js=None) -%}
 <script type="text/javascript" src="/static/js/sijax/sijax.js"></script>
+<script type="text/javascript" src="/static/js/sijax/sijax_upload.js"></script>
 <script type="text/javascript">
     {{ g.sijax.get_js()|safe }}
+    {% if form_init_js %}
+        {{ form_init_js|safe }}
+    {% endif %}
 </script>
 {%- endmacro %}
 
@@ -45,7 +49,6 @@
             <p></p>
             {# render vote form #}
             <div class="btn-group-vertical btn-block">
-                {#  #}
                 <button class="btn btn-success btn-xs btn-block" href="javascript://" onclick="Sijax.request('vote_post', ['{{ post.id}}', true]);">
                     <span class="glyphicon glyphicon-thumbs-up"></span>
                 </button>
@@ -118,7 +121,7 @@
                     </button>
                     <h4 class="modal-title" id="ModalTitle"></h4>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body" id="post_form_container">
                         {{ render_post_form(submit_post_form, current_user) }}
                 </div>
             </div>
@@ -136,7 +139,7 @@
 {%- endmacro %}
 
 {% macro render_post_form(submit_post_form, current_user) -%}
-<form class="panel panel-default form" action="/submit/post/" method="POST" name="submit_post_form">
+<form class="panel panel-default form" enctype="multipart/form-data" method="POST" name="post_form" id="post_form">
     {{ submit_post_form.hidden_tag() }}
     <div class="row panel-body">
         <div class="col-md-2 col-xs-3">

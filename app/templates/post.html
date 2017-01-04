@@ -2,12 +2,13 @@
 {% import "macros.html" as macros %}
 
 {% block head_custom %}
-    {{ macros.sjiax_scripts() }}
+    {{ macros.sjiax_scripts(form_init_js) }}
 {% endblock %}
 
 {% block central_column %}
     {{ macros.post_modal_script() }}
     {{ macros.post_modal(submit_post_form, current_user) }}
+    <div id="post-container">
     {{ macros.render_post(main_post, current_user) }}
     {% if children %}
         {% for child, depth in children %}
@@ -19,6 +20,7 @@
             </div>
         {% endfor %}
     {% endif %}
+    </div>
 {% endblock %}
 
 {% block side_column %}

@@ -1,5 +1,5 @@
 from app import app, db
-from flask import g, render_template, abort, redirect, url_for, request, flash
+from flask import g, render_template, abort, redirect, url_for, request, get_template_attribute
 from flask_security import current_user
 from flask_admin.contrib import sqla
 from flask_misaka import markdown
@@ -15,6 +15,7 @@ def home():
     if not current_user.is_authenticated:
         return render_template("index.html", title="Welcome")
     # ajax request handling
+    form_init_js = g.sijax.register_upload_callback('post_form', submit_post)
     if g.sijax.is_sijax_request:
         g.sijax.register_callback('vote_post', vote_post)
         return g.sijax.process_request()
@@ -25,44 +26,9 @@ def home():
         'posts': database.Post.query.all(),
         'topics': database.Topic.query.all(),
         'submit_post_form': forms.PostForm(next_url=request.url),
+        'form_init_js': form_init_js
     }
     return render_template("home.html", **options)
-
-
-@app.route('/submit/post/', methods=('GET', 'POST'))
-def submit_post():
-    # not allowed user handling:
-    if not current_user.is_authenticated:
-        abort(403)  # permission denied
-    # non-ajax handling:
-    form = forms.PostForm()
-    if form.validate_on_submit():
-        # markdown options and content
-        mark_opt = {
-            'autolink': True,
-            'underline': True,
-            'smartypants': True,
-            'strikethrough': True,
-            'skip_html': True
-        }
-        content = markdown(form.content.data, **mark_opt)
-        pst = database.Post(content=content, poster=current_user, poster_id=current_user.id, date=func.now())
-        if form.parent_id.data:
-            pst.parent_id = int(form.parent_id.data)
-        for topic_name in form.topics.data.split():
-            tpc = database.Topic.query.filter_by(name=topic_name).first()
-            if not tpc:
-                tpc = database.Topic(name=topic_name, description='')
-                db.session.add(tpc)
-            pst.topics.append(tpc)
-        db.session.add(pst)
-        db.session.commit()
-        flash("You published your new post")
-        next_url = form.next_url.data
-        if not next_url:
-            next_url = '/'
-        return redirect(next_url)
-    return render_template('submitpost.html', submit_post_form=form, current_user=current_user)
 
 
 @app.route('/topic/<topic_name>/', methods=('GET', 'POST'))
@@ -71,6 +37,7 @@ def topic(topic_name):
     if not current_user.is_authenticated:
         return redirect("/")
     # ajax request handling
+    form_init_js = g.sijax.register_upload_callback('post_form', submit_post)
     if g.sijax.is_sijax_request:
         g.sijax.register_callback('vote_post', vote_post)
         return g.sijax.process_request()
@@ -83,6 +50,7 @@ def topic(topic_name):
         'posts': main_topic.posts,
         'topics': database.Topic.query.all(),
         'submit_post_form': forms.PostForm(next_url=request.url),
+        'form_init_js': form_init_js
     }
     return render_template("topic.html", **options)
 
@@ -98,6 +66,7 @@ def user_page(username, subpage):
     if not current_user.is_authenticated:
         return redirect("/")
     # ajax request handling
+    form_init_js = g.sijax.register_upload_callback('post_form', submit_post)
     if g.sijax.is_sijax_request:
         g.sijax.register_callback('vote_post', vote_post)
         return g.sijax.process_request()
@@ -113,6 +82,7 @@ def user_page(username, subpage):
         'subpage': subpage,
         'subpages': ['post', 'upvotes', 'downvotes'],
         'submit_post_form': forms.PostForm(next_url=request.url),
+        'form_init_js': form_init_js
     }
     return render_template("user.html", **options)
 
@@ -123,6 +93,7 @@ def post(post_id):
     if not current_user.is_authenticated:
         return redirect("/")
     # ajax request handling
+    form_init_js = g.sijax.register_upload_callback('post_form', submit_post)
     if g.sijax.is_sijax_request:
         g.sijax.register_callback('vote_post', vote_post)
         return g.sijax.process_request()
@@ -135,6 +106,7 @@ def post(post_id):
         'children': get_children(main_post),
         'topics': database.Topic.query.all(),
         'submit_post_form': forms.PostForm(next_url=request.url),
+        'form_init_js': form_init_js
     }
     return render_template("post.html", **options)
 
@@ -154,65 +126,7 @@ def get_children(parent_post, d=0):
 
 @app.route('/subscribe/<mailing_list>/', methods=('GET', 'POST'))
 def subscribe(mailing_list):
-    # basics:
-    title = 'Subscribe'
-    template = 'subscribe.html'
-    # retrieve the mailing list from the database
-    ml = database.MailingList.query.filter_by(name=mailing_list).first()
-    # check if mailing list exists
-    if not ml:
-        abort(404)
-    # check if the form has been correctly filled
-    form = forms.EmailForm()
-    errors = []
-    if form.validate_on_submit():
-        # if so, add the mail to the mailing list
-        mail = str(form.email.data)
-        em = database.Email.query.filter_by(value=mail).first()
-        # if it's not in the database add it
-        if not em:
-            em = database.Email(value=mail)
-            db.session.add(em)
-        # check if this email is already associated to this mailing list
-        if em in ml.emails:
-            errors.append("This email is already registered to this mailing list")
-        else:
-            ml.emails.append(em)
-            db.session.commit()
-            db.session.flush()
-            return render_template(template, title=title, name=mailing_list)
-    # if not, add the form errors and retry:
-    errors.extend([v for value in form.errors.values() for v in value])
-    return render_template(template, title=title, form=form, name=mailing_list, errors=errors)
-
-
-@app.route('/unsubscribe/<mailing_list>/', methods=('GET', 'POST'))
-def unsubscribe(mailing_list):
-    # basics:
-    title = 'Unsubscribe'
-    template = 'subscribe.html'
-    # retrieve the mailing list from the database
-    ml = database.MailingList.query.filter_by(name=mailing_list).first()
-    # check if mailing list exists
-    if not ml:
-        abort(404)
-    form = forms.EmailForm()
-    # check if the form has been correctly filled
-    errors = []
-    if form.validate_on_submit():
-        em = database.Email.query.filter_by(value=(str(form.email.data))).first()
-        if not em:
-            errors.append("This email is not in the database")
-        else:
-            if em not in ml.emails:
-                errors.append("This email is already not subscribed to this mailing list")
-            else:
-                ml.emails.remove(em)
-                db.session.commit()
-                db.session.flush()
-                return render_template(template, title=title, name=mailing_list)
-    errors.extend([v for value in form.errors.values() for v in value])
-    return render_template(template, title=title, form=form, name=mailing_list, errors=errors)
+    return render_template('subscribe.html', title='Subscribe', name=mailing_list)
 
 
 # Custom admin model view class
@@ -256,3 +170,34 @@ def vote_post(obj_response, post_id, up):
     db.session.commit()
     obj_response.html('#post_vote_' + post_id, str(pst.points()))
     obj_response.attr('#post_vote_' + post_id, 'class', pst.current_vote_style(current_user))
+
+
+def submit_post(obj_response, files, form_values):
+    form = forms.PostForm(**form_values)
+    if form.validate():
+        # markdown options and content
+        mark_opt = {
+            'autolink': True,
+            'underline': True,
+            'smartypants': True,
+            'strikethrough': True,
+            'skip_html': True
+        }
+        content = markdown(form.content.data, **mark_opt)
+        pst = database.Post(content=content, poster=current_user, poster_id=current_user.id, date=func.now())
+        if form.parent_id.data:
+            pst.parent_id = int(form.parent_id.data)
+        for topic_name in form.topics.data.split():
+            tpc = database.Topic.query.filter_by(name=topic_name).first()
+            if not tpc:
+                tpc = database.Topic(name=topic_name, description='')
+                db.session.add(tpc)
+            pst.topics.append(tpc)
+        db.session.add(pst)
+        db.session.commit()
+        render_post = get_template_attribute('macros.html', 'render_post')
+        obj_response.html_prepend('#post-container', render_post(pst, current_user).unescape())
+        obj_response.script("$('#postModal').modal('hide');")
+        form.reset()
+    render_post_form = get_template_attribute('macros.html', 'render_post_form')
+    obj_response.html('#post_form_container', render_post_form(form, current_user).unescape())

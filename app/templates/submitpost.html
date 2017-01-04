@@ -1,7 +1,0 @@
-{% extends "columned.html" %}
-{% import "macros.html" as macros %}
-
-{% block central_column %}
-    <h2>Submit a new post:</h2>
-    {{ macros.render_post_form(submit_post_form, current_user) }}
-{% endblock %}

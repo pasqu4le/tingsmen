@@ -9,14 +9,17 @@ from flask_misaka import Misaka
 import flask_sijax
 
 app = Flask(__name__)
-# use misaka for markdown
-Misaka(app)
-# take configuration keys from environment variables
+# set configuration keys and take them from environment variables
 app.config['SECRET_KEY'] = os.environ['SECRET_KEY']
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL']
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SIJAX_STATIC_PATH'] = 'app/static/js/sijax/'
 app.config['SIJAX_JSON_URI'] = 'app/static/js/sijax/json2.js'
+app.config['SECURITY_USER_IDENTITY_ATTRIBUTES'] = ('username', 'email')
+app.config['SECURITY_PASSWORD_HASH'] = 'sha512_crypt'
+app.config['SECURITY_PASSWORD_SALT'] = os.environ['SECRET_SALT']
+# use misaka for markdown
+Misaka(app)
 # use sijax for ajax requests
 flask_sijax.Sijax(app)
 # Gravatar setup
@@ -29,9 +32,6 @@ migrate = Migrate(app, db)
 from app import database, forms
 
 # Security setup
-app.config['SECURITY_USER_IDENTITY_ATTRIBUTES'] = ('username', 'email')
-app.config['SECURITY_PASSWORD_HASH'] = 'sha512_crypt'
-app.config['SECURITY_PASSWORD_SALT'] = os.environ['SECRET_SALT']
 user_datastore = SQLAlchemyUserDatastore(db, database.User, database.Role)
 security = Security(app, user_datastore, login_form=forms.CustomLoginForm)
 

@@ -2,16 +2,18 @@
 {% import "macros.html" as macros %}
 
 {% block head_custom %}
-    {{ macros.sjiax_scripts() }}
+    {{ macros.sjiax_scripts(form_init_js) }}
 {% endblock %}
 
 {% block central_column %}
     {{ macros.post_modal_script() }}
     {{ macros.post_modal(submit_post_form, current_user) }}
     {{ macros.new_post_panel(current_user) }}
+    <div id="post-container">
     {% for post in posts %}
         {{ macros.render_post(post, current_user) }}
     {% endfor %}
+    </div>
 {% endblock %}
 
 {% block side_column %}
