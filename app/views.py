@@ -1,9 +1,9 @@
-from app import app, db
+from app import app
 from flask import g, render_template, abort, redirect, url_for, request, get_template_attribute
 from flask_security import current_user
 from flask_admin.contrib import sqla
 from flask_misaka import markdown
-import database
+from database import *
 import forms
 from sqlalchemy.sql import func
 
@@ -17,14 +17,16 @@ def home():
     # ajax request handling
     form_init_js = g.sijax.register_upload_callback('post_form', submit_post)
     if g.sijax.is_sijax_request:
+        g.sijax.register_callback('load_more_posts', load_more_posts)
         g.sijax.register_callback('vote_post', vote_post)
         return g.sijax.process_request()
     # non-ajax handling:
+    posts = Post.get_more()
     options = {
         'title': 'Home',
         'current_user': current_user,
-        'posts': database.Post.query.all(),
-        'topics': database.Topic.query.all(),
+        'posts': posts,
+        'topics': Topic.query.all(),
         'submit_post_form': forms.PostForm(next_url=request.url),
         'form_init_js': form_init_js
     }
@@ -39,16 +41,18 @@ def topic(topic_name):
     # ajax request handling
     form_init_js = g.sijax.register_upload_callback('post_form', submit_post)
     if g.sijax.is_sijax_request:
+        g.sijax.register_callback('load_more_posts', load_more_posts)
         g.sijax.register_callback('vote_post', vote_post)
         return g.sijax.process_request()
     # non-ajax handling:
-    main_topic = database.Topic.query.filter_by(name=topic_name).first()
+    main_topic = Topic.query.filter_by(name=topic_name).first()
+    posts = Post.get_more(group='topic', name=topic_name)
     options = {
         'title': '#' + main_topic.name,
         'current_user': current_user,
         'main_topic': main_topic,
-        'posts': main_topic.posts,
-        'topics': database.Topic.query.all(),
+        'posts': posts,
+        'topics': Topic.query.all(),
         'submit_post_form': forms.PostForm(next_url=request.url),
         'form_init_js': form_init_js
     }
@@ -68,19 +72,29 @@ def user_page(username, subpage):
     # ajax request handling
     form_init_js = g.sijax.register_upload_callback('post_form', submit_post)
     if g.sijax.is_sijax_request:
+        g.sijax.register_callback('load_more_posts', load_more_posts)
         g.sijax.register_callback('vote_post', vote_post)
         return g.sijax.process_request()
     # non-ajax handling:
-    main_user = database.User.query.filter_by(username=username).first()
+    main_user = User.query.filter_by(username=username).first()
+    posts = []
+    group = 'user'
+    if subpage == 'post':
+        posts = Post.get_more(group='user', name=username)
+    elif subpage == 'upvotes':
+        posts = Post.get_more(group='upvotes', name=username)
+        group = 'upvotes'
+    elif subpage == 'downvotes':
+        posts = Post.get_more(group='downvotes', name=username)
+        group = 'downvotes'
     options = {
         'title': main_user.username,
         'current_user': current_user,
         'user': main_user,
-        'posts': main_user.posts,
-        'upvotes': main_user.upvoted,
-        'downvotes': main_user.downvoted,
-        'subpage': subpage,
-        'subpages': ['post', 'upvotes', 'downvotes'],
+        'posts': posts,
+        'posts_group': group,
+        'current_page': subpage,
+        'user_pages': ['post', 'upvotes', 'downvotes'],
         'submit_post_form': forms.PostForm(next_url=request.url),
         'form_init_js': form_init_js
     }
@@ -98,30 +112,24 @@ def post(post_id):
         g.sijax.register_callback('vote_post', vote_post)
         return g.sijax.process_request()
     # non-ajax handling:
-    main_post = database.Post.query.filter_by(id=post_id).first()
+    main_post = Post.query.filter_by(id=post_id).first()
+    # oldest parent:
+    old_parent = None
+    if main_post.parent:
+        old_parent = main_post.parent
+        while old_parent.parent:
+            old_parent = old_parent.parent
     options = {
         'title': 'Post',
         'current_user': current_user,
         'main_post': main_post,
-        'children': get_children(main_post),
-        'topics': database.Topic.query.all(),
+        'old_parent': old_parent,
+        'children': main_post.get_children(),
+        'topics': Topic.query.all(),
         'submit_post_form': forms.PostForm(next_url=request.url),
         'form_init_js': form_init_js
     }
     return render_template("post.html", **options)
-
-
-def get_children(parent_post, d=0):
-    # utility function to get a post children tree
-    res = []
-    depth = d
-    if depth < 3:
-        depth = d+1
-    if parent_post.children:
-        for child in parent_post.children:
-            res.append((child, depth))
-            res.extend(get_children(child, d=depth))
-    return res
 
 
 @app.route('/subscribe/<mailing_list>/', methods=('GET', 'POST'))
@@ -152,7 +160,7 @@ class ModelView(sqla.ModelView):
 
 # ---------------------------------------------- SIJAX FUNCTIONS
 def vote_post(obj_response, post_id, up):
-    pst = database.Post.query.filter_by(id=post_id).first()
+    pst = Post.query.filter_by(id=post_id).first()
     if up:
         if current_user in pst.upvotes:
             pst.upvotes.remove(current_user)
@@ -172,6 +180,18 @@ def vote_post(obj_response, post_id, up):
     obj_response.attr('#post_vote_' + post_id, 'class', pst.current_vote_style(current_user))
 
 
+def load_more_posts(obj_response, group, name, older_than):
+    posts = Post.get_more(group=group, name=name, older_than=older_than)
+    render_post = get_template_attribute('macros.html', 'render_post')
+    more_posts_panel = get_template_attribute('macros.html', 'more_posts_panel')
+    if posts:
+        for pst in posts:
+            obj_response.html_append('#post-container', render_post(pst, current_user).unescape())
+        obj_response.html('#load_more_container', more_posts_panel(group, name, posts[-1].date).unescape())
+    else:
+        obj_response.html('#load_more_container', more_posts_panel(group, name, None).unescape())
+
+
 def submit_post(obj_response, files, form_values):
     form = forms.PostForm(**form_values)
     if form.validate():
@@ -184,13 +204,14 @@ def submit_post(obj_response, files, form_values):
             'skip_html': True
         }
         content = markdown(form.content.data, **mark_opt)
-        pst = database.Post(content=content, poster=current_user, poster_id=current_user.id, date=func.now())
+        pst = Post(content=content, poster=current_user, poster_id=current_user.id, date=func.now())
         if form.parent_id.data:
             pst.parent_id = int(form.parent_id.data)
-        for topic_name in form.topics.data.split():
-            tpc = database.Topic.query.filter_by(name=topic_name).first()
+        for tn in form.topics.data.split():
+            topic_name = tn.strip('#').lower()
+            tpc = Topic.query.filter_by(name=topic_name).first()
             if not tpc:
-                tpc = database.Topic(name=topic_name, description='')
+                tpc = Topic(name=topic_name, description='')
                 db.session.add(tpc)
             pst.topics.append(tpc)
         db.session.add(pst)

@@ -11,14 +11,7 @@
             <p>{{ main_topic.description }}</p>
         </div>
     {% endif %}
-    {{ macros.post_modal_script() }}
-    {{ macros.post_modal(submit_post_form, current_user) }}
-    {{ macros.new_post_panel(current_user) }}
-    <div id="post-container">
-    {% for post in posts %}
-        {{ macros.render_post(post, current_user) }}
-    {% endfor %}
-    </div>
+    {{ macros.render_post_group(posts, current_user, submit_post_form, new_post=True, load_more=True, posts_group='topic', posts_name=main_topic.name) }}
 {% endblock %}
 
 {% block side_column %}

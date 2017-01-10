@@ -41,6 +41,24 @@
 
 {# --------------------------- Rendering Macros -------------------------------- #}
 
+{% macro render_post_group(posts, current_user, submit_post_form, new_post=False, load_more=False, posts_group=None, posts_name=None) -%}
+    {{ post_modal_script() }}
+    {{ post_modal(submit_post_form, current_user) }}
+    {% if new_post %}
+        {{ new_post_panel(current_user) }}
+    {% endif %}
+    <div id="post-container">
+    {% for post in posts %}
+        {{ render_post(post, current_user) }}
+    {% endfor %}
+    </div>
+    {% if posts and load_more %}
+        <div class="panel panel-info" id="load_more_container">
+            {{ more_posts_panel(posts_group, posts_name, posts[-1].date) }}
+        </div>
+    {% endif %}
+{%- endmacro %}
+
 {% macro render_post(post, current_user) -%}
 <div class="panel panel-default">
     <div class="row panel-body">
@@ -71,10 +89,11 @@
             <span>  –  </span>
             <a href="/post/{{ post.id }}/"><span class="glyphicon glyphicon-comment"></span> {{ post.children|length }} comments</a>
             <span>  –  </span>
-            <a href="" data-toggle="modal" data-target="#postModal" data-parent='{"id":{{ post.id }},"poster":"{{ post.poster.username }}"}'><span class="glyphicon glyphicon-share-alt"></span> reply</a>
+            <a href="" data-toggle="modal" data-target="#postModal" data-parent='{"id":{{ post.id }},"poster":"{{ post.poster.username }}","topics":"{% for topic in post.topics %}#{{topic.name}} {% endfor %}"}'><span class="glyphicon glyphicon-share-alt"></span> reply</a>
         </p>
-        <p><span class="glyphicon glyphicon-tags"></span> -{% for topic in post.topics %}<a
-                href="/topic/{{ topic.name }}/"> #{{ topic.name }}</a>{% endfor %}</p>
+        <p><span class="glyphicon glyphicon-tags"></span> -{% for topic in post.topics %}
+            <a href="/topic/{{ topic.name }}/"> #{{ topic.name }}</a>{% endfor %}
+        </p>
     </div>
 </div>
 {%- endmacro %}
@@ -91,6 +110,16 @@
     </div>
 {%- endmacro %}
 
+{% macro more_posts_panel(group, name, older_than) -%}
+    {% if older_than %}
+        <a class="panel-body btn btn-primary btn-lg btn-block" href="javascript://" onclick="Sijax.request('load_more_posts', [{% if group %}'{{ group }}'{% else %}null{% endif %}, {% if name %}'{{ name }}'{% else %}null{% endif %}, '{{ older_than }}']);">
+            Load older posts
+        </a>
+    {% else %}
+        <a class="panel-body btn btn-default btn-lg btn-block disabled">There are no more posts here</a>
+    {% endif %}
+{%- endmacro %}
+
 {# --------------------------- Macros for the post modal form -------------------------------- #}
 
 {% macro post_modal_script() -%}
@@ -103,6 +132,7 @@
                 if (parent != null){
                     modal.find('.modal-title').text('Reply to @' + parent.poster + ' post');
                     modal.find('#parent_id').val(parent.id)
+                    modal.find('#topics').val(parent.topics)
                 } else {
                     modal.find('.modal-title').text('New post');
                 }

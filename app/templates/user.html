@@ -6,32 +6,9 @@
 {% endblock %}
 
 {% block central_column %}
-    {{ macros.post_modal_script() }}
-    {{ macros.post_modal(submit_post_form, current_user) }}
-    {{ macros.new_post_panel(current_user) }}
-    {% if subpage == 'post' %}
-        <div id="post-container">
-        {% for post in posts %}
-            {{ macros.render_post(post, current_user) }}
-        {% endfor %}
-        </div>
-    {% endif %}
-    {% if subpage == 'upvotes' %}
-        <div id="post-container">
-        {% for post in upvotes %}
-            {{ macros.render_post(post, current_user) }}
-        {% endfor %}
-        </div>
-    {% endif %}
-    {% if subpage == 'downvotes' %}
-        <div id="post-container">
-        {% for post in downvotes %}
-            {{ macros.render_post(post, current_user) }}
-        {% endfor %}
-        </div>
-    {% endif %}
+    {{ macros.render_post_group(posts, current_user, submit_post_form, new_post=True, load_more=True, posts_group=posts_group) }}
 {% endblock %}
 
 {% block side_column %}
-    {{ macros.user_widget(subpage, subpages, user) }}
+    {{ macros.user_widget(current_page, user_pages, user) }}
 {% endblock %}

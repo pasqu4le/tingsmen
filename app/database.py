@@ -74,6 +74,34 @@ class Post(db.Model):
     downvotes = db.relationship('User', secondary=post_downvote, backref=db.backref('downvoted', lazy='dynamic'))
     topics = db.relationship('Topic', secondary=post_topic, backref=db.backref('posts', lazy='dynamic'))
 
+    @staticmethod
+    def get_more(num=5, group=None, name=None, older_than=None):
+        query = Post.query
+        if group and name:
+            if group == 'user':
+                query = query.filter(Post.poster.has(username=name))
+            elif group == 'topic':
+                query = query.filter(Post.topics.any(name=name))
+            elif group == 'upvotes':
+                query = query.filter(Post.upvotes.any(username=name))
+            elif group == 'downvotes':
+                query = query.filter(Post.downvotes.any(username=name))
+        if older_than:
+            query = query.filter(Post.date < older_than)
+        return query.order_by(Post.date.desc())[:num]
+
+    def get_children(self, d=0):
+        # utility function to get a post children tree
+        res = []
+        depth = d
+        if depth < 3:
+            depth = d + 1
+        if self.children:
+            for child in self.children:
+                res.append((child, depth))
+                res.extend(child.get_children(d=depth))
+        return res
+
     def current_vote_style(self, user):
         # returns the correct bootstrap class for the text displaying if and how a user voted on this post
         if user in self.upvotes:
