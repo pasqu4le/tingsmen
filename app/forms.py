@@ -24,13 +24,8 @@ class InlineSubmitField(BooleanField):
     widget = InlineButtonWidget()
 
 
-class EmailForm(FlaskForm):
-    email = StringField('email', validators=[DataRequired(), Email()], render_kw={'placeholder': 'Email address', 'class': 'form-control'})
-
-
 class PostForm(FlaskForm):
     parent_id = HiddenField('parent_id')
-    next_url = HiddenField('next_url')
     content = TextAreaField('content', validators=[DataRequired()], render_kw={'rows': '8'})
     topics = StringField('topics', render_kw={'placeholder': 'Topics'})
     submit = InlineSubmitField('Post', render_kw={'placeholder': 'Post', 'class': 'btn btn-lg btn-primary btn-block'})

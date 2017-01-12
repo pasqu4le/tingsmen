@@ -35,9 +35,6 @@ def home():
 
 @app.route('/topic/<topic_name>/', methods=('GET', 'POST'))
 def topic(topic_name):
-    # not allowed user handling:
-    if not current_user.is_authenticated:
-        return redirect("/")
     # ajax request handling
     form_init_js = g.sijax.register_upload_callback('post_form', submit_post)
     if g.sijax.is_sijax_request:
@@ -66,9 +63,6 @@ def user(username):
 
 @app.route('/user/<username>/<subpage>/', methods=('GET', 'POST'))
 def user_page(username, subpage):
-    # not allowed user handling:
-    if not current_user.is_authenticated:
-        return redirect("/")
     # ajax request handling
     form_init_js = g.sijax.register_upload_callback('post_form', submit_post)
     if g.sijax.is_sijax_request:
@@ -103,9 +97,6 @@ def user_page(username, subpage):
 
 @app.route('/post/<post_id>/', methods=('GET', 'POST'))
 def post(post_id):
-    # not allowed user handling:
-    if not current_user.is_authenticated:
-        return redirect("/")
     # ajax request handling
     form_init_js = g.sijax.register_upload_callback('post_form', submit_post)
     if g.sijax.is_sijax_request:
@@ -156,6 +147,18 @@ class ModelView(sqla.ModelView):
             else:
                 # login
                 return redirect(url_for('security.login', next=request.url))
+
+
+# ---------------------------------------------- ERROR PAGES
+
+@app.errorhandler(404)
+def page_not_found(error):
+    return render_template("error.html", code=404, message="The page you are looking for can't be found", current_user=current_user)
+
+
+@app.errorhandler(403)
+def permission_denied(error):
+    return render_template("error.html", code=403, message="Access forbidden", current_user=current_user)
 
 
 # ---------------------------------------------- SIJAX FUNCTIONS
@@ -219,6 +222,7 @@ def submit_post(obj_response, files, form_values):
         render_post = get_template_attribute('macros.html', 'render_post')
         obj_response.html_prepend('#post-container', render_post(pst, current_user).unescape())
         obj_response.script("$('#postModal').modal('hide');")
+        obj_response.script("$('html, body').animate({ scrollTop: $('#post-%s').position().top }, 500);" % str(pst.id))
         form.reset()
     render_post_form = get_template_attribute('macros.html', 'render_post_form')
     obj_response.html('#post_form_container', render_post_form(form, current_user).unescape())

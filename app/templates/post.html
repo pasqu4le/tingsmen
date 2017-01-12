@@ -6,7 +6,7 @@
 {% endblock %}
 
 {% block central_column %}
-    {{ macros.post_modal_script() }}
+    {{ macros.post_modal_script(current_user) }}
     {{ macros.post_modal(submit_post_form, current_user) }}
     {% if old_parent %}
     <div class="panel panel-info">

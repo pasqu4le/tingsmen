@@ -42,7 +42,7 @@
 {# --------------------------- Rendering Macros -------------------------------- #}
 
 {% macro render_post_group(posts, current_user, submit_post_form, new_post=False, load_more=False, posts_group=None, posts_name=None) -%}
-    {{ post_modal_script() }}
+    {{ post_modal_script(current_user) }}
     {{ post_modal(submit_post_form, current_user) }}
     {% if new_post %}
         {{ new_post_panel(current_user) }}
@@ -60,13 +60,14 @@
 {%- endmacro %}
 
 {% macro render_post(post, current_user) -%}
-<div class="panel panel-default">
+<div class="panel panel-default" id="post-{{ post.id }}">
     <div class="row panel-body">
         <div class="col-md-2 col-xs-3">
             <img class="img-rounded img-responsive center-block" src="{{ post.poster.email | gravatar }}">
             <p></p>
             {# render vote form #}
             <div class="btn-group-vertical btn-block">
+                {% if current_user.is_authenticated %}
                 <button class="btn btn-success btn-xs btn-block" href="javascript://" onclick="Sijax.request('vote_post', ['{{ post.id}}', true]);">
                     <span class="glyphicon glyphicon-thumbs-up"></span>
                 </button>
@@ -76,6 +77,17 @@
                 <button class="btn btn-danger btn-xs btn-block" href="javascript://" onclick="Sijax.request('vote_post', ['{{ post.id}}', false]);">
                     <span class="glyphicon glyphicon-thumbs-down"></span>
                 </button>
+                {% else %}
+                <a class="btn btn-success btn-xs btn-block" href="/login">
+                    <span class="glyphicon glyphicon-thumbs-up"></span>
+                </a>
+                <a class="btn btn-default btn-block disabled">
+                    <strong >{{ post.points()}}</strong>
+                </a>
+                <a class="btn btn-danger btn-xs btn-block" href="/login">
+                    <span class="glyphicon glyphicon-thumbs-down"></span>
+                </a>
+                {% endif %}
             </div>
         </div>
         <div class="col-md-10 col-xs-9">
@@ -89,7 +101,7 @@
             <span>  –  </span>
             <a href="/post/{{ post.id }}/"><span class="glyphicon glyphicon-comment"></span> {{ post.children|length }} comments</a>
             <span>  –  </span>
-            <a href="" data-toggle="modal" data-target="#postModal" data-parent='{"id":{{ post.id }},"poster":"{{ post.poster.username }}","topics":"{% for topic in post.topics %}#{{topic.name}} {% endfor %}"}'><span class="glyphicon glyphicon-share-alt"></span> reply</a>
+            <a href="" data-toggle="modal" data-target="#postModal" data-autofill='{"id":{{ post.id }},"poster":"{{ post.poster.username }}","topics":"{% for topic in post.topics %}#{{topic.name}} {% endfor %}"}'><span class="glyphicon glyphicon-share-alt"></span> reply</a>
         </p>
         <p><span class="glyphicon glyphicon-tags"></span> -{% for topic in post.topics %}
             <a href="/topic/{{ topic.name }}/"> #{{ topic.name }}</a>{% endfor %}
@@ -122,29 +134,32 @@
 
 {# --------------------------- Macros for the post modal form -------------------------------- #}
 
-{% macro post_modal_script() -%}
+{% macro post_modal_script(current_user) -%}
+    {% if current_user.is_authenticated %}
     <script>
         $(function(){
             $('#postModal').on('show.bs.modal', function (event) {
                 var button = $(event.relatedTarget);
-                var parent = button.data('parent');
+                var autofill = button.data('autofill');
                 var modal = $(this);
-                if (parent != null){
-                    modal.find('.modal-title').text('Reply to @' + parent.poster + ' post');
-                    modal.find('#parent_id').val(parent.id)
-                    modal.find('#topics').val(parent.topics)
+                if (autofill != null){
+                    modal.find('.modal-title').text('Reply to @' + autofill.poster + ' post');
+                    modal.find('#parent_id').val(autofill.id)
+                    modal.find('#topics').val(autofill.topics)
                 } else {
                     modal.find('.modal-title').text('New post');
                 }
             });
         });
     </script>
+    {% endif %}
 {%- endmacro %}
 
 {% macro post_modal(submit_post_form, current_user) -%}
     <div class="modal fade" id="postModal" tabindex="-1" role="dialog" aria-labelledby="postModal">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
+                {% if current_user.is_authenticated %}
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
@@ -154,18 +169,26 @@
                 <div class="modal-body" id="post_form_container">
                         {{ render_post_form(submit_post_form, current_user) }}
                 </div>
+                {% else %}
+                <div class="modal-body">
+                    <p>You need to be logged in to post something</p>
+                    <a class="btn btn-lg btn-primary btn-block" href="/login">Login now</a>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
 {%- endmacro %}
 
 {% macro new_post_panel(current_user) -%}
+    {% if current_user.is_authenticated %}
     <div class="panel panel-info">
         <div class="panel-body row">
             <h4 class="col-xs-7 col-md-9">Hey there {{ current_user.username }}, do you have something to share?</h4>
             <button type="button" class="btn btn-primary btn-lg col-xs-5 col-md-3" data-toggle="modal" data-target="#postModal">Make a post!</button>
         </div>
     </div>
+    {% endif %}
 {%- endmacro %}
 
 {% macro render_post_form(submit_post_form, current_user) -%}
