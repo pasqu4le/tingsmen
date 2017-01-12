@@ -1,6 +1,6 @@
 {% extends "base.html" %}
-{% block style %}
-<link href="/static/form.css" rel="stylesheet">
+{% block head_custom %}
+    <link href="/static/form.css" rel="stylesheet">
 {% endblock %}
 {% block content %}
 {% from "security/_macros.html" import render_field_with_errors, render_field %}

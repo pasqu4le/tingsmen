@@ -1,3 +1,14 @@
+{% macro sjiax_scripts(form_init_js=None) -%}
+<script type="text/javascript" src="/static/js/sijax/sijax.js"></script>
+<script type="text/javascript" src="/static/js/sijax/sijax_upload.js"></script>
+<script type="text/javascript">
+    {{ g.sijax.get_js()|safe }}
+    {% if form_init_js %}
+        {{ form_init_js|safe }}
+    {% endif %}
+</script>
+{%- endmacro %}
+
 {# --------------------------- Widgets Macros -------------------------------- #}
 
 {% macro topics_widget(topics, main_topic=None) -%}
@@ -30,15 +41,54 @@
 
 {# --------------------------- Rendering Macros -------------------------------- #}
 
-{% macro render_post(post, vote_post_form=None) -%}
-<div class="panel panel-default">
+{% macro render_post_group(posts, current_user, submit_post_form, new_post=False, load_more=False, posts_group=None, posts_name=None) -%}
+    {{ post_modal_script(current_user) }}
+    {{ post_modal(submit_post_form, current_user) }}
+    {% if new_post %}
+        {{ new_post_panel(current_user) }}
+    {% endif %}
+    <div id="post-container">
+    {% for post in posts %}
+        {{ render_post(post, current_user) }}
+    {% endfor %}
+    </div>
+    {% if posts and load_more %}
+        <div class="panel panel-info" id="load_more_container">
+            {{ more_posts_panel(posts_group, posts_name, posts[-1].date) }}
+        </div>
+    {% endif %}
+{%- endmacro %}
+
+{% macro render_post(post, current_user) -%}
+<div class="panel panel-default" id="post-{{ post.id }}">
     <div class="row panel-body">
         <div class="col-md-2 col-xs-3">
             <img class="img-rounded img-responsive center-block" src="{{ post.poster.email | gravatar }}">
             <p></p>
-            {% if vote_post_form %}
-            {{ render_vote_form(vote_post_form, post) }}
-            {% endif %}
+            {# render vote form #}
+            <div class="btn-group-vertical btn-block">
+                {% if current_user.is_authenticated %}
+                <button class="btn btn-success btn-xs btn-block" href="javascript://" onclick="Sijax.request('vote_post', ['{{ post.id}}', true]);">
+                    <span class="glyphicon glyphicon-thumbs-up"></span>
+                </button>
+                <a class="btn btn-default btn-block disabled">
+                    <strong class="{{ post.current_vote_style(current_user) }}" id="post_vote_{{ post.id }}">{{ post.points()}}</strong>
+                </a>
+                <button class="btn btn-danger btn-xs btn-block" href="javascript://" onclick="Sijax.request('vote_post', ['{{ post.id}}', false]);">
+                    <span class="glyphicon glyphicon-thumbs-down"></span>
+                </button>
+                {% else %}
+                <a class="btn btn-success btn-xs btn-block" href="/login">
+                    <span class="glyphicon glyphicon-thumbs-up"></span>
+                </a>
+                <a class="btn btn-default btn-block disabled">
+                    <strong >{{ post.points()}}</strong>
+                </a>
+                <a class="btn btn-danger btn-xs btn-block" href="/login">
+                    <span class="glyphicon glyphicon-thumbs-down"></span>
+                </a>
+                {% endif %}
+            </div>
         </div>
         <div class="col-md-10 col-xs-9">
             <h4 class="text-info"><a href="/user/{{ post.poster.username }}/"> – @{{ post.poster.username }}</a></h4>
@@ -51,24 +101,13 @@
             <span>  –  </span>
             <a href="/post/{{ post.id }}/"><span class="glyphicon glyphicon-comment"></span> {{ post.children|length }} comments</a>
             <span>  –  </span>
-            <a href="" data-toggle="modal" data-target="#postModal" data-parent='{"id":{{ post.id }},"poster":"{{ post.poster.username }}"}'><span class="glyphicon glyphicon-share-alt"></span> reply</a>
+            <a href="" data-toggle="modal" data-target="#postModal" data-autofill='{"id":{{ post.id }},"poster":"{{ post.poster.username }}","topics":"{% for topic in post.topics %}#{{topic.name}} {% endfor %}"}'><span class="glyphicon glyphicon-share-alt"></span> reply</a>
         </p>
-        <p><span class="glyphicon glyphicon-tags"></span> -{% for topic in post.topics %}<a
-                href="/topic/{{ topic.name }}/"> #{{ topic.name }}</a>{% endfor %}</p>
+        <p><span class="glyphicon glyphicon-tags"></span> -{% for topic in post.topics %}
+            <a href="/topic/{{ topic.name }}/"> #{{ topic.name }}</a>{% endfor %}
+        </p>
     </div>
 </div>
-{%- endmacro %}
-
-{% macro render_vote_form(vote_post_form, post) -%}
-<form class="form" action="/vote/{{ post.id }}/" method="POST" name="vote_post_form">
-    {{ vote_post_form.hidden_tag() }}
-    <div class="btn-group-vertical btn-block">
-        {# rendered without render_field so they can behave as a vertical btn-block #}
-        {{ vote_post_form.upvote }}
-        <a class="btn btn-default btn-sm btn-block disabled" role="button">{{ post.points() }}</a>
-        {{ vote_post_form.downvote }}
-    </div>
-</form>
 {%- endmacro %}
 
 {% macro render_field(field, label_visible=false) -%}
@@ -83,55 +122,77 @@
     </div>
 {%- endmacro %}
 
+{% macro more_posts_panel(group, name, older_than) -%}
+    {% if older_than %}
+        <a class="panel-body btn btn-primary btn-lg btn-block" href="javascript://" onclick="Sijax.request('load_more_posts', [{% if group %}'{{ group }}'{% else %}null{% endif %}, {% if name %}'{{ name }}'{% else %}null{% endif %}, '{{ older_than }}']);">
+            Load older posts
+        </a>
+    {% else %}
+        <a class="panel-body btn btn-default btn-lg btn-block disabled">There are no more posts here</a>
+    {% endif %}
+{%- endmacro %}
+
 {# --------------------------- Macros for the post modal form -------------------------------- #}
 
-{% macro post_modal_script() -%}
+{% macro post_modal_script(current_user) -%}
+    {% if current_user.is_authenticated %}
     <script>
         $(function(){
             $('#postModal').on('show.bs.modal', function (event) {
                 var button = $(event.relatedTarget);
-                var parent = button.data('parent');
+                var autofill = button.data('autofill');
                 var modal = $(this);
-                if (parent != null){
-                    modal.find('.modal-title').text('Reply to @' + parent.poster + ' post');
-                    modal.find('#parent_id').val(parent.id)
+                if (autofill != null){
+                    modal.find('.modal-title').text('Reply to @' + autofill.poster + ' post');
+                    modal.find('#parent_id').val(autofill.id)
+                    modal.find('#topics').val(autofill.topics)
                 } else {
                     modal.find('.modal-title').text('New post');
                 }
             });
         });
     </script>
+    {% endif %}
 {%- endmacro %}
 
 {% macro post_modal(submit_post_form, current_user) -%}
     <div class="modal fade" id="postModal" tabindex="-1" role="dialog" aria-labelledby="postModal">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
+                {% if current_user.is_authenticated %}
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                     <h4 class="modal-title" id="ModalTitle"></h4>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body" id="post_form_container">
                         {{ render_post_form(submit_post_form, current_user) }}
                 </div>
+                {% else %}
+                <div class="modal-body">
+                    <p>You need to be logged in to post something</p>
+                    <a class="btn btn-lg btn-primary btn-block" href="/login">Login now</a>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
 {%- endmacro %}
 
 {% macro new_post_panel(current_user) -%}
+    {% if current_user.is_authenticated %}
     <div class="panel panel-info">
         <div class="panel-body row">
             <h4 class="col-xs-7 col-md-9">Hey there {{ current_user.username }}, do you have something to share?</h4>
             <button type="button" class="btn btn-primary btn-lg col-xs-5 col-md-3" data-toggle="modal" data-target="#postModal">Make a post!</button>
         </div>
     </div>
+    {% endif %}
 {%- endmacro %}
 
 {% macro render_post_form(submit_post_form, current_user) -%}
-<form class="panel panel-default form" action="/submit/post/" method="POST" name="submit_post_form">
+<form class="panel panel-default form" enctype="multipart/form-data" method="POST" name="post_form" id="post_form">
     {{ submit_post_form.hidden_tag() }}
     <div class="row panel-body">
         <div class="col-md-2 col-xs-3">
