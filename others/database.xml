@@ -41,40 +41,18 @@
 		<type label="Inet CIDR Addr" length="0" sql="CIDR" quote="'"/>
 		<type label="Geometry" length="0" sql="GEOMETRY" quote="'"/>
 	</group>
-</datatypes><table x="53" y="154" name="MailingList">
+</datatypes><table x="54" y="14" name="MailingList">
 <row name="id" null="1" autoincrement="1">
 <datatype>INTEGER</datatype>
 <default>NULL</default></row>
 <row name="name" null="1" autoincrement="0">
 <datatype>VARCHAR(80)</datatype>
 <default>NULL</default></row>
-<key type="PRIMARY" name="">
-<part>id</part>
-</key>
-</table>
-<table x="52" y="3" name="Email">
-<row name="id" null="1" autoincrement="0">
-<datatype>INTEGER</datatype>
-<default>NULL</default></row>
-<row name="value" null="1" autoincrement="0">
-<datatype>VARCHAR(120)</datatype>
+<row name="url" null="1" autoincrement="0">
+<datatype>VARCHAR(50)</datatype>
 <default>NULL</default></row>
 <key type="PRIMARY" name="">
 <part>id</part>
-</key>
-</table>
-<table x="53" y="76" name="EmailMailingList">
-<row name="email_id" null="1" autoincrement="0">
-<datatype>INTEGER</datatype>
-<default>NULL</default><relation table="Email" row="id" />
-</row>
-<row name="mailing_list_id" null="1" autoincrement="0">
-<datatype>INTEGER</datatype>
-<default>NULL</default><relation table="MailingList" row="id" />
-</row>
-<key type="PRIMARY" name="">
-<part>mailing_list_id</part>
-<part>email_id</part>
 </key>
 </table>
 <table x="303" y="5" name="User">
@@ -302,6 +280,20 @@
 <key type="PRIMARY" name="">
 <part>user_id</part>
 <part>proposal_id</part>
+</key>
+</table>
+<table x="57" y="209" name="Globals">
+<row name="id" null="1" autoincrement="1">
+<datatype>INTEGER</datatype>
+<default>NULL</default></row>
+<row name="key" null="1" autoincrement="0">
+<datatype>VARCHAR(30)</datatype>
+<default>NULL</default></row>
+<row name="value" null="1" autoincrement="0">
+<datatype>VARCHAR(200)</datatype>
+<default>NULL</default></row>
+<key type="PRIMARY" name="">
+<part>id</part>
 </key>
 </table>
 </sql>
