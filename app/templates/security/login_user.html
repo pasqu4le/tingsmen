@@ -3,7 +3,6 @@
     <link href="/static/form.css" rel="stylesheet">
 {% endblock %}
 {% block content %}
-{% from "security/_macros.html" import render_field_with_errors, render_field %}
 {% include "security/_messages.html" %}
 {% import "macros.html" as macros %}
 <div class="container top-container">
@@ -15,6 +14,10 @@
         {{ macros.render_field(login_user_form.remember, label_visible=true) }}
         {{ macros.render_field(login_user_form.submit) }}
     </form>
+    <div class="text-center">
+        <p>Forgot your password? <a href="/reset">reset it!</a></p>
+        <p>Not registered yet? <a href="/register">Join us</a></p>
+        <p>You didn't receive the confirmation email? <a href="/confirm">Send it again</a></p>
+    </div>
 </div>
-{% include "security/_menu.html" %}
 {% endblock %}

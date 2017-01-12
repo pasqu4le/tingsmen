@@ -1,4 +1,4 @@
-from app import app
+from app import app, security
 from flask import g, render_template, abort, redirect, url_for, request, get_template_attribute
 from flask_security import current_user
 from flask_admin.contrib import sqla
@@ -156,6 +156,17 @@ class ModelView(sqla.ModelView):
             else:
                 # login
                 return redirect(url_for('security.login', next=request.url))
+
+
+# ---------------------------------------------- SECURITY CONTECT PROCESSORS
+
+@security.register_context_processor
+def security_register_processor():
+    limit = int(Globals.query.filter_by(key='user_limit').first().value)
+    available = False
+    if limit == 0 or User.query.count() < limit:
+        available = True
+    return {'register_available': available}
 
 
 # ---------------------------------------------- ERROR PAGES

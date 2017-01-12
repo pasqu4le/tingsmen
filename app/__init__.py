@@ -6,6 +6,7 @@ from flask_admin import Admin
 from flask_migrate import Migrate
 from flask_gravatar import Gravatar
 from flask_misaka import Misaka
+from flask_mail import Mail
 import flask_sijax
 
 app = Flask(__name__)
@@ -18,6 +19,17 @@ app.config['SIJAX_JSON_URI'] = 'app/static/js/sijax/json2.js'
 app.config['SECURITY_USER_IDENTITY_ATTRIBUTES'] = ('username', 'email')
 app.config['SECURITY_PASSWORD_HASH'] = 'sha512_crypt'
 app.config['SECURITY_PASSWORD_SALT'] = os.environ['SECRET_SALT']
+app.config['SECURITY_CONFIRMABLE'] = True
+app.config['SECURITY_REGISTERABLE'] = True
+app.config['SECURITY_RECOVERABLE'] = True
+app.config['SECURITY_CHANGEABLE'] = True
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USERNAME'] = 'tingsmen@gmail.com'
+app.config['MAIL_PASSWORD'] = os.environ['MAIL_PASSWORD']
+app.config['MAIL_USE_TLS'] = True
+# Mail creation
+mail = Mail(app)
 # use misaka for markdown
 Misaka(app)
 # use sijax for ajax requests
@@ -33,16 +45,23 @@ from app import database, forms
 
 # Security setup
 user_datastore = SQLAlchemyUserDatastore(db, database.User, database.Role)
-security = Security(app, user_datastore, login_form=forms.CustomLoginForm)
+sec_options = {
+    'login_form': forms.CustomLoginForm,
+    'confirm_register_form': forms.CustomRegisterForm,
+    'forgot_password_form': forms.CustomForgotPasswordForm,
+    'send_confirmation_form': forms.CustomSendConfirmationForm
+}
+security = Security(app, user_datastore, **sec_options)
 
 # imported after app, db and user_datastore creation because of dependencies
 from app import views
 
 # Admin setup
-admin = Admin(app, name='tingmen', template_mode='bootstrap3')
+admin = Admin(app, name='Tingsmen', template_mode='bootstrap3')
+admin.add_view(views.ModelView(database.Globals, db.session))
+admin.add_view(views.ModelView(database.MailingList, db.session))
 admin.add_view(views.ModelView(database.User, db.session))
 admin.add_view(views.ModelView(database.Role, db.session))
-admin.add_view(views.ModelView(database.MailingList, db.session))
 admin.add_view(views.ModelView(database.Post, db.session))
 admin.add_view(views.ModelView(database.Topic, db.session))
 

@@ -10,6 +10,16 @@ class MailingList(db.Model):
     def __repr__(self):
         return self.name
 
+
+class Globals(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    key = db.Column(db.String(30), unique=True)
+    value = db.Column(db.String(200))
+
+    def __repr__(self):
+        return self.key
+
+
 roles_users = db.Table('roles_users',
                        db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
                        db.Column('role_id', db.Integer(), db.ForeignKey('role.id')))
