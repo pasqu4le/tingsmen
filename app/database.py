@@ -2,26 +2,13 @@ from app import db
 from flask_security import UserMixin, RoleMixin
 
 
-email_mailing_list = db.Table('email_mailing_list',
-                              db.Column('mailing_list_id', db.Integer(), db.ForeignKey('mailing_list.id')),
-                              db.Column('email_id', db.Integer, db.ForeignKey('email.id')))
-
-
 class MailingList(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(80), unique=True)
-    emails = db.relationship('Email', secondary=email_mailing_list, backref=db.backref('mailing_lists', lazy='dynamic'))
+    url = db.Column(db.String(50), unique=True)
 
     def __repr__(self):
         return self.name
-
-
-class Email(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    value = db.Column(db.String(120), unique=True)
-
-    def __repr__(self):
-        return self.value
 
 roles_users = db.Table('roles_users',
                        db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),

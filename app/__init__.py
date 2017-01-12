@@ -42,7 +42,6 @@ from app import views
 admin = Admin(app, name='tingmen', template_mode='bootstrap3')
 admin.add_view(views.ModelView(database.User, db.session))
 admin.add_view(views.ModelView(database.Role, db.session))
-admin.add_view(views.ModelView(database.Email, db.session))
 admin.add_view(views.ModelView(database.MailingList, db.session))
 admin.add_view(views.ModelView(database.Post, db.session))
 admin.add_view(views.ModelView(database.Topic, db.session))

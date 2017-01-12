@@ -43,6 +43,8 @@ def topic(topic_name):
         return g.sijax.process_request()
     # non-ajax handling:
     main_topic = Topic.query.filter_by(name=topic_name).first()
+    if not main_topic:
+        abort(404)
     posts = Post.get_more(group='topic', name=topic_name)
     options = {
         'title': '#' + main_topic.name,
@@ -71,6 +73,8 @@ def user_page(username, subpage):
         return g.sijax.process_request()
     # non-ajax handling:
     main_user = User.query.filter_by(username=username).first()
+    if not main_user:
+        abort(404)
     posts = []
     group = 'user'
     if subpage == 'post':
@@ -104,6 +108,8 @@ def post(post_id):
         return g.sijax.process_request()
     # non-ajax handling:
     main_post = Post.query.filter_by(id=post_id).first()
+    if not main_post:
+        abort(404)
     # oldest parent:
     old_parent = None
     if main_post.parent:
@@ -125,7 +131,10 @@ def post(post_id):
 
 @app.route('/subscribe/<mailing_list>/', methods=('GET', 'POST'))
 def subscribe(mailing_list):
-    return render_template('subscribe.html', title='Subscribe', name=mailing_list)
+    ml = MailingList.query.filter_by(name=mailing_list).first()
+    if not ml:
+        abort(404)
+    return redirect(ml.url)
 
 
 # Custom admin model view class
