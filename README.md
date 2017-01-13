@@ -1,7 +1,7 @@
-# tingmen
+# Tingsmen
 
-Tingmen is a simple social network based on the vote of it's users.
+Tingsmen is a simple community-based social network.
 
 It is currently in an early phase of development.
 
-Right now the project is hosted on heroku: [tingmen.herokuapp.com](https://tingmen.herokuapp.com/)
+Right now the project is hosted on heroku: [tingsmen.herokuapp.com](https://tingsmen.herokuapp.com/)

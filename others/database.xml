@@ -41,7 +41,7 @@
 		<type label="Inet CIDR Addr" length="0" sql="CIDR" quote="'"/>
 		<type label="Geometry" length="0" sql="GEOMETRY" quote="'"/>
 	</group>
-</datatypes><table x="54" y="14" name="MailingList">
+</datatypes><table x="54" y="5" name="MailingList">
 <row name="id" null="1" autoincrement="1">
 <datatype>INTEGER</datatype>
 <default>NULL</default></row>
@@ -110,10 +110,6 @@
 <row name="content" null="1" autoincrement="0">
 <datatype>VARCHAR(1000)</datatype>
 <default>NULL</default></row>
-<row name="user_id" null="1" autoincrement="0">
-<datatype>INTEGER</datatype>
-<default>NULL</default><relation table="User" row="id" />
-</row>
 <row name="status_id" null="1" autoincrement="0">
 <datatype>INTEGER</datatype>
 <default>NULL</default><relation table="LawStatus" row="id" />
@@ -141,6 +137,9 @@
 <datatype>INTEGER</datatype>
 <default>NULL</default><relation table="Topic" row="id" />
 </row>
+<row name="date" null="1" autoincrement="0">
+<datatype>DATE</datatype>
+<default>NULL</default></row>
 <key type="PRIMARY" name="">
 <part>id</part>
 </key>
@@ -173,7 +172,7 @@
 <part>post_id</part>
 </key>
 </table>
-<table x="1203" y="653" name="Topic">
+<table x="1205" y="631" name="Topic">
 <row name="id" null="1" autoincrement="1">
 <datatype>INTEGER</datatype>
 <default>NULL</default></row>
@@ -187,12 +186,15 @@
 <part>id</part>
 </key>
 </table>
-<table x="268" y="630" name="LawStatus">
+<table x="306" y="604" name="LawStatus">
 <row name="id" null="1" autoincrement="1">
 <datatype>INTEGER</datatype>
 <default>NULL</default></row>
 <row name="name" null="1" autoincrement="0">
 <datatype>VARCHAR(80)</datatype>
+<default>NULL</default></row>
+<row name="description" null="1" autoincrement="0">
+<datatype>VARCHAR(200)</datatype>
 <default>NULL</default></row>
 <key type="PRIMARY" name="">
 <part>id</part>
@@ -282,7 +284,7 @@
 <part>proposal_id</part>
 </key>
 </table>
-<table x="57" y="209" name="Globals">
+<table x="54" y="205" name="Globals">
 <row name="id" null="1" autoincrement="1">
 <datatype>INTEGER</datatype>
 <default>NULL</default></row>

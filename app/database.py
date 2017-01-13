@@ -121,3 +121,59 @@ class Topic(db.Model):
 
     def __repr__(self):
         return "Topic: #" + self.name
+
+
+proposal_upvote = db.Table('proposal_upvote',
+                           db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
+                           db.Column('proposal_id', db.Integer, db.ForeignKey('proposal.id')))
+
+proposal_downvote = db.Table('proposal_downvote',
+                             db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
+                             db.Column('proposal_id', db.Integer, db.ForeignKey('proposal.id')))
+
+
+class Proposal(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    description = db.Column(db.String(2000))
+    date = db.Column(db.DateTime())
+    poster_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    poster = db.relationship("User", backref=db.backref('proposals', lazy='dynamic'))
+    topic_id = db.Column(db.Integer, db.ForeignKey('topic.id'))
+    topic = db.relationship("Topic")
+    upvotes = db.relationship('User', secondary=proposal_upvote, backref=db.backref('upvoted_prop', lazy='dynamic'))
+    downvotes = db.relationship('User', secondary=proposal_downvote, backref=db.backref('downvoted_prop', lazy='dynamic'))
+
+    def __repr__(self):
+        return "Proposal number: " + str(self.id)
+
+
+law_proposal = db.Table('law_proposal',
+                        db.Column('law_id', db.Integer(), db.ForeignKey('law.id')),
+                        db.Column('proposal_id', db.Integer, db.ForeignKey('proposal.id')))
+
+
+class Law(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    date = db.Column(db.DateTime())
+    content = db.Column(db.String(1000))
+    topic_id = db.Column(db.Integer, db.ForeignKey('topic.id'))
+    topic = db.relationship("Topic")
+    proposals = db.relationship('Proposal', secondary=law_proposal, backref=db.backref('laws', lazy='dynamic'))
+
+    def __repr__(self):
+        return "Law number: " + str(self.id)
+
+
+law_law_status = db.Table('law_law_status',
+                          db.Column('law_id', db.Integer(), db.ForeignKey('law.id')),
+                          db.Column('law_status_id', db.Integer, db.ForeignKey('law_status.id')))
+
+
+class LawStatus(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(80))
+    description = db.Column(db.String(200))
+    laws = db.relationship('Law', secondary=law_law_status, backref=db.backref('status', lazy='dynamic'))
+
+    def __repr__(self):
+        return "Law status: " + self.name
