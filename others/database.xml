@@ -114,6 +114,10 @@
 <datatype>INTEGER</datatype>
 <default>NULL</default><relation table="LawStatus" row="id" />
 </row>
+<row name="group_id" null="1" autoincrement="0">
+<datatype>INTEGER</datatype>
+<default>NULL</default><relation table="LawGroup" row="id" />
+</row>
 <row name="topic_id" null="1" autoincrement="0">
 <datatype>INTEGER</datatype>
 <default>NULL</default><relation table="Topic" row="id" />
@@ -144,7 +148,7 @@
 <part>id</part>
 </key>
 </table>
-<table x="702" y="542" name="LawProposal">
+<table x="705" y="504" name="LawAdd">
 <row name="law_id" null="1" autoincrement="0">
 <datatype>INTEGER</datatype>
 <default>NULL</default><relation table="Law" row="id" />
@@ -172,7 +176,7 @@
 <part>post_id</part>
 </key>
 </table>
-<table x="1205" y="631" name="Topic">
+<table x="1204" y="652" name="Topic">
 <row name="id" null="1" autoincrement="1">
 <datatype>INTEGER</datatype>
 <default>NULL</default></row>
@@ -186,7 +190,7 @@
 <part>id</part>
 </key>
 </table>
-<table x="306" y="604" name="LawStatus">
+<table x="305" y="505" name="LawStatus">
 <row name="id" null="1" autoincrement="1">
 <datatype>INTEGER</datatype>
 <default>NULL</default></row>
@@ -292,6 +296,34 @@
 <datatype>VARCHAR(30)</datatype>
 <default>NULL</default></row>
 <row name="value" null="1" autoincrement="0">
+<datatype>VARCHAR(200)</datatype>
+<default>NULL</default></row>
+<key type="PRIMARY" name="">
+<part>id</part>
+</key>
+</table>
+<table x="704" y="583" name="LawRemove">
+<row name="law_id" null="1" autoincrement="0">
+<datatype>INTEGER</datatype>
+<default>NULL</default><relation table="Law" row="id" />
+</row>
+<row name="proposal_id" null="1" autoincrement="0">
+<datatype>INTEGER</datatype>
+<default>NULL</default><relation table="Proposal" row="id" />
+</row>
+<key type="PRIMARY" name="">
+<part>law_id</part>
+<part>proposal_id</part>
+</key>
+</table>
+<table x="305" y="606" name="LawGroup">
+<row name="id" null="1" autoincrement="1">
+<datatype>INTEGER</datatype>
+<default>NULL</default></row>
+<row name="name" null="1" autoincrement="0">
+<datatype>VARCHAR(80)</datatype>
+<default>NULL</default></row>
+<row name="description" null="1" autoincrement="0">
 <datatype>VARCHAR(200)</datatype>
 <default>NULL</default></row>
 <key type="PRIMARY" name="">

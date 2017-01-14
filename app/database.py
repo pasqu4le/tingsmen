@@ -19,7 +19,6 @@ class Globals(db.Model):
     def __repr__(self):
         return self.key
 
-
 roles_users = db.Table('roles_users',
                        db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
                        db.Column('role_id', db.Integer(), db.ForeignKey('role.id')))
@@ -122,7 +121,6 @@ class Topic(db.Model):
     def __repr__(self):
         return "Topic: #" + self.name
 
-
 proposal_upvote = db.Table('proposal_upvote',
                            db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
                            db.Column('proposal_id', db.Integer, db.ForeignKey('proposal.id')))
@@ -146,10 +144,13 @@ class Proposal(db.Model):
     def __repr__(self):
         return "Proposal number: " + str(self.id)
 
+law_add = db.Table('law_add',
+                   db.Column('law_id', db.Integer(), db.ForeignKey('law.id')),
+                   db.Column('proposal_id', db.Integer, db.ForeignKey('proposal.id')))
 
-law_proposal = db.Table('law_proposal',
-                        db.Column('law_id', db.Integer(), db.ForeignKey('law.id')),
-                        db.Column('proposal_id', db.Integer, db.ForeignKey('proposal.id')))
+law_remove = db.Table('law_remove',
+                      db.Column('law_id', db.Integer(), db.ForeignKey('law.id')),
+                      db.Column('proposal_id', db.Integer, db.ForeignKey('proposal.id')))
 
 
 class Law(db.Model):
@@ -158,11 +159,11 @@ class Law(db.Model):
     content = db.Column(db.String(1000))
     topic_id = db.Column(db.Integer, db.ForeignKey('topic.id'))
     topic = db.relationship("Topic")
-    proposals = db.relationship('Proposal', secondary=law_proposal, backref=db.backref('laws', lazy='dynamic'))
+    add_by = db.relationship('Proposal', secondary=law_add, backref=db.backref('add_laws', lazy='dynamic'))
+    remove_by = db.relationship('Proposal', secondary=law_remove, backref=db.backref('remove_laws', lazy='dynamic'))
 
     def __repr__(self):
         return "Law number: " + str(self.id)
-
 
 law_law_status = db.Table('law_law_status',
                           db.Column('law_id', db.Integer(), db.ForeignKey('law.id')),
@@ -177,3 +178,17 @@ class LawStatus(db.Model):
 
     def __repr__(self):
         return "Law status: " + self.name
+
+law_law_group = db.Table('law_law_group',
+                         db.Column('law_id', db.Integer(), db.ForeignKey('law.id')),
+                         db.Column('law_group_id', db.Integer, db.ForeignKey('law_group.id')))
+
+
+class LawGroup(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(80))
+    description = db.Column(db.String(200))
+    laws = db.relationship('Law', secondary=law_law_group, backref=db.backref('group', lazy='dynamic'))
+
+    def __repr__(self):
+        return "Law group: " + self.name
