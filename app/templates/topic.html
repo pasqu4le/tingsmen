@@ -11,7 +11,7 @@
             <p>{{ main_topic.description }}</p>
         </div>
     {% endif %}
-    {{ macros.render_post_group(posts, current_user, submit_post_form, new_post=True, load_more=True, posts_group='topic', posts_name=main_topic.name) }}
+    {{ macros.render_post_group(posts, current_user, submit_post_form, new_post=True, load_more=True, posts_group='topic', posts_name=main_topic.name, topic=main_topic) }}
 {% endblock %}
 
 {% block side_column %}

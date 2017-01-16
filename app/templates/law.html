@@ -1,0 +1,15 @@
+{% extends "columned.html" %}
+{% import "macros.html" as macros %}
+
+{% block head_custom %}
+    {{ macros.sjiax_scripts(form_init_js) }}
+{% endblock %}
+
+{% block central_column %}
+    {{ macros.render_law(law, current_user, comment_here=True) }}
+    {{ macros.render_post_group(posts, current_user, submit_post_form, new_post=False, load_more=True, posts_group='topic', posts_name=law.topic.name) }}
+{% endblock %}
+
+{% block side_column %}
+
+{% endblock %}

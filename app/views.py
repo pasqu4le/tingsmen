@@ -27,7 +27,7 @@ def home():
         'current_user': current_user,
         'posts': posts,
         'topics': Topic.query.all(),
-        'submit_post_form': forms.PostForm(next_url=request.url),
+        'submit_post_form': forms.PostForm(),
         'form_init_js': form_init_js
     }
     return render_template("home.html", **options)
@@ -52,7 +52,7 @@ def topic(topic_name):
         'main_topic': main_topic,
         'posts': posts,
         'topics': Topic.query.all(),
-        'submit_post_form': forms.PostForm(next_url=request.url),
+        'submit_post_form': forms.PostForm(),
         'form_init_js': form_init_js
     }
     return render_template("topic.html", **options)
@@ -93,7 +93,7 @@ def user_page(username, subpage):
         'posts_group': group,
         'current_page': subpage,
         'user_pages': ['post', 'upvotes', 'downvotes'],
-        'submit_post_form': forms.PostForm(next_url=request.url),
+        'submit_post_form': forms.PostForm(),
         'form_init_js': form_init_js
     }
     return render_template("user.html", **options)
@@ -123,10 +123,85 @@ def post(post_id):
         'old_parent': old_parent,
         'children': main_post.get_children(),
         'topics': Topic.query.all(),
-        'submit_post_form': forms.PostForm(next_url=request.url),
+        'submit_post_form': forms.PostForm(),
         'form_init_js': form_init_js
     }
     return render_template("post.html", **options)
+
+
+@app.route('/law/<law_id>/', methods=('GET', 'POST'))
+def view_law(law_id):
+    # ajax request handling
+    form_init_js = g.sijax.register_upload_callback('post_form', submit_post)
+    if g.sijax.is_sijax_request:
+        g.sijax.register_callback('load_more_posts', load_more_posts)
+        g.sijax.register_callback('vote_post', vote_post)
+        return g.sijax.process_request()
+    # non-ajax handling:
+    law = Law.query.filter_by(id=law_id).first()
+    if not law:
+        abort(404)
+    options = {
+        'title': 'Law',
+        'current_user': current_user,
+        'law': law,
+        'posts': Post.get_more(group='topic', name=law.topic.name),
+        'submit_post_form': forms.PostForm(),
+        'form_init_js': form_init_js
+    }
+    return render_template("law.html", **options)
+
+
+@app.route('/laws/group/<group_name>/', methods=('GET', 'POST'))
+def law_group(group_name):
+    return redirect("/laws/group/" + group_name + "/approved/")
+
+
+@app.route('/laws/group/<group_name>/<status_name>/', methods=('GET', 'POST'))
+def law_group_status(group_name, status_name):
+    # ajax request handling
+    if g.sijax.is_sijax_request:
+        g.sijax.register_callback('load_more_laws', load_more_laws)
+        return g.sijax.process_request()
+    # non-ajax handling:
+    group = LawGroup.query.filter_by(name=group_name).first()
+    status = LawStatus.query.filter_by(name=status_name).first()
+    if not (group and status):
+        abort(404)
+    options = {
+        'title': ' '.join([group_name, 'laws -', status_name]),
+        'current_user': current_user,
+        'group': group,
+        'laws': Law.get_more(group_name=group_name, status_name=status_name),
+        'status': status,
+        'statuses': LawStatus.query.all()
+    }
+    return render_template("law_group.html", **options)
+
+
+@app.route('/laws/', methods=('GET', 'POST'))
+def all_laws():
+    return redirect("/laws/status/approved/")
+
+
+@app.route('/laws/status/<status_name>/', methods=('GET', 'POST'))
+def law_status(status_name):
+    # ajax request handling
+    if g.sijax.is_sijax_request:
+        g.sijax.register_callback('load_more_laws', load_more_laws)
+        return g.sijax.process_request()
+    # non-ajax handling:
+    status = LawStatus.query.filter_by(name=status_name).first()
+    if not status:
+        abort(404)
+    options = {
+        'title': ' '.join([status_name, 'laws']),
+        'current_user': current_user,
+        'status': status,
+        'laws': Law.get_more(status_name=status_name),
+        'statuses': LawStatus.query.all()
+    }
+    return render_template("law_status.html", **options)
 
 
 @app.route('/subscribe/<mailing_list>/', methods=('GET', 'POST'))
@@ -246,3 +321,15 @@ def submit_post(obj_response, files, form_values):
         form.reset()
     render_post_form = get_template_attribute('macros.html', 'render_post_form')
     obj_response.html('#post_form_container', render_post_form(form, current_user).unescape())
+
+
+def load_more_laws(obj_response, group_name, status_name, older_than):
+    laws = Law.get_more(group_name=group_name, status_name=status_name, older_than=older_than)
+    render_law = get_template_attribute('macros.html', 'render_law')
+    more_laws_panel = get_template_attribute('macros.html', 'more_laws_panel')
+    if laws:
+        for law in laws:
+            obj_response.html_append('#laws-container', render_law(law, current_user).unescape())
+        obj_response.html('#load_laws_container', more_laws_panel(group_name, status_name, laws[-1].date).unescape())
+    else:
+        obj_response.html('#load_laws_container', more_laws_panel(group_name, status_name, None).unescape())
