@@ -100,7 +100,7 @@ def user_page(username, subpage):
 
 
 @app.route('/post/<post_id>/', methods=('GET', 'POST'))
-def post(post_id):
+def view_post(post_id):
     # ajax request handling
     form_init_js = g.sijax.register_upload_callback('post_form', submit_post)
     if g.sijax.is_sijax_request:
@@ -258,24 +258,24 @@ def permission_denied(error):
 
 # ---------------------------------------------- SIJAX FUNCTIONS
 def vote_post(obj_response, post_id, up):
-    pst = Post.query.filter_by(id=post_id).first()
+    post = Post.query.filter_by(id=post_id).first()
     if up:
-        if current_user in pst.upvotes:
-            pst.upvotes.remove(current_user)
+        if current_user in post.upvotes:
+            post.upvotes.remove(current_user)
         else:
-            if current_user in pst.downvotes:
-                pst.downvotes.remove(current_user)
-            pst.upvotes.append(current_user)
+            if current_user in post.downvotes:
+                post.downvotes.remove(current_user)
+            post.upvotes.append(current_user)
     else:
-        if current_user in pst.downvotes:
-            pst.downvotes.remove(current_user)
+        if current_user in post.downvotes:
+            post.downvotes.remove(current_user)
         else:
-            if current_user in pst.upvotes:
-                pst.upvotes.remove(current_user)
-            pst.downvotes.append(current_user)
+            if current_user in post.upvotes:
+                post.upvotes.remove(current_user)
+            post.downvotes.append(current_user)
     db.session.commit()
-    obj_response.html('#post_vote_' + post_id, str(pst.points()))
-    obj_response.attr('#post_vote_' + post_id, 'class', pst.current_vote_style(current_user))
+    obj_response.html('#post_vote_' + post_id, str(post.points()))
+    obj_response.attr('#post_vote_' + post_id, 'class', post.current_vote_style(current_user))
 
 
 def load_more_posts(obj_response, group, name, older_than):
@@ -283,8 +283,8 @@ def load_more_posts(obj_response, group, name, older_than):
     render_post = get_template_attribute('macros.html', 'render_post')
     more_posts_panel = get_template_attribute('macros.html', 'more_posts_panel')
     if posts:
-        for pst in posts:
-            obj_response.html_append('#post-container', render_post(pst, current_user).unescape())
+        for post in posts:
+            obj_response.html_append('#post-container', render_post(post, current_user).unescape())
         obj_response.html('#load_more_container', more_posts_panel(group, name, posts[-1].date).unescape())
     else:
         obj_response.html('#load_more_container', more_posts_panel(group, name, None).unescape())
@@ -302,22 +302,22 @@ def submit_post(obj_response, files, form_values):
             'skip_html': True
         }
         content = markdown(form.content.data, **mark_opt)
-        pst = Post(content=content, poster=current_user, poster_id=current_user.id, date=func.now())
+        post = Post(content=content, poster=current_user, poster_id=current_user.id, date=func.now())
         if form.parent_id.data:
-            pst.parent_id = int(form.parent_id.data)
+            post.parent_id = int(form.parent_id.data)
         for tn in form.topics.data.split():
             topic_name = tn.strip('#').lower()
             tpc = Topic.query.filter_by(name=topic_name).first()
             if not tpc:
                 tpc = Topic(name=topic_name, description='')
                 db.session.add(tpc)
-            pst.topics.append(tpc)
-        db.session.add(pst)
+            post.topics.append(tpc)
+        db.session.add(post)
         db.session.commit()
         render_post = get_template_attribute('macros.html', 'render_post')
-        obj_response.html_prepend('#post-container', render_post(pst, current_user).unescape())
+        obj_response.html_prepend('#post-container', render_post(post, current_user).unescape())
         obj_response.script("$('#postModal').modal('hide');")
-        obj_response.script("$('html, body').animate({ scrollTop: $('#post-%s').position().top }, 500);" % str(pst.id))
+        obj_response.script("$('html, body').animate({ scrollTop: $('#post-%s').position().top }, 500);" % str(post.id))
         form.reset()
     render_post_form = get_template_attribute('macros.html', 'render_post_form')
     obj_response.html('#post_form_container', render_post_form(form, current_user).unescape())
