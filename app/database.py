@@ -1,5 +1,7 @@
 from app import db
+from datetime import datetime
 from flask_security import UserMixin, RoleMixin
+from sqlalchemy.ext.hybrid import hybrid_property
 
 
 class MailingList(db.Model):
@@ -141,6 +143,14 @@ class Proposal(db.Model):
     upvotes = db.relationship('User', secondary=proposal_upvote, backref=db.backref('upvoted_prop', lazy='dynamic'))
     downvotes = db.relationship('User', secondary=proposal_downvote, backref=db.backref('downvoted_prop', lazy='dynamic'))
 
+    @hybrid_property
+    def is_open(self):
+        today = datetime.today()
+        if today.weekday() == 0:
+            window = today - self.date
+            return window.days <= 6
+        return False
+
     def __repr__(self):
         return "Proposal number: " + str(self.id)
 
@@ -183,7 +193,7 @@ law_law_status = db.Table('law_law_status',
 
 class LawStatus(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(80))
+    name = db.Column(db.String(80), unique=True)
     description = db.Column(db.String(200))
     laws = db.relationship('Law', secondary=law_law_status, backref=db.backref('status', lazy='dynamic'))
 
@@ -197,7 +207,7 @@ law_law_group = db.Table('law_law_group',
 
 class LawGroup(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(80))
+    name = db.Column(db.String(80), unique=True)
     description = db.Column(db.String(200))
     laws = db.relationship('Law', secondary=law_law_group, backref=db.backref('group', lazy='dynamic'))
 
