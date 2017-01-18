@@ -58,7 +58,7 @@
 {% macro render_proposal(proposal, current_user, comment_here=False) -%}
 <div class="panel panel-primary" id="proposal-{{ proposal.id }}">
     <div class="panel-heading">
-        <p class="panel-title">Proposal n. {{ proposal.id }}, by <a href="/user/{{ proposal.poster.username }}/">@{{ proposal.poster.username }}</a></p>
+        <a href="/proposal/{{ proposal.id }}/" class="panel-title">Proposal n. {{ proposal.id }}</a>, by <a href="/user/{{ proposal.poster.username }}/" class="panel-title">@{{ proposal.poster.username }}</a>
     </div>
     <div class="panel-body">
         <div class="safe-content-text panel-body">{{ proposal.description | safe }}</div>
@@ -73,18 +73,18 @@
         {% endfor %}
     </div>
     <div class="panel-footer">
-        <p>
-            <a href="/proposal/{{ proposal.id }}/" class="text-muted"><span class="glyphicon glyphicon-link"></span> {{ proposal.date.year }}-{{ proposal.date.month }}-{{ proposal.date.day }} {{ proposal.date.hour }}:{{ proposal.date.minute }}</a>
-            <span>  –  </span>
-            <a href="/proposal/{{ proposal.id }}/"><span class="glyphicon glyphicon-comment"></span> discussion</a>
-            <span>  –  </span>
-            {% if comment_here %}
-                <a href="" data-toggle="modal" data-target="#postModal" data-autofill='{"topics":"#{{ proposal.topic.name }}"}'>
-            {% else %}
-                <a href="/proposal/{{ proposal.id }}/">
-            {% endif %}
-                    <span class="glyphicon glyphicon-share-alt"></span> comment</a>
-        </p>
+        <div class="row">
+            <div class="col-md-10 col-xs-8">
+                <a class="btn btn-default disabled">
+                    <span class="badge">{{ proposal.points() }}</span>
+                </a>
+            </div>
+            <div class="col-md-2 col-xs-4">
+                {% if comment_here %}
+                <a class="btn btn-primary btn-block" href="" data-toggle="modal" data-target="#postModal" data-autofill='{"topics":"#{{ proposal.topic.name }}"}'><span class="glyphicon glyphicon-share-alt"></span> reply</a>
+                {% endif %}
+            </div>
+        </div>
     </div>
 </div>
 {%- endmacro %}
@@ -93,7 +93,7 @@
 <div class="panel panel-info" id="law-{{ law.id }}">
     <div class="panel-heading">
         <div class="row">
-            <div class="col-xs-7"><span class="panel-title">Law n. {{ law.id }}</span>
+            <div class="col-xs-7"><a href="/law/{{ law.id }}/" class="panel-title">Law n. {{ law.id }}</a>
                 <small> in {% for group in law.group %}<a href="/laws/group/{{group.name}}/">{{group.name}}</a>{% if not loop.last %}, {% endif %}{% endfor %}</small>
             </div>
             <div class="col-xs-5 text-right">{% for status in law.status %}<a href="/laws/status/{{status.name}}/" class="label label-success">{{status.name}}</a> {% endfor %}</div>
@@ -103,48 +103,16 @@
         <div class="safe-content-text">{{ law.content | safe }}</div>
     </div>
     <div class="panel-footer">
-        <p>
-            <a href="/law/{{ law.id }}/" class="text-muted"><span class="glyphicon glyphicon-link"></span> {{ law.date.year }}-{{ law.date.month }}-{{ law.date.day }} {{ law.date.hour }}:{{ law.date.minute }}</a>
-            <span>  –  </span>
-            <a href="/law/{{ law.id }}/"><span class="glyphicon glyphicon-comment"></span> discussion</a>
-            <span>  –  </span>
-            {% if comment_here %}
-                <a href="" data-toggle="modal" data-target="#postModal" data-autofill='{"topics":"#{{ law.topic.name }}"}'>
-            {% else %}
-                <a href="/law/{{ law.id }}/">
-            {% endif %}
-                    <span class="glyphicon glyphicon-share-alt"></span> comment</a>
-        </p>
-    </div>
-</div>
-{%- endmacro %}
-
-{% macro render_law(law, current_user, comment_here=False) -%}
-<div class="panel panel-info" id="law-{{ law.id }}">
-    <div class="panel-heading">
         <div class="row">
-            <div class="col-xs-7"><span class="panel-title">Law n. {{ law.id }}</span>
-                <small> in {% for group in law.group %}<a href="/laws/group/{{group.name}}/">{{group.name}}</a>{% if not loop.last %}, {% endif %}{% endfor %}</small>
+            <div class="col-md-10 col-xs-8">
+                <a class="btn btn-link" href="/law/{{ law.id }}/"><span class="glyphicon glyphicon-comment"></span> Discussion <span class="badge">{{ law.topic.posts.count() }}</span></a>
             </div>
-            <div class="col-xs-5 text-right">{% for status in law.status %}<a href="/laws/status/{{status.name}}/" class="label label-success">{{status.name}}</a> {% endfor %}</div>
+            <div class="col-md-2 col-xs-4">
+                {% if comment_here %}
+                <a class="btn btn-primary btn-block" href="" data-toggle="modal" data-target="#postModal" data-autofill='{"topics":"#{{ law.topic.name }}"}'><span class="glyphicon glyphicon-share-alt"></span> reply</a>
+                {% endif %}
+            </div>
         </div>
-    </div>
-    <div class="panel-body">
-        <div class="safe-content-text">{{ law.content | safe }}</div>
-    </div>
-    <div class="panel-footer">
-        <p>
-            <a href="/law/{{ law.id }}/" class="text-muted"><span class="glyphicon glyphicon-link"></span> {{ law.date.year }}-{{ law.date.month }}-{{ law.date.day }} {{ law.date.hour }}:{{ law.date.minute }}</a>
-            <span>  –  </span>
-            <a href="/law/{{ law.id }}/"><span class="glyphicon glyphicon-comment"></span> discussion</a>
-            <span>  –  </span>
-            {% if comment_here %}
-                <a href="" data-toggle="modal" data-target="#postModal" data-autofill='{"topics":"#{{ law.topic.name }}"}'>
-            {% else %}
-                <a href="/law/{{ law.id }}/">
-            {% endif %}
-                    <span class="glyphicon glyphicon-share-alt"></span> comment</a>
-        </p>
     </div>
 </div>
 {%- endmacro %}
@@ -199,21 +167,23 @@
             </div>
         </div>
         <div class="col-md-10 col-xs-9">
-            <h4 class="text-info"><a href="/user/{{ post.poster.username }}/"> – @{{ post.poster.username }}</a></h4>
+            <div class="row">
+                <p class="lead text-info col-xs-5"><a href="/user/{{ post.poster.username }}/"> –@{{ post.poster.username }}</a></p>
+                <a href="/post/{{ post.id }}/" class="col-xs-7 text-right text-muted">{{ post.date.year }}-{{ post.date.month }}-{{ post.date.day }} {{ post.date.hour }}:{{ post.date.minute }} <span class="glyphicon glyphicon-link"></span></a>
+            </div>
             <div class="safe-content-text">{{ post.content | safe }}</div>
         </div>
     </div>
     <div class="panel-footer">
-        <p>
-            <a href="/post/{{ post.id }}/" class="text-muted"><span class="glyphicon glyphicon-link"></span> {{ post.date.year }}-{{ post.date.month }}-{{ post.date.day }} {{ post.date.hour }}:{{ post.date.minute }}</a>
-            <span>  –  </span>
-            <a href="/post/{{ post.id }}/"><span class="glyphicon glyphicon-comment"></span> {{ post.children|length }} comments</a>
-            <span>  –  </span>
-            <a href="" data-toggle="modal" data-target="#postModal" data-autofill='{"id":{{ post.id }},"poster":"{{ post.poster.username }}","topics":"{% for topic in post.topics %}#{{topic.name}} {% endfor %}"}'><span class="glyphicon glyphicon-share-alt"></span> reply</a>
-        </p>
-        <p><span class="glyphicon glyphicon-tags"></span> -{% for topic in post.topics %}
-            <a href="/topic/{{ topic.name }}/"> #{{ topic.name }}</a>{% endfor %}
-        </p>
+        <div class="row">
+            <div class="col-md-10 col-xs-8">
+                <span class="glyphicon glyphicon-tags"></span> -{% for topic in post.topics %}
+                <a href="/topic/{{ topic.name }}/"> #{{ topic.name }}</a>{% endfor %}
+            </div>
+            <div class="col-md-2 col-xs-4">
+                <a class="btn btn-primary btn-block" href="" data-toggle="modal" data-target="#postModal" data-autofill='{"id":{{ post.id }},"poster":"{{ post.poster.username }}","topics":"{% for topic in post.topics %}#{{topic.name}} {% endfor %}"}'><span class="glyphicon glyphicon-share-alt"></span> reply</a>
+            </div>
+        </div>
     </div>
 </div>
 {%- endmacro %}

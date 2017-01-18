@@ -151,6 +151,9 @@ class Proposal(db.Model):
             return window.days <= 6
         return False
 
+    def points(self):
+        return len(self.upvotes) - len(self.downvotes)
+
     def __repr__(self):
         return "Proposal number: " + str(self.id)
 
