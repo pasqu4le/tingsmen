@@ -74,10 +74,18 @@
     </div>
     <div class="panel-footer">
         <div class="row">
-            <div class="col-md-10 col-xs-8">
-                <a class="btn btn-default disabled">
-                    <span class="badge">{{ proposal.points() }}</span>
-                </a>
+            <div class="col-md-10 col-xs-8 btn-group">
+                {% if current_user.is_authenticated and proposal.is_open %}
+                    <button class="btn btn-success" href="javascript://" onclick="Sijax.request('vote_proposal', ['{{ proposal.id}}', true]);"><span class="glyphicon glyphicon-arrow-up"></span> Support</button>
+                    <a class="btn btn-default disabled">
+                        <strong class="{{ proposal.current_vote_style(current_user) }}" id="proposal_vote_{{ proposal.id }}">{{ proposal.points() }}</strong>
+                    </a>
+                    <button class="btn btn-danger" href="javascript://" onclick="Sijax.request('vote_proposal', ['{{ proposal.id}}', false]);">Oppose <span class="glyphicon glyphicon-arrow-down"></span></button>
+                {% else %}
+                    <a class="btn btn-default disabled">
+                        <span class="badge">{{ proposal.points() }}</span>
+                    </a>
+                {% endif %}
             </div>
             <div class="col-md-2 col-xs-4">
                 {% if comment_here %}

@@ -154,6 +154,14 @@ class Proposal(db.Model):
     def points(self):
         return len(self.upvotes) - len(self.downvotes)
 
+    def current_vote_style(self, user):
+        # returns the correct bootstrap class for the text displaying if and how a user voted on this post
+        if user in self.upvotes:
+            return 'text-success'
+        if user in self.downvotes:
+            return 'text-danger'
+        return 'text-muted'
+
     def __repr__(self):
         return "Proposal number: " + str(self.id)
 

@@ -136,6 +136,7 @@ def view_proposal(proposal_id):
     if g.sijax.is_sijax_request:
         g.sijax.register_callback('load_more_posts', load_more_posts)
         g.sijax.register_callback('vote_post', vote_post)
+        g.sijax.register_callback('vote_proposal', vote_proposal)
         return g.sijax.process_request()
     # non-ajax handling:
     proposal = Proposal.query.filter_by(id=proposal_id).first()
@@ -282,23 +283,46 @@ def permission_denied(error):
 # ---------------------------------------------- SIJAX FUNCTIONS
 def vote_post(obj_response, post_id, up):
     post = Post.query.filter_by(id=post_id).first()
-    if up:
-        if current_user in post.upvotes:
-            post.upvotes.remove(current_user)
+    if post and current_user.is_authenticated:
+        if up:
+            if current_user in post.upvotes:
+                post.upvotes.remove(current_user)
+            else:
+                if current_user in post.downvotes:
+                    post.downvotes.remove(current_user)
+                post.upvotes.append(current_user)
         else:
             if current_user in post.downvotes:
                 post.downvotes.remove(current_user)
-            post.upvotes.append(current_user)
-    else:
-        if current_user in post.downvotes:
-            post.downvotes.remove(current_user)
+            else:
+                if current_user in post.upvotes:
+                    post.upvotes.remove(current_user)
+                post.downvotes.append(current_user)
+        db.session.commit()
+        obj_response.html('#post_vote_' + post_id, str(post.points()))
+        obj_response.attr('#post_vote_' + post_id, 'class', post.current_vote_style(current_user))
+
+
+def vote_proposal(obj_response, proposal_id, up):
+    proposal = Proposal.query.filter_by(id=proposal_id).first()
+    if proposal and current_user.is_authenticated and proposal.is_open:
+        if up:
+            if current_user in proposal.upvotes:
+                proposal.upvotes.remove(current_user)
+            else:
+                if current_user in proposal.downvotes:
+                    proposal.downvotes.remove(current_user)
+                proposal.upvotes.append(current_user)
         else:
-            if current_user in post.upvotes:
-                post.upvotes.remove(current_user)
-            post.downvotes.append(current_user)
-    db.session.commit()
-    obj_response.html('#post_vote_' + post_id, str(post.points()))
-    obj_response.attr('#post_vote_' + post_id, 'class', post.current_vote_style(current_user))
+            if current_user in proposal.downvotes:
+                proposal.downvotes.remove(current_user)
+            else:
+                if current_user in proposal.upvotes:
+                    proposal.upvotes.remove(current_user)
+                proposal.downvotes.append(current_user)
+        db.session.commit()
+        obj_response.html('#proposal_vote_' + proposal_id, str(proposal.points()))
+        obj_response.attr('#proposal_vote_' + proposal_id, 'class', proposal.current_vote_style(current_user))
 
 
 def load_more_posts(obj_response, group, name, older_than):
