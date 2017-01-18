@@ -129,6 +129,29 @@ def view_post(post_id):
     return render_template("post.html", **options)
 
 
+@app.route('/proposal/<proposal_id>/', methods=('GET', 'POST'))
+def view_proposal(proposal_id):
+    # ajax request handling
+    form_init_js = g.sijax.register_upload_callback('post_form', submit_post)
+    if g.sijax.is_sijax_request:
+        g.sijax.register_callback('load_more_posts', load_more_posts)
+        g.sijax.register_callback('vote_post', vote_post)
+        return g.sijax.process_request()
+    # non-ajax handling:
+    proposal = Proposal.query.filter_by(id=proposal_id).first()
+    if not proposal:
+        abort(404)
+    options = {
+        'title': 'Proposal',
+        'current_user': current_user,
+        'proposal': proposal,
+        'posts': Post.get_more(group='topic', name=proposal.topic.name),
+        'submit_post_form': forms.PostForm(),
+        'form_init_js': form_init_js
+    }
+    return render_template("proposal.html", **options)
+
+
 @app.route('/law/<law_id>/', methods=('GET', 'POST'))
 def view_law(law_id):
     # ajax request handling

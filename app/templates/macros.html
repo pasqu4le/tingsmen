@@ -54,14 +54,79 @@
 
 {# --------------------------- Rendering Macros -------------------------------- #}
 
+
+{% macro render_proposal(proposal, current_user, comment_here=False) -%}
+<div class="panel panel-primary" id="proposal-{{ proposal.id }}">
+    <div class="panel-heading">
+        <p class="panel-title">Proposal n. {{ proposal.id }}, by <a href="/user/{{ proposal.poster.username }}/">@{{ proposal.poster.username }}</a></p>
+    </div>
+    <div class="panel-body">
+        <div class="safe-content-text panel-body">{{ proposal.description | safe }}</div>
+        <div class="divider"></div>
+        <div class="alert alert-success text-center">Laws this proposal will add:</div>
+        {% for law in proposal.add_laws %}
+            {{ render_law(law, current_user) }}
+        {% endfor %}
+        <div class="alert alert-danger text-center">Laws this proposal will remove:</div>
+        {% for law in proposal.remove_laws %}
+            {{ render_law(law, current_user) }}
+        {% endfor %}
+    </div>
+    <div class="panel-footer">
+        <p>
+            <a href="/proposal/{{ proposal.id }}/" class="text-muted"><span class="glyphicon glyphicon-link"></span> {{ proposal.date.year }}-{{ proposal.date.month }}-{{ proposal.date.day }} {{ proposal.date.hour }}:{{ proposal.date.minute }}</a>
+            <span>  –  </span>
+            <a href="/proposal/{{ proposal.id }}/"><span class="glyphicon glyphicon-comment"></span> discussion</a>
+            <span>  –  </span>
+            {% if comment_here %}
+                <a href="" data-toggle="modal" data-target="#postModal" data-autofill='{"topics":"#{{ proposal.topic.name }}"}'>
+            {% else %}
+                <a href="/proposal/{{ proposal.id }}/">
+            {% endif %}
+                    <span class="glyphicon glyphicon-share-alt"></span> comment</a>
+        </p>
+    </div>
+</div>
+{%- endmacro %}
+
 {% macro render_law(law, current_user, comment_here=False) -%}
-<div class="panel panel-default" id="law-{{ law.id }}">
+<div class="panel panel-info" id="law-{{ law.id }}">
     <div class="panel-heading">
         <div class="row">
             <div class="col-xs-7"><span class="panel-title">Law n. {{ law.id }}</span>
                 <small> in {% for group in law.group %}<a href="/laws/group/{{group.name}}/">{{group.name}}</a>{% if not loop.last %}, {% endif %}{% endfor %}</small>
             </div>
-            <div class="col-xs-5 text-right">{% for status in law.status %}<a href="/laws/status/{{status.name}}/">{{status.name}}</a>{% if not loop.last %}, {% endif %}{% endfor %}</div>
+            <div class="col-xs-5 text-right">{% for status in law.status %}<a href="/laws/status/{{status.name}}/" class="label label-success">{{status.name}}</a> {% endfor %}</div>
+        </div>
+    </div>
+    <div class="panel-body">
+        <div class="safe-content-text">{{ law.content | safe }}</div>
+    </div>
+    <div class="panel-footer">
+        <p>
+            <a href="/law/{{ law.id }}/" class="text-muted"><span class="glyphicon glyphicon-link"></span> {{ law.date.year }}-{{ law.date.month }}-{{ law.date.day }} {{ law.date.hour }}:{{ law.date.minute }}</a>
+            <span>  –  </span>
+            <a href="/law/{{ law.id }}/"><span class="glyphicon glyphicon-comment"></span> discussion</a>
+            <span>  –  </span>
+            {% if comment_here %}
+                <a href="" data-toggle="modal" data-target="#postModal" data-autofill='{"topics":"#{{ law.topic.name }}"}'>
+            {% else %}
+                <a href="/law/{{ law.id }}/">
+            {% endif %}
+                    <span class="glyphicon glyphicon-share-alt"></span> comment</a>
+        </p>
+    </div>
+</div>
+{%- endmacro %}
+
+{% macro render_law(law, current_user, comment_here=False) -%}
+<div class="panel panel-info" id="law-{{ law.id }}">
+    <div class="panel-heading">
+        <div class="row">
+            <div class="col-xs-7"><span class="panel-title">Law n. {{ law.id }}</span>
+                <small> in {% for group in law.group %}<a href="/laws/group/{{group.name}}/">{{group.name}}</a>{% if not loop.last %}, {% endif %}{% endfor %}</small>
+            </div>
+            <div class="col-xs-5 text-right">{% for status in law.status %}<a href="/laws/status/{{status.name}}/" class="label label-success">{{status.name}}</a> {% endfor %}</div>
         </div>
     </div>
     <div class="panel-body">
