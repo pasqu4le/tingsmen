@@ -88,6 +88,9 @@
                 {% endif %}
             </div>
             <div class="col-md-2 col-xs-4">
+                {% if current_user.has_role('admin') and not proposal.confirmed() %}
+                    <button class="btn btn-default btn-block" href="javascript://" onclick="Sijax.request('confirm_proposal', ['{{ proposal.id}}']);">Confirm</button>
+                {% endif %}
                 {% if comment_here %}
                 <a class="btn btn-primary btn-block" href="" data-toggle="modal" data-target="#postModal" data-autofill='{"topics":"#{{ proposal.topic.name }}"}'><span class="glyphicon glyphicon-share-alt"></span> reply</a>
                 {% endif %}

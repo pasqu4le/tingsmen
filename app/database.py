@@ -151,11 +151,47 @@ class Proposal(db.Model):
             return window.days <= 6
         return False
 
+    def approved(self):
+        return self.points() > 0
+
+    def rejected(self):
+        return self.points() < 0
+
+    def confirmed(self):
+        proposed = LawStatus.query.filter_by(name='proposed').first()
+        approved = LawStatus.query.filter_by(name='approved').first()
+        removed = LawStatus.query.filter_by(name='removed').first()
+        # check that all statuses do exist
+        if proposed and approved and removed:
+            for law in self.add_laws:
+                if proposed in law.status or approved not in law.status:
+                    return False
+            for law in self.remove_laws:
+                if removed not in law.status:
+                    return False
+        return True
+
+    def confirm(self):
+        # method to set all laws statuses in this proposal correctly
+        proposed = LawStatus.query.filter_by(name='proposed').first()
+        approved = LawStatus.query.filter_by(name='approved').first()
+        removed = LawStatus.query.filter_by(name='removed').first()
+        # check that all statuses do exist
+        if proposed and approved and removed:
+            for law in self.add_laws:
+                if proposed in law.status:
+                    law.status.remove(proposed)
+                if approved not in law.status:
+                    law.status.append(approved)
+            for law in self.remove_laws:
+                law.status = [removed]
+            db.session.commit()
+
     def points(self):
         return len(self.upvotes) - len(self.downvotes)
 
     def current_vote_style(self, user):
-        # returns the correct bootstrap class for the text displaying if and how a user voted on this post
+        # returns the correct bootstrap class for the text displaying if and how a user voted on this proposal
         if user in self.upvotes:
             return 'text-success'
         if user in self.downvotes:

@@ -137,6 +137,7 @@ def view_proposal(proposal_id):
         g.sijax.register_callback('load_more_posts', load_more_posts)
         g.sijax.register_callback('vote_post', vote_post)
         g.sijax.register_callback('vote_proposal', vote_proposal)
+        g.sijax.register_callback('confirm_proposal', confirm_proposal)
         return g.sijax.process_request()
     # non-ajax handling:
     proposal = Proposal.query.filter_by(id=proposal_id).first()
@@ -323,6 +324,15 @@ def vote_proposal(obj_response, proposal_id, up):
         db.session.commit()
         obj_response.html('#proposal_vote_' + proposal_id, str(proposal.points()))
         obj_response.attr('#proposal_vote_' + proposal_id, 'class', proposal.current_vote_style(current_user))
+
+
+def confirm_proposal(obj_response, proposal_id):
+    proposal = Proposal.query.filter_by(id=proposal_id).first()
+    if proposal and current_user.has_role('admin'):
+        proposal.confirm()
+        obj_response.alert('proposal confirmed')
+    else:
+        obj_response.alert('proposal not confirmed')
 
 
 def load_more_posts(obj_response, group, name, older_than):
