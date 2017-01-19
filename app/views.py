@@ -154,6 +154,37 @@ def view_proposal(proposal_id):
     return render_template("proposal.html", **options)
 
 
+@app.route('/proposals/')
+def view_proposals():
+    return redirect("/proposals/open/")
+
+
+@app.route('/proposals/<status>/', methods=('GET', 'POST'))
+def proposal_status(status):
+    # ajax request handling
+    if g.sijax.is_sijax_request:
+        g.sijax.register_callback('vote_proposal', vote_proposal)
+        g.sijax.register_callback('confirm_proposal', confirm_proposal)
+        g.sijax.register_callback('load_more_proposals', load_more_proposals)
+        return g.sijax.process_request()
+    # non-ajax handling:
+    proposals = []
+    description = 'here is one'
+    if status == 'open':
+        proposals = Proposal.get_more(open=True)
+    elif status == 'all':
+        proposals = Proposal.get_more()
+    options = {
+        'title': ' '.join([status, 'proposals']),
+        'current_user': current_user,
+        'statuses': ['all', 'open'],
+        'current_status': status,
+        'proposals': proposals,
+        'description': description
+    }
+    return render_template("proposals.html", **options)
+
+
 @app.route('/law/<law_id>/', methods=('GET', 'POST'))
 def view_law(law_id):
     # ajax request handling
@@ -204,7 +235,7 @@ def law_group_status(group_name, status_name):
     return render_template("law_group.html", **options)
 
 
-@app.route('/laws/', methods=('GET', 'POST'))
+@app.route('/laws/')
 def all_laws():
     return redirect("/laws/status/approved/")
 
@@ -390,3 +421,15 @@ def load_more_laws(obj_response, group_name, status_name, older_than):
         obj_response.html('#load_laws_container', more_laws_panel(group_name, status_name, laws[-1].date).unescape())
     else:
         obj_response.html('#load_laws_container', more_laws_panel(group_name, status_name, None).unescape())
+
+
+def load_more_proposals(obj_response, open, older_than):
+    proposals = Proposal.get_more(open=open, older_than=older_than)
+    render_proposal = get_template_attribute('macros.html', 'render_proposal')
+    more_proposals_panel = get_template_attribute('macros.html', 'more_proposals_panel')
+    if proposals:
+        for proposal in proposals:
+            obj_response.html_append('#proposals-container', render_proposal(proposal, current_user).unescape())
+        obj_response.html('#load_proposals_container', more_proposals_panel(open, proposals[-1].date).unescape())
+    else:
+        obj_response.html('#load_proposals_container', more_proposals_panel(open, None).unescape())

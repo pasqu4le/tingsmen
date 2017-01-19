@@ -1,0 +1,28 @@
+{% extends "columned.html" %}
+{% import "macros.html" as macros %}
+
+{% block head_custom %}
+    {{ macros.sjiax_scripts() }}
+{% endblock %}
+
+{% block central_column %}
+    <div class="jumbotron">
+        <h3>{{ current_status }} proposals{% if description %}: <small>{{ description }}</small>{% endif %}</h3>
+    </div>
+    <div id="proposals-container">
+    {% for proposal in proposals %}
+        {{ macros.render_proposal(proposal, current_user)}}
+    {% endfor %}
+    </div>
+    <div class="panel panel-info" id="load_proposals_container">
+        {% if proposals %}
+            {{ macros.more_proposals_panel(open, proposals[-1].date) }}
+        {% else %}
+            {{ macros.more_proposals_panel(False, None) }}
+        {% endif %}
+    </div>
+{% endblock %}
+
+{% block side_column %}
+    {{ macros.proposal_widget(current_status, statuses) }}
+{% endblock %}

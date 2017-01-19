@@ -2,6 +2,7 @@ from app import db
 from datetime import datetime
 from flask_security import UserMixin, RoleMixin
 from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy import func, select
 
 
 class MailingList(db.Model):
@@ -148,8 +149,18 @@ class Proposal(db.Model):
         today = datetime.today()
         if today.weekday() == 0:
             window = today - self.date
-            return window.days <= 6
+            if window.days <= 6:
+                return True
         return False
+
+    @staticmethod
+    def get_more(num=5, open=False, older_than=None):
+        query = Proposal.query
+        if open:
+            query = query.filter_by(is_open=True)
+        if older_than:
+            query = query.filter(Proposal.date < older_than)
+        return query.order_by(Proposal.date.desc())[:num]
 
     def approved(self):
         return self.points() > 0
