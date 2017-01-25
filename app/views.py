@@ -317,6 +317,8 @@ def submit_proposal():
     form = forms.ProposalForm()
     if current_user.is_authenticated and form.validate_on_submit():
         proposal = Proposal(description=form.description.data, poster=current_user, poster_id=current_user.id, date=func.now())
+        db.session.add(proposal)
+        db.session.flush()
         prop_tpc = Topic.query.filter_by(name="proposal." + str(proposal.id)).first()
         if not prop_tpc:
             prop_tpc = Topic(name="proposal." + str(proposal.id))
@@ -326,6 +328,8 @@ def submit_proposal():
         for content, groups in [(e.data['content'], e.data['groups']) for e in form.new_laws.entries]:
             if content:
                 law = Law(content=content, date=func.now())
+                db.session.add(law)
+                db.session.flush()
                 law_tpc = Topic.query.filter_by(name="law." + str(law.id)).first()
                 if not law_tpc:
                     law_tpc = Topic(name="law." + str(law.id))
