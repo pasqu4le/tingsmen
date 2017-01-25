@@ -2,7 +2,6 @@ from app import db
 from datetime import datetime
 from flask_security import UserMixin, RoleMixin
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy import func, select
 
 
 class MailingList(db.Model):

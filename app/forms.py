@@ -3,7 +3,7 @@ from flask_security.forms import email_required, email_validator, unique_user_em
 from flask_wtf import FlaskForm
 from flask_wtf.csrf import generate_csrf
 from werkzeug.datastructures import MultiDict
-from wtforms import StringField, PasswordField, BooleanField, TextAreaField, HiddenField
+from wtforms import StringField, PasswordField, BooleanField, TextAreaField, HiddenField, FieldList, FormField
 from wtforms.validators import DataRequired, EqualTo
 from wtforms.widgets.core import html_params
 from wtforms.widgets import HTMLString
@@ -35,6 +35,21 @@ class PostForm(FlaskForm):
         # allow to reset this form fields
         blank_data = MultiDict([('csrf', generate_csrf())])
         self.process(blank_data)
+
+
+class LawForm(FlaskForm):
+    content = TextAreaField(render_kw={'placeholder': 'Content', 'rows': '5'})
+    groups = StringField(render_kw={'placeholder': 'Groups'})
+
+
+class ProposalForm(FlaskForm):
+    description = TextAreaField(validators=[DataRequired()], render_kw={'placeholder': 'Description', 'rows': '7'})
+    new_laws = FieldList(FormField(LawForm), min_entries=1)
+    remove_laws = FieldList(StringField(render_kw={'placeholder': 'LawNumber'}), min_entries=1)
+    submit = InlineSubmitField('Submit', render_kw={'placeholder': 'Post', 'class': 'btn btn-lg btn-primary btn-block'})
+
+
+# ---------- custom flask-security forms
 
 
 class CustomLoginForm(flask_security.forms.LoginForm):

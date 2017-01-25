@@ -74,7 +74,7 @@
         <a href="/proposal/{{ proposal.id }}/" class="panel-title">Proposal n. {{ proposal.id }}</a>, by <a href="/user/{{ proposal.poster.username }}/" class="panel-title">@{{ proposal.poster.username }}</a>
     </div>
     <div class="panel-body">
-        <div class="safe-content-text panel-body">{{ proposal.description | safe }}</div>
+        <div class="main-content-text page-header">{{ proposal.description }}</div>
         <div class="divider"></div>
         <div class="alert alert-success text-center">Laws this proposal will add:</div>
         {% for law in proposal.add_laws %}
@@ -131,7 +131,7 @@
         </div>
     </div>
     <div class="panel-body">
-        <div class="safe-content-text">{{ law.content | safe }}</div>
+        <div class="main-content-text">{{ law.content }}</div>
     </div>
     <div class="panel-footer">
         <div class="row">
@@ -202,7 +202,7 @@
                 <p class="lead text-info col-xs-5"><a href="/user/{{ post.poster.username }}/"> –@{{ post.poster.username }}</a></p>
                 <a href="/post/{{ post.id }}/" class="col-xs-7 text-right text-muted">{{ post.date.year }}-{{ post.date.month }}-{{ post.date.day }} {{ post.date.hour }}:{{ post.date.minute }} <span class="glyphicon glyphicon-link"></span></a>
             </div>
-            <div class="safe-content-text">{{ post.content | safe }}</div>
+            <div class="main-content-text">{{ post.content | safe }}</div>
         </div>
     </div>
     <div class="panel-footer">
@@ -344,6 +344,55 @@
     <div class="panel-footer">
         {{ render_field(submit_post_form.topics) }}
         {{ render_field(submit_post_form.submit) }}
+    </div>
+</form>
+{%- endmacro %}
+
+{# --------------------------- Macros for the proposal form -------------------------------- #}
+
+{% macro render_proposal_form(proposal_form, current_user) -%}
+<form class="panel panel-default form" enctype="multipart/form-data" method="POST" name="proposal_form" id="proposal_form">
+    {{ proposal_form.hidden_tag() }}
+    <div class="panel-body">
+        <div class="text-center">
+            <strong class="h2">New Proposal</strong>
+            {{ render_field(proposal_form.description) }}
+        </div>
+
+        <div class="alert alert-success text-center">Laws this proposal will add:</div>
+        <div id="new-law-form-container">
+            {% for law_form in proposal_form.new_laws %}
+                {# single law-form render#}
+                <div class="well">
+                    {{ law_form.hidden_tag() }}
+                    <div class="row">
+                        <strong class="col-xs-4 col-md-2">New law in:</strong>
+                        <div class="col-xs-8 col-md-10">
+                            {{ render_field(law_form.groups) }}
+                        </div>
+                    </div>
+                    {{ render_field(law_form.content) }}
+                </div>
+            {% endfor %}
+        </div>
+        <div class="text-center">
+            <a class="btn btn-success" id="add_law_form">Add another law</a>
+        </div>
+
+        <div class="alert alert-danger text-center">Laws this proposal will remove:</div>
+        <div id="remove-law-container">
+            {% for remove_field in proposal_form.remove_laws %}
+                <div class="well">
+                    {{ render_field(remove_field) }}
+                </div>
+            {% endfor %}
+        </div>
+        <div class="text-center">
+            <a class="btn btn-danger" id="remove_law">Remove another law</a>
+        </div>
+    </div>
+    <div class="panel-footer">
+        {{ render_field(proposal_form.submit) }}
     </div>
 </form>
 {%- endmacro %}

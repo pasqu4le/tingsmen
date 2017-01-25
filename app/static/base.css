@@ -2,10 +2,10 @@
     padding-top: 70px;
 }
 
-.safe-content-text p, .safe-content-text h1, .safe-content-text li{
+.main-content-text p, .main-content-text h1, .main-content-text li{
     color: #777;
 }
 
-.safe-content-text p, .safe-content-text li{
+.main-content-text p, .main-content-text li{
     font-size: 22px
 }
