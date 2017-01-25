@@ -11,17 +11,17 @@
 
 {# --------------------------- Widgets Macros -------------------------------- #}
 
-{% macro topics_widget(topics, main_topic=None) -%}
+{% macro topics_widget(topics, more_topics_number, current_topic=None) -%}
 <div class="panel panel-default">
     <div class="panel-heading">
         <p class="panel-title">Topics</p>
     </div>
-    <ul class="panel-body nav nav-pills nav-stacked">
+    <div class="list-group">
         {% for topic in topics %}
-            <li role="presentation" {% if main_topic and topic == main_topic %}class="active"{% endif %}><a href="/topic/{{ topic.name }}/">#{{ topic.name }}</a></li>
+            <a role="presentation" class="list-group-item{% if current_topic and topic == current_topic %} active{% endif %}" href="/topic/{{ topic.name }}/">#{{ topic.name }}</a>
         {% endfor %}
-    </ul>
-
+        <a class="list-group-item list-group-item-info" href="/topics/">More topics<span class="badge">{{ more_topics_number }}</span></a>
+    </div>
 </div>
 {%- endmacro %}
 

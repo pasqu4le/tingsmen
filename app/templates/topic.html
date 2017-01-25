@@ -6,14 +6,14 @@
 {% endblock %}
 
 {% block central_column %}
-    {% if main_topic.description %}
+    {% if current_topic.description %}
         <div class="jumbotron">
-            <p>{{ main_topic.description }}</p>
+            <p>{{ current_topic.description }}</p>
         </div>
     {% endif %}
-    {{ macros.render_post_group(posts, current_user, submit_post_form, new_post=True, load_more=True, posts_group='topic', posts_name=main_topic.name, topic=main_topic) }}
+    {{ macros.render_post_group(posts, current_user, submit_post_form, new_post=True, load_more=True, posts_group='topic', posts_name=current_topic.name, topic=current_topic) }}
 {% endblock %}
 
 {% block side_column %}
-    {{ macros.topics_widget(topics, main_topic) }}
+    {{ macros.topics_widget(topics, more_topics_number, current_topic=current_topic) }}
 {% endblock %}

@@ -26,7 +26,8 @@ def home():
         'title': 'Home',
         'current_user': current_user,
         'posts': posts,
-        'topics': Topic.query.all(),
+        'topics': Topic.query[:10],
+        'more_topics_number': Topic.query.count(),
         'submit_post_form': forms.PostForm(),
         'form_init_js': form_init_js
     }
@@ -42,20 +43,32 @@ def topic(topic_name):
         g.sijax.register_callback('vote_post', vote_post)
         return g.sijax.process_request()
     # non-ajax handling:
-    main_topic = Topic.query.filter_by(name=topic_name).first()
-    if not main_topic:
+    current_topic = Topic.query.filter_by(name=topic_name).first()
+    if not current_topic:
         abort(404)
     posts = Post.get_more(group='topic', name=topic_name)
     options = {
-        'title': '#' + main_topic.name,
+        'title': '#' + current_topic.name,
         'current_user': current_user,
-        'main_topic': main_topic,
+        'current_topic': current_topic,
         'posts': posts,
-        'topics': Topic.query.all(),
+        'topics': Topic.query[:10],
+        'more_topics_number': Topic.query.count(),
         'submit_post_form': forms.PostForm(),
         'form_init_js': form_init_js
     }
     return render_template("topic.html", **options)
+
+
+@app.route('/topics/')
+def topics():
+    topic_list =  Topic.query.all()
+    options = {
+        'title': 'Topics',
+        'topic_list': topic_list,
+        'current_user': current_user,
+    }
+    return render_template("topics.html", **options)
 
 
 @app.route('/user/<username>/')
@@ -122,7 +135,8 @@ def view_post(post_id):
         'main_post': main_post,
         'old_parent': old_parent,
         'children': main_post.get_children(),
-        'topics': Topic.query.all(),
+        'topics': Topic.query[:10],
+        'more_topics_number': Topic.query.count(),
         'submit_post_form': forms.PostForm(),
         'form_init_js': form_init_js
     }
