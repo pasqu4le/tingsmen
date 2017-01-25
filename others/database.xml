@@ -41,7 +41,7 @@
 		<type label="Inet CIDR Addr" length="0" sql="CIDR" quote="'"/>
 		<type label="Geometry" length="0" sql="GEOMETRY" quote="'"/>
 	</group>
-</datatypes><table x="54" y="14" name="MailingList">
+</datatypes><table x="54" y="5" name="MailingList">
 <row name="id" null="1" autoincrement="1">
 <datatype>INTEGER</datatype>
 <default>NULL</default></row>
@@ -110,13 +110,13 @@
 <row name="content" null="1" autoincrement="0">
 <datatype>VARCHAR(1000)</datatype>
 <default>NULL</default></row>
-<row name="user_id" null="1" autoincrement="0">
-<datatype>INTEGER</datatype>
-<default>NULL</default><relation table="User" row="id" />
-</row>
 <row name="status_id" null="1" autoincrement="0">
 <datatype>INTEGER</datatype>
 <default>NULL</default><relation table="LawStatus" row="id" />
+</row>
+<row name="group_id" null="1" autoincrement="0">
+<datatype>INTEGER</datatype>
+<default>NULL</default><relation table="LawGroup" row="id" />
 </row>
 <row name="topic_id" null="1" autoincrement="0">
 <datatype>INTEGER</datatype>
@@ -141,11 +141,14 @@
 <datatype>INTEGER</datatype>
 <default>NULL</default><relation table="Topic" row="id" />
 </row>
+<row name="date" null="1" autoincrement="0">
+<datatype>DATE</datatype>
+<default>NULL</default></row>
 <key type="PRIMARY" name="">
 <part>id</part>
 </key>
 </table>
-<table x="702" y="542" name="LawProposal">
+<table x="705" y="504" name="LawAdd">
 <row name="law_id" null="1" autoincrement="0">
 <datatype>INTEGER</datatype>
 <default>NULL</default><relation table="Law" row="id" />
@@ -173,7 +176,7 @@
 <part>post_id</part>
 </key>
 </table>
-<table x="1203" y="653" name="Topic">
+<table x="1204" y="652" name="Topic">
 <row name="id" null="1" autoincrement="1">
 <datatype>INTEGER</datatype>
 <default>NULL</default></row>
@@ -187,12 +190,15 @@
 <part>id</part>
 </key>
 </table>
-<table x="268" y="630" name="LawStatus">
+<table x="305" y="505" name="LawStatus">
 <row name="id" null="1" autoincrement="1">
 <datatype>INTEGER</datatype>
 <default>NULL</default></row>
 <row name="name" null="1" autoincrement="0">
 <datatype>VARCHAR(80)</datatype>
+<default>NULL</default></row>
+<row name="description" null="1" autoincrement="0">
+<datatype>VARCHAR(200)</datatype>
 <default>NULL</default></row>
 <key type="PRIMARY" name="">
 <part>id</part>
@@ -282,7 +288,7 @@
 <part>proposal_id</part>
 </key>
 </table>
-<table x="57" y="209" name="Globals">
+<table x="54" y="205" name="Globals">
 <row name="id" null="1" autoincrement="1">
 <datatype>INTEGER</datatype>
 <default>NULL</default></row>
@@ -290,6 +296,34 @@
 <datatype>VARCHAR(30)</datatype>
 <default>NULL</default></row>
 <row name="value" null="1" autoincrement="0">
+<datatype>VARCHAR(200)</datatype>
+<default>NULL</default></row>
+<key type="PRIMARY" name="">
+<part>id</part>
+</key>
+</table>
+<table x="704" y="583" name="LawRemove">
+<row name="law_id" null="1" autoincrement="0">
+<datatype>INTEGER</datatype>
+<default>NULL</default><relation table="Law" row="id" />
+</row>
+<row name="proposal_id" null="1" autoincrement="0">
+<datatype>INTEGER</datatype>
+<default>NULL</default><relation table="Proposal" row="id" />
+</row>
+<key type="PRIMARY" name="">
+<part>law_id</part>
+<part>proposal_id</part>
+</key>
+</table>
+<table x="305" y="606" name="LawGroup">
+<row name="id" null="1" autoincrement="1">
+<datatype>INTEGER</datatype>
+<default>NULL</default></row>
+<row name="name" null="1" autoincrement="0">
+<datatype>VARCHAR(80)</datatype>
+<default>NULL</default></row>
+<row name="description" null="1" autoincrement="0">
 <datatype>VARCHAR(200)</datatype>
 <default>NULL</default></row>
 <key type="PRIMARY" name="">

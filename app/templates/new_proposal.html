@@ -1,0 +1,21 @@
+{% extends "columned.html" %}
+{% import "macros.html" as macros %}
+
+{% block head_custom %}
+    <script type="text/javascript" src="/static/proposal_forms.js"></script>
+{% endblock %}
+
+{% block central_column %}
+    {% if current_user.is_authenticated %}
+        {{ macros.render_proposal_form(proposal_form, current_user) }}
+    {% else %}
+        <div class="jumbotron text-center">
+            <p>Sorry, you can only propose law if you are a registered user</p>
+            <p>Already registered? <a href="/login">Log in</a></p>
+            <p>Not registered yet? <a href="/register">Join us</a></p>
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block side_column %}
+{% endblock %}

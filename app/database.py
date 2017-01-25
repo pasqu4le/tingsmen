@@ -1,5 +1,7 @@
 from app import db
+from datetime import datetime
 from flask_security import UserMixin, RoleMixin
+from sqlalchemy.ext.hybrid import hybrid_property
 
 
 class MailingList(db.Model):
@@ -18,7 +20,6 @@ class Globals(db.Model):
 
     def __repr__(self):
         return self.key
-
 
 roles_users = db.Table('roles_users',
                        db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
@@ -121,3 +122,151 @@ class Topic(db.Model):
 
     def __repr__(self):
         return "Topic: #" + self.name
+
+proposal_upvote = db.Table('proposal_upvote',
+                           db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
+                           db.Column('proposal_id', db.Integer, db.ForeignKey('proposal.id')))
+
+proposal_downvote = db.Table('proposal_downvote',
+                             db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
+                             db.Column('proposal_id', db.Integer, db.ForeignKey('proposal.id')))
+
+
+class Proposal(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    description = db.Column(db.String(2000))
+    date = db.Column(db.DateTime())
+    poster_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    poster = db.relationship("User", backref=db.backref('proposals', lazy='dynamic'))
+    topic_id = db.Column(db.Integer, db.ForeignKey('topic.id'))
+    topic = db.relationship("Topic")
+    upvotes = db.relationship('User', secondary=proposal_upvote, backref=db.backref('upvoted_prop', lazy='dynamic'))
+    downvotes = db.relationship('User', secondary=proposal_downvote, backref=db.backref('downvoted_prop', lazy='dynamic'))
+
+    @hybrid_property
+    def is_open(self):
+        today = datetime.today()
+        if today.weekday() == 0:
+            window = today - self.date
+            if window.days <= 6:
+                return True
+        return False
+
+    @staticmethod
+    def get_more(num=5, open=False, older_than=None):
+        query = Proposal.query
+        if open:
+            query = query.filter_by(is_open=True)
+        if older_than:
+            query = query.filter(Proposal.date < older_than)
+        return query.order_by(Proposal.date.desc())[:num]
+
+    def approved(self):
+        return self.points() > 0
+
+    def rejected(self):
+        return self.points() < 0
+
+    def confirmed(self):
+        proposed = LawStatus.query.filter_by(name='proposed').first()
+        approved = LawStatus.query.filter_by(name='approved').first()
+        removed = LawStatus.query.filter_by(name='removed').first()
+        # check that all statuses do exist
+        if proposed and approved and removed:
+            for law in self.add_laws:
+                if proposed in law.status or approved not in law.status:
+                    return False
+            for law in self.remove_laws:
+                if removed not in law.status:
+                    return False
+        return True
+
+    def confirm(self):
+        # method to set all laws statuses in this proposal correctly
+        proposed = LawStatus.query.filter_by(name='proposed').first()
+        approved = LawStatus.query.filter_by(name='approved').first()
+        removed = LawStatus.query.filter_by(name='removed').first()
+        # check that all statuses do exist
+        if proposed and approved and removed:
+            for law in self.add_laws:
+                if proposed in law.status:
+                    law.status.remove(proposed)
+                if approved not in law.status:
+                    law.status.append(approved)
+            for law in self.remove_laws:
+                law.status = [removed]
+            db.session.commit()
+
+    def points(self):
+        return len(self.upvotes) - len(self.downvotes)
+
+    def current_vote_style(self, user):
+        # returns the correct bootstrap class for the text displaying if and how a user voted on this proposal
+        if user in self.upvotes:
+            return 'text-success'
+        if user in self.downvotes:
+            return 'text-danger'
+        return 'text-muted'
+
+    def __repr__(self):
+        return "Proposal number: " + str(self.id)
+
+law_add = db.Table('law_add',
+                   db.Column('law_id', db.Integer(), db.ForeignKey('law.id')),
+                   db.Column('proposal_id', db.Integer, db.ForeignKey('proposal.id')))
+
+law_remove = db.Table('law_remove',
+                      db.Column('law_id', db.Integer(), db.ForeignKey('law.id')),
+                      db.Column('proposal_id', db.Integer, db.ForeignKey('proposal.id')))
+
+
+class Law(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    date = db.Column(db.DateTime())
+    content = db.Column(db.String(1000))
+    topic_id = db.Column(db.Integer, db.ForeignKey('topic.id'))
+    topic = db.relationship("Topic")
+    add_by = db.relationship('Proposal', secondary=law_add, backref=db.backref('add_laws', lazy='dynamic'))
+    remove_by = db.relationship('Proposal', secondary=law_remove, backref=db.backref('remove_laws', lazy='dynamic'))
+
+    @staticmethod
+    def get_more(num=5, group_name=None, status_name=None, older_than=None):
+        query = Law.query
+        if status_name:
+            query = query.filter(Law.status.any(name=status_name))
+        if group_name:
+            query = query.filter(Law.group.any(name=group_name))
+        if older_than:
+            query = query.filter(Law.date < older_than)
+        return query.order_by(Law.date.desc())[:num]
+
+    def __repr__(self):
+        return "Law number: " + str(self.id)
+
+law_law_status = db.Table('law_law_status',
+                          db.Column('law_id', db.Integer(), db.ForeignKey('law.id')),
+                          db.Column('law_status_id', db.Integer, db.ForeignKey('law_status.id')))
+
+
+class LawStatus(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(80), unique=True)
+    description = db.Column(db.String(200))
+    laws = db.relationship('Law', secondary=law_law_status, backref=db.backref('status', lazy='dynamic'))
+
+    def __repr__(self):
+        return "Law status: " + self.name
+
+law_law_group = db.Table('law_law_group',
+                         db.Column('law_id', db.Integer(), db.ForeignKey('law.id')),
+                         db.Column('law_group_id', db.Integer, db.ForeignKey('law_group.id')))
+
+
+class LawGroup(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(80), unique=True)
+    description = db.Column(db.String(200))
+    laws = db.relationship('Law', secondary=law_law_group, backref=db.backref('group', lazy='dynamic'))
+
+    def __repr__(self):
+        return "Law group: " + self.name

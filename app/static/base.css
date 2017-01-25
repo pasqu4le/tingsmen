@@ -2,15 +2,10 @@
     padding-top: 70px;
 }
 
-.post-content-text p, .post-content-text h1, .post-content-text li{
+.main-content-text p, .main-content-text h1, .main-content-text li{
     color: #777;
 }
 
-.post-content-text p, .post-content-text li{
+.main-content-text p, .main-content-text li{
     font-size: 22px
-}
-iframe {
-    display:block;
-    width:100%;
-    height: 100%;
 }

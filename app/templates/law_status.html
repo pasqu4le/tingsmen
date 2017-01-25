@@ -1,0 +1,28 @@
+{% extends "columned.html" %}
+{% import "macros.html" as macros %}
+
+{% block head_custom %}
+    {{ macros.sjiax_scripts() }}
+{% endblock %}
+
+{% block central_column %}
+    <div class="jumbotron">
+        <h4>{{ status.name }}{% if status.description %}: <small>{{ status.description }}</small>{% endif %}</h4>
+    </div>
+    <div id="laws-container">
+    {% for law in laws %}
+        {{ macros.render_law(law, current_user)}}
+    {% endfor %}
+    </div>
+    <div class="panel panel-info" id="load_laws_container">
+        {% if laws %}
+            {{ macros.more_laws_panel(None, status.name, laws[-1].date) }}
+        {% else %}
+            {{ macros.more_laws_panel(None, status.name, None) }}
+        {% endif %}
+    </div>
+{% endblock %}
+
+{% block side_column %}
+    {{ macros.law_widget(status, statuses) }}
+{% endblock %}
