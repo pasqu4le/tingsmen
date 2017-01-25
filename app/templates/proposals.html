@@ -24,5 +24,5 @@
 {% endblock %}
 
 {% block side_column %}
-    {{ macros.proposal_widget(current_status, statuses) }}
+    {{ macros.proposal_widget(statuses, current_status=current_status) }}
 {% endblock %}

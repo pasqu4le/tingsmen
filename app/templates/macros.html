@@ -39,16 +39,16 @@
 </div>
 {%- endmacro %}
 
-{% macro proposal_widget(current_status, statuses) -%}
-<div class="panel panel-primary">
-    <div class="panel-heading panel-title">
-        <p class="text-center ">Status</p>
+{% macro proposal_widget(statuses, current_status=None) -%}
+<div class="panel panel-default">
+    <div class="panel-heading text-center">
+        <p class="panel-title ">Status</p>
     </div>
-    <ul class="panel-body nav nav-pills nav-stacked">
+    <div class="list-group">
         {% for status in statuses %}
-            <li role="presentation" {% if current_status == status %}class="active"{% endif %}><a href="/proposals/{{ status }}/">{{ status }}</a></li>
+            <a role="presentation" class="list-group-item{% if current_status and current_status == status %} active{% endif %}" href="/proposals/{{ status }}/">{{ status }}</a>
         {% endfor %}
-    </ul>
+    </div>
 </div>
 {%- endmacro %}
 

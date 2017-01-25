@@ -161,6 +161,7 @@ def view_proposal(proposal_id):
         'title': 'Proposal',
         'current_user': current_user,
         'proposal': proposal,
+        'statuses': ['all', 'open'],
         'posts': Post.get_more(group='topic', name=proposal.topic.name),
         'submit_post_form': forms.PostForm(),
         'form_init_js': form_init_js
