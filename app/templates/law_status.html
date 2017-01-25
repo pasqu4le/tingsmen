@@ -7,7 +7,7 @@
 
 {% block central_column %}
     <div class="jumbotron">
-        <h4>{{ status.name }}{% if status.description %}: <small>{{ status.description }}</small>{% endif %}</h4>
+        <h4>{{ current_status.name }}{% if current_status.description %}: <small>{{ current_status.description }}</small>{% endif %}</h4>
     </div>
     <div id="laws-container">
     {% for law in laws %}
@@ -16,13 +16,13 @@
     </div>
     <div class="panel panel-info" id="load_laws_container">
         {% if laws %}
-            {{ macros.more_laws_panel(None, status.name, laws[-1].date) }}
+            {{ macros.more_laws_panel(None, current_status.name, laws[-1].date) }}
         {% else %}
-            {{ macros.more_laws_panel(None, status.name, None) }}
+            {{ macros.more_laws_panel(None, current_status.name, None) }}
         {% endif %}
     </div>
 {% endblock %}
 
 {% block side_column %}
-    {{ macros.law_widget(status, statuses) }}
+    {{ macros.law_widget(statuses, current_status=current_status) }}
 {% endblock %}

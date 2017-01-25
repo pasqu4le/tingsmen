@@ -217,6 +217,7 @@ def view_law(law_id):
         'law': law,
         'posts': Post.get_more(group='topic', name=law.topic.name),
         'submit_post_form': forms.PostForm(),
+        'statuses': LawStatus.query.all(),
         'form_init_js': form_init_js
     }
     return render_template("law.html", **options)
@@ -235,15 +236,15 @@ def law_group_status(group_name, status_name):
         return g.sijax.process_request()
     # non-ajax handling:
     group = LawGroup.query.filter_by(name=group_name).first()
-    status = LawStatus.query.filter_by(name=status_name).first()
-    if not (group and status):
+    current_status = LawStatus.query.filter_by(name=status_name).first()
+    if not (group and current_status):
         abort(404)
     options = {
         'title': ' '.join([group_name, 'laws -', status_name]),
         'current_user': current_user,
         'group': group,
         'laws': Law.get_more(group_name=group_name, status_name=status_name),
-        'status': status,
+        'current_status': current_status,
         'statuses': LawStatus.query.all()
     }
     return render_template("law_group.html", **options)
@@ -261,13 +262,13 @@ def law_status(status_name):
         g.sijax.register_callback('load_more_laws', load_more_laws)
         return g.sijax.process_request()
     # non-ajax handling:
-    status = LawStatus.query.filter_by(name=status_name).first()
-    if not status:
+    current_status = LawStatus.query.filter_by(name=status_name).first()
+    if not current_status:
         abort(404)
     options = {
         'title': ' '.join([status_name, 'laws']),
         'current_user': current_user,
-        'status': status,
+        'current_status': current_status,
         'laws': Law.get_more(status_name=status_name),
         'statuses': LawStatus.query.all()
     }
