@@ -524,7 +524,7 @@ def load_more_laws(obj_response, group_name, status_name, older_than):
     more_laws_panel = get_template_attribute('macros.html', 'more_laws_panel')
     if laws:
         for law in laws:
-            obj_response.html_append('#laws-container', render_law(law, current_user).unescape())
+            obj_response.html_append('#laws-container', render_law(law, current_user, actions_footer=True).unescape())
         obj_response.html('#load_laws_container', more_laws_panel(group_name, status_name, laws[-1].date).unescape())
     else:
         obj_response.html('#load_laws_container', more_laws_panel(group_name, status_name, None).unescape())

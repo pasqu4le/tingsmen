@@ -70,58 +70,68 @@
 
 
 {% macro render_proposal(proposal, current_user, comment_here=False) -%}
-<div class="panel panel-primary" id="proposal-{{ proposal.id }}">
-    <div class="panel-heading">
-        <a href="/proposal/{{ proposal.id }}/" class="panel-title">Proposal n. {{ proposal.id }}</a>, by <a href="/user/{{ proposal.poster.username }}/" class="panel-title">@{{ proposal.poster.username }}</a>
-    </div>
+<div class="panel panel-default" id="proposal-{{ proposal.id }}">
     <div class="panel-body">
-        <div class="main-content-text page-header">{{ proposal.description }}</div>
-        <div class="divider"></div>
-        <div class="alert alert-success text-center">Laws this proposal will add:</div>
-        {% for law in proposal.add_laws %}
-            {{ render_law(law, current_user) }}
-        {% endfor %}
-        <div class="alert alert-danger text-center">Laws this proposal will remove:</div>
-        {% for law in proposal.remove_laws %}
-            {{ render_law(law, current_user) }}
-        {% endfor %}
-    </div>
-    <div class="panel-footer">
         <div class="row">
-            <div class="col-md-10 col-xs-8 btn-group">
-                {% if current_user.is_authenticated and proposal.is_open %}
-                    <button class="btn btn-success" href="javascript://" onclick="Sijax.request('vote_proposal', ['{{ proposal.id}}', true]);"><span class="glyphicon glyphicon-arrow-up"></span> Support</button>
-                    <a class="btn btn-default disabled">
-                        <strong class="{{ proposal.current_vote_style(current_user) }}" id="proposal_vote_{{ proposal.id }}">{{ proposal.points() }}</strong>
-                    </a>
-                    <button class="btn btn-danger" href="javascript://" onclick="Sijax.request('vote_proposal', ['{{ proposal.id}}', false]);">Oppose <span class="glyphicon glyphicon-arrow-down"></span></button>
-                {% else %}
-                    <a class="btn btn-default disabled">
-                        <span class="badge">{{ proposal.points() }}</span>
-                        {% if proposal.approved() %}
-                            <span class="label label-success">Approved</span>
-                        {% elif proposal.rejected() %}
-                            <span class="label label-danger">Rejected</span>
-                        {% else %}
-                            <span class="label label-default">Not voted</span>
-                        {% endif %}
-                    </a>
-                {% endif %}
+            <p class="lead col-xs-7">
+                <a href="/proposal/{{ proposal.id }}/">Proposal n. {{ proposal.id }}</a>, by <a href="/user/{{ proposal.poster.username }}/">@{{ proposal.poster.username }}</a>
+            </p>
+            <a href="/proposal/{{ proposal.id }}/" class="col-xs-5 text-right text-muted">{{ proposal.date.year }}-{{ proposal.date.month }}-{{ proposal.date.day }} {{ proposal.date.hour }}:{{ proposal.date.minute }} <span class="glyphicon glyphicon-link"></span></a>
+        </div>
+        <div class="main-content-text"><p>{{ proposal.description }}</p></div>
+        <hr>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="alert alert-success text-center">Laws this proposal will add:</div>
+                {% for law in proposal.add_laws %}
+                    {{ render_law(law, current_user) }}
+                {% endfor %}
             </div>
-            <div class="col-md-2 col-xs-4">
-                {% if current_user.has_role('admin') and not proposal.confirmed() %}
-                    <button class="btn btn-default btn-block" href="javascript://" onclick="Sijax.request('confirm_proposal', ['{{ proposal.id}}']);">Confirm</button>
-                {% endif %}
-                {% if comment_here %}
-                <a class="btn btn-primary btn-block" href="" data-toggle="modal" data-target="#postModal" data-autofill='{"topics":"#{{ proposal.topic.name }}"}'><span class="glyphicon glyphicon-share-alt"></span> reply</a>
-                {% endif %}
+            <div class="col-md-6">
+                <div class="alert alert-danger text-center">Laws this proposal will remove:</div>
+                {% for law in proposal.remove_laws %}
+                    {{ render_law(law, current_user) }}
+                {% endfor %}
             </div>
+        </div>
+    </div>
+    <div class="panel-footer btn-group btn-group-justified">
+        <div class="btn-group">
+            {% if current_user.is_authenticated and proposal.is_open %}
+                <button class="btn btn-success" href="javascript://" onclick="Sijax.request('vote_proposal', ['{{ proposal.id}}', true]);"><span class="glyphicon glyphicon-arrow-up"></span> Support</button>
+                <a class="btn btn-link disabled">
+                    <strong class="{{ proposal.current_vote_style(current_user) }}" id="proposal_vote_{{ proposal.id }}">{{ proposal.points() }}</strong>
+                </a>
+                <button class="btn btn-danger" href="javascript://" onclick="Sijax.request('vote_proposal', ['{{ proposal.id}}', false]);">Oppose <span class="glyphicon glyphicon-arrow-down"></span></button>
+            {% else %}
+                <a class="btn btn-link disabled">
+                    <span class="badge">{{ proposal.points() }}</span>
+                    {% if proposal.approved() %}
+                        <span class="label label-success">Approved</span>
+                    {% elif proposal.rejected() %}
+                        <span class="label label-danger">Rejected</span>
+                    {% else %}
+                        <span class="label label-default">Not voted</span>
+                    {% endif %}
+                </a>
+            {% endif %}
+        </div>
+        <div class="btn-group">
+            <a class="btn btn-link" href="/new-proposal/change/{{ proposal.id }}/"><span class="glyphicon glyphicon-pencil"></span> change</a>
+        </div>
+        <div class="btn-group">
+            {% if current_user.has_role('admin') and not proposal.confirmed() %}
+                <button class="btn btn-link" href="javascript://" onclick="Sijax.request('confirm_proposal', ['{{ proposal.id}}']);">Confirm</button>
+            {% endif %}
+            {% if comment_here %}
+            <a class="btn btn-link" href="" data-toggle="modal" data-target="#postModal" data-autofill='{"topics":"#{{ proposal.topic.name }}"}'><span class="glyphicon glyphicon-share-alt"></span> reply</a>
+            {% endif %}
         </div>
     </div>
 </div>
 {%- endmacro %}
 
-{% macro render_law(law, current_user, comment_here=False) -%}
+{% macro render_law(law, current_user, actions_footer=False, comment_here=False) -%}
 <div class="panel panel-info" id="law-{{ law.id }}">
     <div class="panel-heading">
         <div class="row">
@@ -132,20 +142,19 @@
         </div>
     </div>
     <div class="panel-body">
-        <div class="main-content-text">{{ law.content }}</div>
+        <div class="main-content-text"><p>{{ law.content }}</p></div>
     </div>
-    <div class="panel-footer">
-        <div class="row">
-            <div class="col-md-10 col-xs-8">
-                <a class="btn btn-link" href="/law/{{ law.id }}/"><span class="glyphicon glyphicon-comment"></span> Discussion <span class="badge">{{ law.topic.posts.count() }}</span></a>
-            </div>
-            <div class="col-md-2 col-xs-4">
-                {% if comment_here %}
-                <a class="btn btn-primary btn-block" href="" data-toggle="modal" data-target="#postModal" data-autofill='{"topics":"#{{ law.topic.name }}"}'><span class="glyphicon glyphicon-share-alt"></span> reply</a>
-                {% endif %}
-            </div>
-        </div>
+    {% if actions_footer %}
+    <div class="panel-footer btn-group btn-group-justified">
+        <a class="btn btn-link" href="/law/{{ law.id }}/"><span class="glyphicon glyphicon-comment"></span> discussion <span class="badge">{{ law.topic.posts.count() }}</span></a>
+        <a class="btn btn-link" href="/new-proposal/remove/{{ law.id }}/"><span class="glyphicon glyphicon-remove"></span> remove</a>
+        {% if comment_here %}
+        <a class="btn btn-link" href="" data-toggle="modal" data-target="#postModal" data-autofill='{"topics":"#{{ law.topic.name }}"}'><span class="glyphicon glyphicon-share-alt"></span> reply</a>
+        {% else %}
+        <a class="btn btn-link" href="/law/{{ law.id }}/"><span class="glyphicon glyphicon-share-alt"></span> reply</a>
+        {% endif %}
     </div>
+    {% endif %}
 </div>
 {%- endmacro %}
 
@@ -359,37 +368,46 @@
             <strong class="h2">New Proposal</strong>
             {{ render_field(proposal_form.description) }}
         </div>
-
-        <div class="alert alert-success text-center">Laws this proposal will add:</div>
-        <div id="new-law-form-container">
-            {% for law_form in proposal_form.new_laws %}
-                {# single law-form render#}
-                <div class="well">
-                    {{ law_form.hidden_tag() }}
-                    <div class="row">
-                        <strong class="col-xs-4 col-md-2">New law in:</strong>
-                        <div class="col-xs-8 col-md-10">
-                            {{ render_field(law_form.groups) }}
+        <hr>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="alert alert-success text-center">Laws this proposal will add:</div>
+                <div id="new-law-form-container">
+                    {% for law_form in proposal_form.new_laws %}
+                        {# single law-form render #}
+                        <div class="well">
+                            {{ law_form.hidden_tag() }}
+                            <div class="row">
+                                <strong class="col-xs-4">Law in:</strong>
+                                <div class="col-xs-8">
+                                    {{ render_field(law_form.groups) }}
+                                </div>
+                            </div>
+                            {{ render_field(law_form.content) }}
                         </div>
+                    {% endfor %}
+                </div>
+                <div class="text-center">
+                    <a class="btn btn-success" id="add_law_form">Add another law</a>
+                </div>
+                <p></p>
+            </div>
+            <div class="col-md-6">
+                <div class="alert alert-danger text-center">Laws this proposal will remove:</div>
+                    <div id="remove-law-container">
+                        {% for remove_field in proposal_form.remove_laws %}
+                            <div class="well row">
+                                <strong class="col-xs-3">Law n°</strong>
+                                <div class="col-xs-9">
+                                    {{ render_field(remove_field) }}
+                                </div>
+                            </div>
+                        {% endfor %}
                     </div>
-                    {{ render_field(law_form.content) }}
-                </div>
-            {% endfor %}
-        </div>
-        <div class="text-center">
-            <a class="btn btn-success" id="add_law_form">Add another law</a>
-        </div>
-
-        <div class="alert alert-danger text-center">Laws this proposal will remove:</div>
-        <div id="remove-law-container">
-            {% for remove_field in proposal_form.remove_laws %}
-                <div class="well">
-                    {{ render_field(remove_field) }}
-                </div>
-            {% endfor %}
-        </div>
-        <div class="text-center">
-            <a class="btn btn-danger" id="remove_law">Remove another law</a>
+                    <div class="text-center">
+                        <a class="btn btn-danger" id="remove_law">Remove another law</a>
+                    </div>
+            </div>
         </div>
     </div>
     <div class="panel-footer">

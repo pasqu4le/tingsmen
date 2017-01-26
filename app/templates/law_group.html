@@ -12,7 +12,7 @@
     </div>
     <div id="laws-container">
     {% for law in laws %}
-        {{ macros.render_law(law, current_user)}}
+        {{ macros.render_law(law, current_user, actions_footer=True)}}
     {% endfor %}
     </div>
     <div class="panel panel-info" id="load_laws_container">
