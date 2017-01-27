@@ -481,16 +481,7 @@ def load_more_posts(obj_response, group, name, older_than):
 def submit_post(obj_response, files, form_values):
     form = forms.PostForm(**form_values)
     if form.validate():
-        # markdown options and content
-        mark_opt = {
-            'autolink': True,
-            'underline': True,
-            'smartypants': True,
-            'strikethrough': True,
-            'skip_html': True
-        }
-        content = markdown(form.content.data, **mark_opt)
-        post = Post(content=content, poster=current_user, poster_id=current_user.id, date=func.now())
+        post = Post(content=form.content.data, poster=current_user, poster_id=current_user.id, date=func.now())
         if form.parent_id.data:
             post.parent_id = int(form.parent_id.data)
         for tn in form.topics.data.split():

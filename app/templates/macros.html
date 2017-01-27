@@ -79,7 +79,7 @@
                 </p>
                 <a href="/proposal/{{ proposal.id }}/" class="col-xs-5 text-right text-muted">{{ proposal.date.year }}-{{ proposal.date.month }}-{{ proposal.date.day }} {{ proposal.date.hour }}:{{ proposal.date.minute }} <span class="glyphicon glyphicon-link"></span></a>
             </div>
-            <div class="main-content-text"><p>{{ proposal.description }}</p></div>
+            <div class="main-content-text">{{ proposal.description|markdown }}</div>
             <hr>
             <div class="row">
                 <div class="col-md-6">
@@ -158,7 +158,7 @@
             </div>
         </div>
         <div class="panel-body">
-            <div class="main-content-text"><p>{{ law.content }}</p></div>
+            <div class="main-content-text">{{ law.content|markdown }}</div>
         </div>
         {% if actions_footer %}
         <div class="panel-footer btn-group btn-group-justified">
@@ -230,7 +230,7 @@
                     <p class="lead text-info col-xs-5"><a href="/user/{{ post.poster.username }}/"> –@{{ post.poster.username }}</a></p>
                     <a href="/post/{{ post.id }}/" class="col-xs-7 text-right text-muted">{{ post.date.year }}-{{ post.date.month }}-{{ post.date.day }} {{ post.date.hour }}:{{ post.date.minute }} <span class="glyphicon glyphicon-link"></span></a>
                 </div>
-                <div class="main-content-text">{{ post.content | safe }}</div>
+                <div class="main-content-text">{{ post.content|markdown }}</div>
             </div>
         </div>
         <div class="panel-footer">

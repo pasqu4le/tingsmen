@@ -31,7 +31,14 @@ app.config['MAIL_USE_TLS'] = True
 # Mail creation
 mail = Mail(app)
 # use misaka for markdown
-Misaka(app)
+mark_opt = {
+    'autolink': True,
+    'underline': True,
+    'smartypants': True,
+    'strikethrough': True,
+    'skip_html': True
+}
+Misaka(app, **mark_opt)
 # use sijax for ajax requests
 flask_sijax.Sijax(app)
 # Gravatar setup
