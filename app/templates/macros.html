@@ -316,7 +316,7 @@
     <script>
         $(document).ready(function() {
             // buttons that will close the collapsable post form should have the .collapser class
-            $(".collapser").click(function(event) {
+            $(document).on("click", ".collapser", function(event) {
                 var button = $(event.target)
                 var autofill = button.data('autofill');
                 var post_form = $('#collapsable_post_form');
