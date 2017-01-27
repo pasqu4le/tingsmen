@@ -3,6 +3,7 @@
 
 {% block head_custom %}
     {{ macros.sjiax_scripts(form_init_js) }}
+    {{ macros.post_form_scripts(current_user, topics_all) }}
 {% endblock %}
 
 {% block central_column %}
@@ -15,5 +16,5 @@
 {% endblock %}
 
 {% block side_column %}
-    {{ macros.topics_widget(topics, more_topics_number, current_topic=current_topic) }}
+    {{ macros.topics_widget(some_topics, more_topics_number, current_topic=current_topic) }}
 {% endblock %}

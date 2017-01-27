@@ -3,11 +3,11 @@
 
 {% block head_custom %}
     {{ macros.sjiax_scripts(form_init_js) }}
+    {{ macros.post_form_scripts(current_user, topics_all) }}
 {% endblock %}
 
 {% block central_column %}
-    {{ macros.post_modal_script(current_user) }}
-    {{ macros.post_modal(submit_post_form, current_user) }}
+    {{ macros.render_collapsable_post_form(submit_post_form, current_user) }}
     {% if old_parent %}
     <div class="panel panel-info">
         <div class="panel-body row">
@@ -34,5 +34,5 @@
 {% endblock %}
 
 {% block side_column %}
-    {{ macros.topics_widget(topics) }}
+    {{ macros.topics_widget(some_topics, more_topics_number) }}
 {% endblock %}

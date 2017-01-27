@@ -70,109 +70,114 @@
 
 
 {% macro render_proposal(proposal, current_user, comment_here=False) -%}
-<div class="panel panel-default" id="proposal-{{ proposal.id }}">
-    <div class="panel-body">
-        <div class="row">
-            <p class="lead col-xs-7">
-                <a href="/proposal/{{ proposal.id }}/">Proposal n. {{ proposal.id }}</a>, by <a href="/user/{{ proposal.poster.username }}/">@{{ proposal.poster.username }}</a>
-            </p>
-            <a href="/proposal/{{ proposal.id }}/" class="col-xs-5 text-right text-muted">{{ proposal.date.year }}-{{ proposal.date.month }}-{{ proposal.date.day }} {{ proposal.date.hour }}:{{ proposal.date.minute }} <span class="glyphicon glyphicon-link"></span></a>
-        </div>
-        <div class="main-content-text"><p>{{ proposal.description }}</p></div>
-        <hr>
-        <div class="row">
-            <div class="col-md-6">
-                <div class="alert alert-success text-center">Laws this proposal will add:</div>
-                {% for law in proposal.add_laws %}
-                    {{ render_law(law, current_user) }}
-                {% endfor %}
+<div id="proposal-{{ proposal.id }}">
+    <div class="panel panel-default">
+        <div class="panel-body">
+            <div class="row">
+                <p class="lead col-xs-7">
+                    <a href="/proposal/{{ proposal.id }}/">Proposal n. {{ proposal.id }}</a>, by <a href="/user/{{ proposal.poster.username }}/">@{{ proposal.poster.username }}</a>
+                </p>
+                <a href="/proposal/{{ proposal.id }}/" class="col-xs-5 text-right text-muted">{{ proposal.date.year }}-{{ proposal.date.month }}-{{ proposal.date.day }} {{ proposal.date.hour }}:{{ proposal.date.minute }} <span class="glyphicon glyphicon-link"></span></a>
             </div>
-            <div class="col-md-6">
-                <div class="alert alert-danger text-center">Laws this proposal will remove:</div>
-                {% for law in proposal.remove_laws %}
-                    {{ render_law(law, current_user) }}
-                {% endfor %}
-            </div>
-        </div>
-    </div>
-    <div class="panel-footer btn-group btn-group-justified">
-        <div class="btn-group">
-            {% if current_user.is_authenticated and proposal.is_open %}
-            <div class="btn-group btn-group-justified">
-                <div class="btn-group">
-                    <button class="btn btn-success" href="javascript://" onclick="Sijax.request('vote_proposal', ['{{ proposal.id}}', true]);">
-                        <span class="glyphicon glyphicon-arrow-up"></span>
-                    </button>
+            <div class="main-content-text"><p>{{ proposal.description }}</p></div>
+            <hr>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="alert alert-success text-center">Laws this proposal will add:</div>
+                    {% for law in proposal.add_laws %}
+                        {{ render_law(law, current_user) }}
+                    {% endfor %}
                 </div>
-                <div class="btn-group">
+                <div class="col-md-6">
+                    <div class="alert alert-danger text-center">Laws this proposal will remove:</div>
+                    {% for law in proposal.remove_laws %}
+                        {{ render_law(law, current_user) }}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        <div class="panel-footer btn-group btn-group-justified">
+            <div class="btn-group">
+                {% if current_user.is_authenticated and proposal.is_open %}
+                <div class="btn-group btn-group-justified">
+                    <div class="btn-group">
+                        <button class="btn btn-success" href="javascript://" onclick="Sijax.request('vote_proposal', ['{{ proposal.id}}', true]);">
+                            <span class="glyphicon glyphicon-arrow-up"></span>
+                        </button>
+                    </div>
+                    <div class="btn-group">
+                        <a class="btn btn-link disabled">
+                            <strong class="{{ proposal.current_vote_style(current_user) }}" id="proposal_vote_{{ proposal.id }}">{{ proposal.points() }}</strong>
+                        </a>
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-danger" href="javascript://" onclick="Sijax.request('vote_proposal', ['{{ proposal.id}}', false]);">
+                            <span class="glyphicon glyphicon-arrow-down"></span>
+                        </button>
+                    </div>
+                </div>
+                {% else %}
                     <a class="btn btn-link disabled">
-                        <strong class="{{ proposal.current_vote_style(current_user) }}" id="proposal_vote_{{ proposal.id }}">{{ proposal.points() }}</strong>
+                        <span class="badge">{{ proposal.points() }}</span>
+                        {% if proposal.approved() %}
+                            <span class="label label-success">Approved</span>
+                        {% elif proposal.rejected() %}
+                            <span class="label label-danger">Rejected</span>
+                        {% else %}
+                            <span class="label label-default">Not voted</span>
+                        {% endif %}
                     </a>
-                </div>
-                <div class="btn-group">
-                    <button class="btn btn-danger" href="javascript://" onclick="Sijax.request('vote_proposal', ['{{ proposal.id}}', false]);">
-                        <span class="glyphicon glyphicon-arrow-down"></span>
-                    </button>
-                </div>
+                {% endif %}
             </div>
-            {% else %}
-                <a class="btn btn-link disabled">
-                    <span class="badge">{{ proposal.points() }}</span>
-                    {% if proposal.approved() %}
-                        <span class="label label-success">Approved</span>
-                    {% elif proposal.rejected() %}
-                        <span class="label label-danger">Rejected</span>
-                    {% else %}
-                        <span class="label label-default">Not voted</span>
-                    {% endif %}
-                </a>
-            {% endif %}
-        </div>
-        <div class="btn-group">
-            <a class="btn btn-link" href="/new-proposal/change/{{ proposal.id }}/"><span class="glyphicon glyphicon-pencil"></span> change</a>
-        </div>
-        <div class="btn-group">
-            {% if current_user.has_role('admin') and not proposal.confirmed() %}
-                <button class="btn btn-link" href="javascript://" onclick="Sijax.request('confirm_proposal', ['{{ proposal.id}}']);">Confirm</button>
-            {% endif %}
-            {% if comment_here %}
-            <a class="btn btn-link" href="" data-toggle="modal" data-target="#postModal" data-autofill='{"topics":"#{{ proposal.topic.name }}"}'><span class="glyphicon glyphicon-share-alt"></span> reply</a>
-            {% endif %}
+            <div class="btn-group">
+                <a class="btn btn-link" href="/new-proposal/change/{{ proposal.id }}/"><span class="glyphicon glyphicon-pencil"></span> change</a>
+            </div>
+            <div class="btn-group">
+                {% if current_user.has_role('admin') and not proposal.confirmed() %}
+                    <button class="btn btn-link" href="javascript://" onclick="Sijax.request('confirm_proposal', ['{{ proposal.id}}']);">Confirm</button>
+                {% endif %}
+                {% if comment_here %}
+                <a class="btn btn-link collapser" data-autofill='{"destination":"#proposal-{{ proposal.id }}_form_space","topics":"#{{ proposal.topic.name }}"}'><span class="glyphicon glyphicon-share-alt"></span> comment</a>
+                {% endif %}
+            </div>
         </div>
     </div>
+    <div id="proposal-{{ proposal.id }}_form_space"></div>
 </div>
 {%- endmacro %}
 
 {% macro render_law(law, current_user, actions_footer=False, comment_here=False) -%}
-<div class="panel panel-info" id="law-{{ law.id }}">
-    <div class="panel-heading">
-        <div class="row">
-            <div class="col-xs-7"><a href="/law/{{ law.id }}/" class="panel-title">Law n. {{ law.id }}</a>
-                <small> in {% for group in law.group %}<a href="/laws/group/{{group.name}}/">{{group.name}}</a>{% if not loop.last %}, {% endif %}{% endfor %}</small>
+<div id="law-{{ law.id }}">
+    <div class="panel panel-info">
+        <div class="panel-heading">
+            <div class="row">
+                <div class="col-xs-7"><a href="/law/{{ law.id }}/" class="panel-title">Law n. {{ law.id }}</a>
+                    <small> in {% for group in law.group %}<a href="/laws/group/{{group.name}}/">{{group.name}}</a>{% if not loop.last %}, {% endif %}{% endfor %}</small>
+                </div>
+                <div class="col-xs-5 text-right">{% for status in law.status %}<a href="/laws/status/{{status.name}}/" class="label label-success">{{status.name}}</a> {% endfor %}</div>
             </div>
-            <div class="col-xs-5 text-right">{% for status in law.status %}<a href="/laws/status/{{status.name}}/" class="label label-success">{{status.name}}</a> {% endfor %}</div>
         </div>
-    </div>
-    <div class="panel-body">
-        <div class="main-content-text"><p>{{ law.content }}</p></div>
-    </div>
-    {% if actions_footer %}
-    <div class="panel-footer btn-group btn-group-justified">
-        <a class="btn btn-link" href="/law/{{ law.id }}/"><span class="glyphicon glyphicon-comment"></span> discussion <span class="badge">{{ law.topic.posts.count() }}</span></a>
-        <a class="btn btn-link" href="/new-proposal/remove/{{ law.id }}/"><span class="glyphicon glyphicon-remove"></span> remove</a>
-        {% if comment_here %}
-        <a class="btn btn-link" href="" data-toggle="modal" data-target="#postModal" data-autofill='{"topics":"#{{ law.topic.name }}"}'><span class="glyphicon glyphicon-share-alt"></span> reply</a>
-        {% else %}
-        <a class="btn btn-link" href="/law/{{ law.id }}/"><span class="glyphicon glyphicon-share-alt"></span> reply</a>
+        <div class="panel-body">
+            <div class="main-content-text"><p>{{ law.content }}</p></div>
+        </div>
+        {% if actions_footer %}
+        <div class="panel-footer btn-group btn-group-justified">
+            <a class="btn btn-link" href="/law/{{ law.id }}/"><span class="glyphicon glyphicon-comment"></span> discussion <span class="badge">{{ law.topic.posts.count() }}</span></a>
+            <a class="btn btn-link" href="/new-proposal/remove/{{ law.id }}/"><span class="glyphicon glyphicon-remove"></span> remove</a>
+            {% if comment_here %}
+            <a class="btn btn-link collapser" data-autofill='{"destination":"#law-{{ law.id }}_form_space","topics":"#{{ law.topic.name }}"}'><span class="glyphicon glyphicon-share-alt"></span> comment</a>
+            {% else %}
+            <a class="btn btn-link" href="/law/{{ law.id }}/"><span class="glyphicon glyphicon-share-alt"></span> comment</a>
+            {% endif %}
+        </div>
         {% endif %}
     </div>
-    {% endif %}
+    <div id="law-{{ law.id }}_form_space"></div>
 </div>
 {%- endmacro %}
 
 {% macro render_post_group(posts, current_user, submit_post_form, new_post=False, load_more=False, posts_group=None, posts_name=None, topic=None) -%}
-    {{ post_modal_script(current_user) }}
-    {{ post_modal(submit_post_form, current_user) }}
+    {{ render_collapsable_post_form(submit_post_form, current_user) }}
     {% if new_post %}
         {{ new_post_panel(current_user, topic=topic) }}
     {% endif %}
@@ -189,55 +194,58 @@
 {%- endmacro %}
 
 {% macro render_post(post, current_user) -%}
-<div class="panel panel-default" id="post-{{ post.id }}">
-    <div class="row panel-body">
-        <div class="col-md-2 col-xs-3">
-            <img class="img-rounded img-responsive center-block" src="{{ post.poster.email | gravatar }}">
-            <p></p>
-            {# render vote form #}
-            <div class="btn-group-vertical btn-block">
-                {% if current_user.is_authenticated %}
-                <button class="btn btn-success btn-xs btn-block" href="javascript://" onclick="Sijax.request('vote_post', ['{{ post.id}}', true]);">
-                    <span class="glyphicon glyphicon-thumbs-up"></span>
-                </button>
-                <a class="btn btn-default btn-block disabled">
-                    <strong class="{{ post.current_vote_style(current_user) }}" id="post_vote_{{ post.id }}">{{ post.points()}}</strong>
-                </a>
-                <button class="btn btn-danger btn-xs btn-block" href="javascript://" onclick="Sijax.request('vote_post', ['{{ post.id}}', false]);">
-                    <span class="glyphicon glyphicon-thumbs-down"></span>
-                </button>
-                {% else %}
-                <a class="btn btn-success btn-xs btn-block" href="/login">
-                    <span class="glyphicon glyphicon-thumbs-up"></span>
-                </a>
-                <a class="btn btn-default btn-block disabled">
-                    <strong >{{ post.points()}}</strong>
-                </a>
-                <a class="btn btn-danger btn-xs btn-block" href="/login">
-                    <span class="glyphicon glyphicon-thumbs-down"></span>
-                </a>
-                {% endif %}
+<div id="post-{{ post.id }}">
+    <div class="panel panel-default">
+        <div class="row panel-body">
+            <div class="col-md-2 col-xs-3">
+                <img class="img-rounded img-responsive center-block" src="{{ post.poster.email | gravatar }}">
+                <p></p>
+                {# render vote form #}
+                <div class="btn-group-vertical btn-block">
+                    {% if current_user.is_authenticated %}
+                    <button class="btn btn-success btn-xs btn-block" href="javascript://" onclick="Sijax.request('vote_post', ['{{ post.id}}', true]);">
+                        <span class="glyphicon glyphicon-thumbs-up"></span>
+                    </button>
+                    <a class="btn btn-default btn-block disabled">
+                        <strong class="{{ post.current_vote_style(current_user) }}" id="post_vote_{{ post.id }}">{{ post.points()}}</strong>
+                    </a>
+                    <button class="btn btn-danger btn-xs btn-block" href="javascript://" onclick="Sijax.request('vote_post', ['{{ post.id}}', false]);">
+                        <span class="glyphicon glyphicon-thumbs-down"></span>
+                    </button>
+                    {% else %}
+                    <a class="btn btn-success btn-xs btn-block" href="/login">
+                        <span class="glyphicon glyphicon-thumbs-up"></span>
+                    </a>
+                    <a class="btn btn-default btn-block disabled">
+                        <strong >{{ post.points()}}</strong>
+                    </a>
+                    <a class="btn btn-danger btn-xs btn-block" href="/login">
+                        <span class="glyphicon glyphicon-thumbs-down"></span>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-md-10 col-xs-9">
+                <div class="row">
+                    <p class="lead text-info col-xs-5"><a href="/user/{{ post.poster.username }}/"> –@{{ post.poster.username }}</a></p>
+                    <a href="/post/{{ post.id }}/" class="col-xs-7 text-right text-muted">{{ post.date.year }}-{{ post.date.month }}-{{ post.date.day }} {{ post.date.hour }}:{{ post.date.minute }} <span class="glyphicon glyphicon-link"></span></a>
+                </div>
+                <div class="main-content-text">{{ post.content | safe }}</div>
             </div>
         </div>
-        <div class="col-md-10 col-xs-9">
+        <div class="panel-footer">
             <div class="row">
-                <p class="lead text-info col-xs-5"><a href="/user/{{ post.poster.username }}/"> –@{{ post.poster.username }}</a></p>
-                <a href="/post/{{ post.id }}/" class="col-xs-7 text-right text-muted">{{ post.date.year }}-{{ post.date.month }}-{{ post.date.day }} {{ post.date.hour }}:{{ post.date.minute }} <span class="glyphicon glyphicon-link"></span></a>
-            </div>
-            <div class="main-content-text">{{ post.content | safe }}</div>
-        </div>
-    </div>
-    <div class="panel-footer">
-        <div class="row">
-            <div class="col-md-10 col-xs-8">
-                <span class="glyphicon glyphicon-tags"></span> -{% for topic in post.topics %}
-                <a href="/topic/{{ topic.name }}/"> #{{ topic.name }}</a>{% endfor %}
-            </div>
-            <div class="col-md-2 col-xs-4">
-                <a class="btn btn-primary btn-block" href="" data-toggle="modal" data-target="#postModal" data-autofill='{"id":{{ post.id }},"poster":"{{ post.poster.username }}","topics":"{% for topic in post.topics %}#{{topic.name}} {% endfor %}"}'><span class="glyphicon glyphicon-share-alt"></span> reply</a>
+                <div class="col-md-10 col-xs-8">
+                    <span class="glyphicon glyphicon-tags"></span> -{% for topic in post.topics %}
+                    <a href="/topic/{{ topic.name }}/"> #{{ topic.name }}</a>{% endfor %}
+                </div>
+                <div class="col-md-2 col-xs-4">
+                    <button class="collapser btn btn-primary btn-block" data-autofill='{"destination":"#post-{{ post.id }}_form_space","id":{{ post.id }},"topics":"{% for topic in post.topics %}#{{topic.name}} {% endfor %}"}'><span class="glyphicon glyphicon-share-alt"></span> reply</button>
+                </div>
             </div>
         </div>
     </div>
+    <div id="post-{{ post.id }}_form_space"></div>
 </div>
 {%- endmacro %}
 
@@ -283,89 +291,101 @@
     {% endif %}
 {%- endmacro %}
 
-{# --------------------------- Macros for the post modal form -------------------------------- #}
+{# --------------------------- Macros for the collapsable post form -------------------------------- #}
 
-{% macro post_modal_script(current_user) -%}
+{% macro post_form_scripts(current_user, topics_all) -%}
     {% if current_user.is_authenticated %}
+    <script src="http://code.jquery.com/jquery-migrate-1.4.1.js"></script>
+    <script src="/static/js/jquery.caretposition.js"></script>
+    <script src="/static/js/jquery.sew.js"></script>
     <script>
-        $(function(){
-            $('#postModal').on('show.bs.modal', function (event) {
-                var button = $(event.relatedTarget);
+        $(document).ready(function() {
+            var values = [{% for topic in topics_all%}{val:'{{ topic.name }}'},{% endfor %}];
+
+            var customItemTemplate = "<div><span />&nbsp;<small /></div>";
+
+            function elementFactory(element, e) {
+                var template = $(customItemTemplate).find('span').text('#' + e.val).end();
+                element.append(template);
+            };
+
+            // here is how we use it
+            $('#topics').sew({values: values, elementFactory: elementFactory, token: '#'});
+        });
+    </script>
+    <script>
+        $(document).ready(function() {
+            // buttons that will close the collapsable post form should have the .collapser class
+            $(".collapser").click(function(event) {
+                var button = $(event.target)
                 var autofill = button.data('autofill');
-                var modal = $(this);
-                if (autofill != null){
-                    if (autofill.poster != null){
-                        modal.find('.modal-title').text('Reply to @' + autofill.poster + ' post');
-                    } else {
-                        modal.find('.modal-title').text('New post');
-                    }
-                    if (autofill.id != null){
-                        modal.find('#parent_id').val(autofill.id);
-                    }
-                    if (autofill.topics != null){
-                        modal.find('#topics').val(autofill.topics);
-                    }
-                } else {
-                    modal.find('.modal-title').text('New post');
+                var post_form = $('#collapsable_post_form');
+
+                // collapse immediately:
+                post_form.attr('class', 'collapse');
+
+                // move in the correct position:
+                post_form.appendTo(autofill.destination);
+
+                // reset or set data:
+                post_form.find('#content').val("");
+                if (autofill.id != null){
+                    post_form.find('#parent_id').val(autofill.id);
                 }
+                if (autofill.topics != null){
+                    post_form.find('#topics').val(autofill.topics);
+                } else {
+                    post_form.find('#topics').val("");
+                }
+
+                // finally de-collapse
+                post_form.collapse('show');
             });
         });
     </script>
     {% endif %}
-{%- endmacro %}
-
-{% macro post_modal(submit_post_form, current_user) -%}
-    <div class="modal fade" id="postModal" tabindex="-1" role="dialog" aria-labelledby="postModal">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                {% if current_user.is_authenticated %}
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                    <h4 class="modal-title" id="ModalTitle"></h4>
-                </div>
-                <div class="modal-body" id="post_form_container">
-                        {{ render_post_form(submit_post_form, current_user) }}
-                </div>
-                {% else %}
-                <div class="modal-body">
-                    <p>You need to be logged in to post something</p>
-                    <a class="btn btn-lg btn-primary btn-block" href="/login">Login now</a>
-                </div>
-                {% endif %}
-            </div>
-        </div>
-    </div>
+    {# TODO: show login way for not registered users#}
 {%- endmacro %}
 
 {% macro new_post_panel(current_user, topic=None) -%}
     {% if current_user.is_authenticated %}
-    <div class="panel panel-info">
-        <div class="panel-body row">
-            <h4 class="col-xs-7 col-md-9">Hey there {{ current_user.username }}, do you have something to share?</h4>
-            <button type="button" class="btn btn-primary btn-lg col-xs-5 col-md-3" data-toggle="modal" data-target="#postModal" {% if topic %}data-autofill='{"topics":"#{{ topic.name }}"}'{% endif %}>Make a post!</button>
+    <div class="panel panel-default">
+        <div class="panel-body">
+            <div class="row">
+                <h4 class="col-xs-7 col-md-9">Hey there {{ current_user.username }}, do you have something to share?</h4>
+                <button type="button" class="collapser btn btn-primary btn-lg col-xs-5 col-md-3" data-autofill='{"destination":"#panel_form_space"{% if topic %},"topics":"#{{ topic.name }}"{% endif %}}'>Make a post!</button>
+            </div>
+            <p></p>
+            <div id="panel_form_space"></div>
         </div>
     </div>
     {% endif %}
 {%- endmacro %}
 
+{% macro render_collapsable_post_form(submit_post_form, current_user) -%}
+<div class="collapse" id="collapsable_post_form">
+    {{ render_post_form(submit_post_form, current_user) }}
+</div>
+{%- endmacro %}
+
 {% macro render_post_form(submit_post_form, current_user) -%}
-<form class="panel panel-default form" enctype="multipart/form-data" method="POST" name="post_form" id="post_form">
+<form class="well form" enctype="multipart/form-data" method="POST" name="post_form" id="post_form">
     {{ submit_post_form.hidden_tag() }}
-    <div class="row panel-body">
+    <div class="row">
         <div class="col-md-2 col-xs-3">
             <img class="img-rounded img-responsive center-block" src="{{ current_user.email | gravatar }}">
-            <p></p>
         </div>
         <div class="col-md-10 col-xs-9">
-            <h4 class="text-info"><a href="/user/{{ current_user.username }}/"> – @{{ current_user.username }}</a></h4>
             {{ render_field(submit_post_form.content) }}
         </div>
     </div>
-    <div class="panel-footer">
-        {{ render_field(submit_post_form.topics) }}
-        {{ render_field(submit_post_form.submit) }}
+    <div class="row">
+        <div class="col-md-10 col-xs-8">
+            {{ render_field(submit_post_form.topics) }}
+        </div>
+        <div class="col-md-2 col-xs-4">
+            {{ render_field(submit_post_form.submit) }}
+        </div>
     </div>
 </form>
 {%- endmacro %}

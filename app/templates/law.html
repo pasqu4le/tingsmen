@@ -3,6 +3,7 @@
 
 {% block head_custom %}
     {{ macros.sjiax_scripts(form_init_js) }}
+    {{ macros.post_form_scripts(current_user topics_all) }}
 {% endblock %}
 
 {% block central_column %}

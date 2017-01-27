@@ -26,7 +26,8 @@ def home():
         'title': 'Home',
         'current_user': current_user,
         'posts': posts,
-        'topics': Topic.query[:10],
+        'some_topics': Topic.query[:10],
+        'topics_all': Topic.query.all(),
         'more_topics_number': Topic.query.count(),
         'submit_post_form': forms.PostForm(),
         'form_init_js': form_init_js
@@ -52,7 +53,8 @@ def topic(topic_name):
         'current_user': current_user,
         'current_topic': current_topic,
         'posts': posts,
-        'topics': Topic.query[:10],
+        'some_topics': Topic.query[:10],
+        'topics_all': Topic.query.all(),
         'more_topics_number': Topic.query.count(),
         'submit_post_form': forms.PostForm(),
         'form_init_js': form_init_js
@@ -62,7 +64,7 @@ def topic(topic_name):
 
 @app.route('/topics/')
 def topics():
-    topic_list =  Topic.query.all()
+    topic_list = Topic.query.all()
     options = {
         'title': 'Topics',
         'topic_list': topic_list,
@@ -106,6 +108,7 @@ def user_page(username, subpage):
         'posts_group': group,
         'current_page': subpage,
         'user_pages': ['post', 'upvotes', 'downvotes'],
+        'topics_all': Topic.query.all(),
         'submit_post_form': forms.PostForm(),
         'form_init_js': form_init_js
     }
@@ -135,7 +138,8 @@ def view_post(post_id):
         'main_post': main_post,
         'old_parent': old_parent,
         'children': main_post.get_children(),
-        'topics': Topic.query[:10],
+        'some_topics': Topic.query[:10],
+        'topics_all': Topic.query.all(),
         'more_topics_number': Topic.query.count(),
         'submit_post_form': forms.PostForm(),
         'form_init_js': form_init_js
@@ -163,6 +167,7 @@ def view_proposal(proposal_id):
         'proposal': proposal,
         'statuses': ['all', 'open'],
         'posts': Post.get_more(group='topic', name=proposal.topic.name),
+        'topics_all': Topic.query.all(),
         'submit_post_form': forms.PostForm(),
         'form_init_js': form_init_js
     }
@@ -217,6 +222,7 @@ def view_law(law_id):
         'current_user': current_user,
         'law': law,
         'posts': Post.get_more(group='topic', name=law.topic.name),
+        'topics_all': Topic.query.all(),
         'submit_post_form': forms.PostForm(),
         'statuses': LawStatus.query.all(),
         'form_init_js': form_init_js
@@ -511,11 +517,11 @@ def submit_post(obj_response, files, form_values):
         db.session.commit()
         render_post = get_template_attribute('macros.html', 'render_post')
         obj_response.html_prepend('#post-container', render_post(post, current_user).unescape())
-        obj_response.script("$('#postModal').modal('hide');")
+        obj_response.script("$('#collapsable_post_form').collapse('hide');")
         obj_response.script("$('html, body').animate({ scrollTop: $('#post-%s').position().top }, 500);" % str(post.id))
         form.reset()
     render_post_form = get_template_attribute('macros.html', 'render_post_form')
-    obj_response.html('#post_form_container', render_post_form(form, current_user).unescape())
+    obj_response.html('#collapsable_post_form', render_post_form(form, current_user).unescape())
 
 
 def load_more_laws(obj_response, group_name, status_name, older_than):
