@@ -393,7 +393,7 @@
 {# --------------------------- Macros for the proposal form -------------------------------- #}
 
 {% macro render_proposal_form(proposal_form, current_user) -%}
-<form class="panel panel-default form" enctype="multipart/form-data" method="POST" name="proposal_form" id="proposal_form">
+<form class="panel panel-default form" action="/new-proposal/" enctype="multipart/form-data" method="POST" name="proposal_form" id="proposal_form">
     {{ proposal_form.hidden_tag() }}
     <div class="panel-body">
         <div class="text-center">

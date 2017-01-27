@@ -282,43 +282,32 @@ def law_status(status_name):
     return render_template("law_status.html", **options)
 
 
-@app.route('/new-proposal/', methods=('GET', 'POST'))
-def new_empty_proposal():
-    if request.method == 'POST':
-        return submit_proposal()
-    return new_proposal()
-
-
-@app.route('/new-proposal/remove/<law_id>/', methods=('GET', 'POST'))
+@app.route('/new-proposal/remove/<law_id>/')
 def new_proposal_remove(law_id):
-    if request.method == 'POST':
-        return submit_proposal()
     form = forms.ProposalForm()
     form.remove_laws.pop_entry()
     form.remove_laws.append_entry(law_id)
     return new_proposal(form)
 
 
-@app.route('/new-proposal/change/<proposal_id>/', methods=('GET', 'POST'))
+@app.route('/new-proposal/change/<proposal_id>/')
 def new_proposal_change(proposal_id):
-    if request.method == 'POST':
-        return submit_proposal()
-    proposal = Proposal.query.filter_by(id=proposal_id).first()
-    if not proposal:
-        return new_proposal()
     form = forms.ProposalForm()
-    form.description.data = proposal.description
-    if proposal.add_laws:
-        form.new_laws.pop_entry()
-        for law in proposal.add_laws:
-            form.new_laws.append_entry({'content': law.content, 'groups': " ".join([g.name for g in law.group])})
-    if proposal.remove_laws:
-        form.remove_laws.pop_entry()
-        for law in proposal.remove_laws:
-            form.remove_laws.append_entry(law.id)
+    proposal = Proposal.query.filter_by(id=proposal_id).first()
+    if proposal:
+        form.description.data = proposal.description
+        if proposal.add_laws:
+            form.new_laws.pop_entry()
+            for law in proposal.add_laws:
+                form.new_laws.append_entry({'content': law.content, 'groups': " ".join([g.name for g in law.group])})
+        if proposal.remove_laws:
+            form.remove_laws.pop_entry()
+            for law in proposal.remove_laws:
+                form.remove_laws.append_entry(law.id)
     return new_proposal(form)
 
 
+@app.route('/new-proposal/', methods=('GET', 'POST'))
 def submit_proposal():
     form = forms.ProposalForm()
     if current_user.is_authenticated and form.validate_on_submit():
@@ -363,9 +352,7 @@ def submit_proposal():
     return new_proposal(form)
 
 
-def new_proposal(form=None):
-    if not form:
-        form = forms.ProposalForm()
+def new_proposal(form):
     options = {
         'current_user': current_user,
         'proposal_form': form
