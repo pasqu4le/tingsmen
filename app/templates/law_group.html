@@ -11,9 +11,9 @@
         <h4>{{ current_status.name }}{% if current_status.description %}: <small>{{ current_status.description }}</small>{% endif %}</h4>
     </div>
     <div id="laws-container">
-    {% for law in laws %}
-        {{ macros.render_law(law, current_user, actions_footer=True)}}
-    {% endfor %}
+        {% for law in laws %}
+            {{ macros.render_law(law, current_user, actions_footer=True)}}
+        {% endfor %}
     </div>
     <div class="panel panel-info" id="load_laws_container">
         {% if laws %}

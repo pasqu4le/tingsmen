@@ -99,23 +99,23 @@
         <div class="panel-footer btn-group btn-group-justified">
             <div class="btn-group">
                 {% if current_user.is_authenticated and proposal.is_open %}
-                <div class="btn-group btn-group-justified">
-                    <div class="btn-group">
-                        <button class="btn btn-success" href="javascript://" onclick="Sijax.request('vote_proposal', ['{{ proposal.id}}', true]);">
-                            <span class="glyphicon glyphicon-arrow-up"></span>
-                        </button>
+                    <div class="btn-group btn-group-justified">
+                        <div class="btn-group">
+                            <button class="btn btn-success" href="javascript://" onclick="Sijax.request('vote_proposal', ['{{ proposal.id}}', true]);">
+                                <span class="glyphicon glyphicon-arrow-up"></span>
+                            </button>
+                        </div>
+                        <div class="btn-group">
+                            <a class="btn btn-link disabled">
+                                <strong class="{{ proposal.current_vote_style(current_user) }}" id="proposal_vote_{{ proposal.id }}">{{ proposal.points() }}</strong>
+                            </a>
+                        </div>
+                        <div class="btn-group">
+                            <button class="btn btn-danger" href="javascript://" onclick="Sijax.request('vote_proposal', ['{{ proposal.id}}', false]);">
+                                <span class="glyphicon glyphicon-arrow-down"></span>
+                            </button>
+                        </div>
                     </div>
-                    <div class="btn-group">
-                        <a class="btn btn-link disabled">
-                            <strong class="{{ proposal.current_vote_style(current_user) }}" id="proposal_vote_{{ proposal.id }}">{{ proposal.points() }}</strong>
-                        </a>
-                    </div>
-                    <div class="btn-group">
-                        <button class="btn btn-danger" href="javascript://" onclick="Sijax.request('vote_proposal', ['{{ proposal.id}}', false]);">
-                            <span class="glyphicon glyphicon-arrow-down"></span>
-                        </button>
-                    </div>
-                </div>
                 {% else %}
                     <a class="btn btn-link disabled">
                         <span class="badge">{{ proposal.points() }}</span>
@@ -137,7 +137,7 @@
                     <button class="btn btn-link" href="javascript://" onclick="Sijax.request('confirm_proposal', ['{{ proposal.id}}']);">Confirm</button>
                 {% endif %}
                 {% if comment_here %}
-                <a class="btn btn-link collapser" data-autofill='{"destination":"#proposal-{{ proposal.id }}_form_space","topics":"#{{ proposal.topic.name }}"}'><span class="glyphicon glyphicon-share-alt"></span> comment</a>
+                    <a class="btn btn-link collapser" data-autofill='{"destination":"#proposal-{{ proposal.id }}_form_space","topics":"#{{ proposal.topic.name }}"}'><span class="glyphicon glyphicon-share-alt"></span> comment</a>
                 {% endif %}
             </div>
         </div>
@@ -161,15 +161,15 @@
             <div class="main-content-text">{{ law.content|markdown }}</div>
         </div>
         {% if actions_footer %}
-        <div class="panel-footer btn-group btn-group-justified">
-            <a class="btn btn-link" href="/law/{{ law.id }}/"><span class="glyphicon glyphicon-comment"></span> discussion <span class="badge">{{ law.topic.posts.count() }}</span></a>
-            <a class="btn btn-link" href="/new-proposal/remove/{{ law.id }}/"><span class="glyphicon glyphicon-remove"></span> remove</a>
-            {% if comment_here %}
-            <a class="btn btn-link collapser" data-autofill='{"destination":"#law-{{ law.id }}_form_space","topics":"#{{ law.topic.name }}"}'><span class="glyphicon glyphicon-share-alt"></span> comment</a>
-            {% else %}
-            <a class="btn btn-link" href="/law/{{ law.id }}/"><span class="glyphicon glyphicon-share-alt"></span> comment</a>
-            {% endif %}
-        </div>
+            <div class="panel-footer btn-group btn-group-justified">
+                <a class="btn btn-link" href="/law/{{ law.id }}/"><span class="glyphicon glyphicon-comment"></span> discussion <span class="badge">{{ law.topic.posts.count() }}</span></a>
+                <a class="btn btn-link" href="/new-proposal/remove/{{ law.id }}/"><span class="glyphicon glyphicon-remove"></span> remove</a>
+                {% if comment_here %}
+                    <a class="btn btn-link collapser" data-autofill='{"destination":"#law-{{ law.id }}_form_space","topics":"#{{ law.topic.name }}"}'><span class="glyphicon glyphicon-share-alt"></span> comment</a>
+                {% else %}
+                    <a class="btn btn-link" href="/law/{{ law.id }}/"><span class="glyphicon glyphicon-share-alt"></span> comment</a>
+                {% endif %}
+            </div>
         {% endif %}
     </div>
     <div id="law-{{ law.id }}_form_space"></div>
@@ -177,20 +177,20 @@
 {%- endmacro %}
 
 {% macro render_post_group(posts, current_user, submit_post_form, new_post=False, load_more=False, posts_group=None, posts_name=None, topic=None) -%}
-    {{ render_collapsable_post_form(submit_post_form, current_user) }}
-    {% if new_post %}
-        {{ new_post_panel(current_user, topic=topic) }}
-    {% endif %}
-    <div id="post-container">
+{{ render_collapsable_post_form(submit_post_form, current_user) }}
+{% if new_post %}
+    {{ new_post_panel(current_user, topic=topic) }}
+{% endif %}
+<div id="post-container">
     {% for post in posts %}
         {{ render_post(post, current_user) }}
     {% endfor %}
+</div>
+{% if posts and load_more %}
+    <div class="panel panel-info" id="load_more_container">
+        {{ more_posts_panel(posts_group, posts_name, posts[-1].date) }}
     </div>
-    {% if posts and load_more %}
-        <div class="panel panel-info" id="load_more_container">
-            {{ more_posts_panel(posts_group, posts_name, posts[-1].date) }}
-        </div>
-    {% endif %}
+{% endif %}
 {%- endmacro %}
 
 {% macro render_post(post, current_user) -%}
@@ -203,25 +203,25 @@
                 {# render vote form #}
                 <div class="btn-group-vertical btn-block">
                     {% if current_user.is_authenticated %}
-                    <button class="btn btn-success btn-xs btn-block" href="javascript://" onclick="Sijax.request('vote_post', ['{{ post.id}}', true]);">
-                        <span class="glyphicon glyphicon-thumbs-up"></span>
-                    </button>
-                    <a class="btn btn-default btn-block disabled">
-                        <strong class="{{ post.current_vote_style(current_user) }}" id="post_vote_{{ post.id }}">{{ post.points()}}</strong>
-                    </a>
-                    <button class="btn btn-danger btn-xs btn-block" href="javascript://" onclick="Sijax.request('vote_post', ['{{ post.id}}', false]);">
-                        <span class="glyphicon glyphicon-thumbs-down"></span>
-                    </button>
+                        <button class="btn btn-success btn-xs btn-block" href="javascript://" onclick="Sijax.request('vote_post', ['{{ post.id}}', true]);">
+                            <span class="glyphicon glyphicon-thumbs-up"></span>
+                        </button>
+                        <a class="btn btn-default btn-block disabled">
+                            <strong class="{{ post.current_vote_style(current_user) }}" id="post_vote_{{ post.id }}">{{ post.points()}}</strong>
+                        </a>
+                        <button class="btn btn-danger btn-xs btn-block" href="javascript://" onclick="Sijax.request('vote_post', ['{{ post.id}}', false]);">
+                            <span class="glyphicon glyphicon-thumbs-down"></span>
+                        </button>
                     {% else %}
-                    <a class="btn btn-success btn-xs btn-block" href="/login">
-                        <span class="glyphicon glyphicon-thumbs-up"></span>
-                    </a>
-                    <a class="btn btn-default btn-block disabled">
-                        <strong >{{ post.points()}}</strong>
-                    </a>
-                    <a class="btn btn-danger btn-xs btn-block" href="/login">
-                        <span class="glyphicon glyphicon-thumbs-down"></span>
-                    </a>
+                        <a class="btn btn-success btn-xs btn-block" href="/login">
+                            <span class="glyphicon glyphicon-thumbs-up"></span>
+                        </a>
+                        <a class="btn btn-default btn-block disabled">
+                            <strong>{{ post.points()}}</strong>
+                        </a>
+                        <a class="btn btn-danger btn-xs btn-block" href="/login">
+                            <span class="glyphicon glyphicon-thumbs-down"></span>
+                        </a>
                     {% endif %}
                 </div>
             </div>
@@ -250,51 +250,45 @@
 {%- endmacro %}
 
 {% macro render_field(field, label_visible=false) -%}
-     <div class="form-group{% if field.errors %} has-error has-feedback{% endif %} {{ kwargs.pop('class_', '') }}">
-         {{ field(class_='form-control', **kwargs) }}{% if field.type != 'HiddenField' and label_visible %} {{ field.label }}{% endif %}
-         {% if field.errors %}
-         <span class="glyphicon glyphicon-remove form-control-feedback" aria-hidden="true"></span>
-         {% for e in field.errors %}
+<div class="form-group{% if field.errors %} has-error has-feedback{% endif %} {{ kwargs.pop('class_', '') }}">
+    {{ field(class_='form-control', **kwargs) }}{% if field.type != 'HiddenField' and label_visible %} {{ field.label }}{% endif %}
+    {% if field.errors %}
+        <span class="glyphicon glyphicon-remove form-control-feedback" aria-hidden="true"></span>
+        {% for e in field.errors %}
             <p class="help-block">{{ e }}</p>
-         {% endfor %}
-         {% endif %}
-    </div>
+        {% endfor %}
+    {% endif %}
+</div>
 {%- endmacro %}
 
 {% macro more_proposals_panel(open, older_than) -%}
-    {% if older_than %}
-        <a class="panel-body btn btn-primary btn-lg btn-block" href="javascript://" onclick="Sijax.request('load_more_proposals', [{% if open %}true{% else %}false{%endif%}, '{{ older_than }}']);">
-            Load older proposals
-        </a>
-    {% else %}
-        <a class="panel-body btn btn-default btn-lg btn-block disabled">There are no more proposals here</a>
-    {% endif %}
+{% if older_than %}
+    <a class="panel-body btn btn-primary btn-lg btn-block" href="javascript://" onclick="Sijax.request('load_more_proposals', [{% if open %}true{% else %}false{%endif%}, '{{ older_than }}']);">Load older proposals</a>
+{% else %}
+    <a class="panel-body btn btn-default btn-lg btn-block disabled">There are no more proposals here</a>
+{% endif %}
 {%- endmacro %}
 
 {% macro more_laws_panel(group_name, status_name, older_than) -%}
-    {% if older_than %}
-        <a class="panel-body btn btn-primary btn-lg btn-block" href="javascript://" onclick="Sijax.request('load_more_laws', [{% if group_name %}'{{ group_name }}'{% else %}null{% endif %}, {% if status_name %}'{{ status_name }}'{% else %}null{% endif %}, '{{ older_than }}']);">
-            Load older laws
-        </a>
-    {% else %}
-        <a class="panel-body btn btn-default btn-lg btn-block disabled">There are no more laws here</a>
-    {% endif %}
+{% if older_than %}
+    <a class="panel-body btn btn-primary btn-lg btn-block" href="javascript://" onclick="Sijax.request('load_more_laws', [{% if group_name %}'{{ group_name }}'{% else %}null{% endif %}, {% if status_name %}'{{ status_name }}'{% else %}null{% endif %}, '{{ older_than }}']);">Load older laws</a>
+{% else %}
+    <a class="panel-body btn btn-default btn-lg btn-block disabled">There are no more laws here</a>
+{% endif %}
 {%- endmacro %}
 
 {% macro more_posts_panel(group, name, older_than) -%}
-    {% if older_than %}
-        <a class="panel-body btn btn-primary btn-lg btn-block" href="javascript://" onclick="Sijax.request('load_more_posts', [{% if group %}'{{ group }}'{% else %}null{% endif %}, {% if name %}'{{ name }}'{% else %}null{% endif %}, '{{ older_than }}']);">
-            Load older posts
-        </a>
-    {% else %}
-        <a class="panel-body btn btn-default btn-lg btn-block disabled">There are no more posts here</a>
-    {% endif %}
+{% if older_than %}
+    <a class="panel-body btn btn-primary btn-lg btn-block" href="javascript://" onclick="Sijax.request('load_more_posts', [{% if group %}'{{ group }}'{% else %}null{% endif %}, {% if name %}'{{ name }}'{% else %}null{% endif %}, '{{ older_than }}']);">Load older posts</a>
+{% else %}
+    <a class="panel-body btn btn-default btn-lg btn-block disabled">There are no more posts here</a>
+{% endif %}
 {%- endmacro %}
 
 {# --------------------------- Macros for the collapsable post form -------------------------------- #}
 
 {% macro post_form_scripts(current_user, topics_all) -%}
-    {% if current_user.is_authenticated %}
+{% if current_user.is_authenticated %}
     <link href="/static/css/sew.css" rel="stylesheet" media="screen">
     <script src="http://code.jquery.com/jquery-migrate-1.4.1.js"></script>
     <script src="/static/js/jquery.caretposition.js"></script>
@@ -344,11 +338,11 @@
             });
         });
     </script>
-    {% endif %}
+{% endif %}
 {%- endmacro %}
 
 {% macro new_post_panel(current_user, topic=None) -%}
-    {% if current_user.is_authenticated %}
+{% if current_user.is_authenticated %}
     <div class="panel panel-default">
         <div class="panel-body">
             <div class="row">
@@ -359,7 +353,7 @@
             <div id="panel_form_space"></div>
         </div>
     </div>
-    {% endif %}
+{% endif %}
 {%- endmacro %}
 
 {% macro render_collapsable_post_form(submit_post_form, current_user) -%}
@@ -426,19 +420,19 @@
             </div>
             <div class="col-md-6">
                 <div class="alert alert-danger text-center">Laws this proposal will remove:</div>
-                    <div id="remove-law-container">
-                        {% for remove_field in proposal_form.remove_laws %}
-                            <div class="well row">
-                                <strong class="col-xs-3">Law n°</strong>
-                                <div class="col-xs-9">
-                                    {{ render_field(remove_field) }}
-                                </div>
+                <div id="remove-law-container">
+                    {% for remove_field in proposal_form.remove_laws %}
+                        <div class="well row">
+                            <strong class="col-xs-3">Law n°</strong>
+                            <div class="col-xs-9">
+                                {{ render_field(remove_field) }}
                             </div>
-                        {% endfor %}
-                    </div>
-                    <div class="text-center">
-                        <a class="btn btn-danger" id="remove_law">Remove another law</a>
-                    </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                <div class="text-center">
+                    <a class="btn btn-danger" id="remove_law">Remove another law</a>
+                </div>
             </div>
         </div>
     </div>

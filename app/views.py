@@ -2,7 +2,6 @@ from app import app, security
 from flask import g, render_template, abort, redirect, url_for, request, get_template_attribute
 from flask_security import current_user
 from flask_admin.contrib import sqla
-from flask_misaka import markdown
 from database import *
 import forms
 from sqlalchemy.sql import func
@@ -321,7 +320,7 @@ def new_proposal_change(proposal_id):
         if proposal.add_laws:
             form.new_laws.pop_entry()
             for law in proposal.add_laws:
-                form.new_laws.append_entry({'content': law.content, 'groups': " ".join([g.name for g in law.group])})
+                form.new_laws.append_entry({'content': law.content, 'groups': " ".join([gr.name for gr in law.group])})
         if proposal.remove_laws:
             form.remove_laws.pop_entry()
             for law in proposal.remove_laws:
@@ -333,7 +332,8 @@ def new_proposal_change(proposal_id):
 def submit_proposal():
     form = forms.ProposalForm()
     if current_user.is_authenticated and form.validate_on_submit():
-        proposal = Proposal(description=form.description.data, poster=current_user, poster_id=current_user.id, date=func.now())
+        proposal = Proposal(description=form.description.data, poster=current_user, poster_id=current_user.id,
+                            date=func.now())
         db.session.add(proposal)
         db.session.flush()
         prop_tpc = Topic.query.filter_by(name="proposal." + str(proposal.id)).first()
@@ -427,7 +427,12 @@ def security_register_processor():
 
 @app.errorhandler(404)
 def page_not_found(error):
-    return render_template("error.html", code=404, message="The page you are looking for can't be found", current_user=current_user)
+    options = {
+        'code': 404,
+        'message': 'The page you are looking for cannot be found',
+        'current_user': current_user
+    }
+    return render_template("error.html", **options)
 
 
 @app.errorhandler(403)

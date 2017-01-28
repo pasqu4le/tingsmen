@@ -1,9 +1,6 @@
 {% extends "columned.html" %}
 {% import "macros.html" as macros %}
 
-{% block head_custom %}
-{% endblock %}
-
 {% block central_column %}
     <h1 class="page-header">Settings</h1>
     {% if messages %}
@@ -17,8 +14,4 @@
         <hr>
         {{ macros.render_field(settings_form.submit) }}
     </form>
-{% endblock %}
-
-{% block side_column %}
-
 {% endblock %}

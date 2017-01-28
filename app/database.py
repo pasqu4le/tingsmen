@@ -72,6 +72,7 @@ class Post(db.Model):
     downvotes = db.relationship('User', secondary=post_downvote, backref=db.backref('downvoted', lazy='dynamic'))
     topics = db.relationship('Topic', secondary=post_topic, backref=db.backref('posts', lazy='dynamic'))
 
+    # static method to get a list of following posts (by date) in a 'group'
     @staticmethod
     def get_more(num=5, group=None, name=None, older_than=None):
         query = Post.query
@@ -141,7 +142,8 @@ class Proposal(db.Model):
     topic_id = db.Column(db.Integer, db.ForeignKey('topic.id'))
     topic = db.relationship("Topic")
     upvotes = db.relationship('User', secondary=proposal_upvote, backref=db.backref('upvoted_prop', lazy='dynamic'))
-    downvotes = db.relationship('User', secondary=proposal_downvote, backref=db.backref('downvoted_prop', lazy='dynamic'))
+    downvotes = db.relationship('User', secondary=proposal_downvote, backref=db.backref('downvoted_prop',
+                                                                                        lazy='dynamic'))
 
     @hybrid_property
     def is_open(self):

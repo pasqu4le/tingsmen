@@ -42,7 +42,8 @@ Misaka(app, **mark_opt)
 # use sijax for ajax requests
 flask_sijax.Sijax(app)
 # Gravatar setup
-gravatar = Gravatar(app, size=150, rating='x', default='retro', force_default=False, force_lower=False, use_ssl=False, base_url=None)
+gravatar = Gravatar(app, size=150, rating='x', default='retro', force_default=False, force_lower=False, use_ssl=False,
+                    base_url=None)
 # SQLAlchemy and migration setup
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)

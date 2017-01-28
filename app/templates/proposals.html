@@ -10,9 +10,9 @@
         <h3>{{ current_status }} proposals{% if description %}: <small>{{ description }}</small>{% endif %}</h3>
     </div>
     <div id="proposals-container">
-    {% for proposal in proposals %}
-        {{ macros.render_proposal(proposal, current_user)}}
-    {% endfor %}
+        {% for proposal in proposals %}
+            {{ macros.render_proposal(proposal, current_user)}}
+        {% endfor %}
     </div>
     <div class="panel panel-info" id="load_proposals_container">
         {% if proposals %}

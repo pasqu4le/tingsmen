@@ -3,9 +3,6 @@
         <div class="navbar-header">
             <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar-collapse-1" aria-expanded="false">
                 <span class="sr-only">Toggle navigation</span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
             </button>
             <a class="navbar-brand" href="/">TINGSMEN <small>BETA</small></a>
         </div>
@@ -14,12 +11,14 @@
             <p class="nav navbar-nav navbar-left navbar-text hidden-xs hidden-sm">The democratic social network</p>
             <ul class="nav navbar-nav navbar-right">
                 <li><a href="/laws/">Laws</a></li>
-                <li><a href="/proposals/">Proposals </a></li>
+                <li><a href="/proposals/">Proposals</a></li>
                 {% if current_user.is_authenticated %}
-                <li><a href="/new-proposal/">
-                    <span class="hidden-md hidden-lg">Propose </span>
-                    <span class="glyphicon glyphicon-plus-sign"></span>
-                </a></li>
+                <li>
+                    <a href="/new-proposal/">
+                        <span class="hidden-md hidden-lg">Propose </span>
+                        <span class="glyphicon glyphicon-plus-sign"></span>
+                    </a>
+                </li>
                 <li>
                     <a href="/user/{{ current_user.username }}/">
                         <img style="float:left" class="img-rounded img-responsive" src="{{ current_user.email | gravatar(size=25) }}"> @{{ current_user.username }}
@@ -39,6 +38,6 @@
                 <li><a href="/login"><span class="glyphicon glyphicon-user"></span> Login</a></li>
                 {% endif %}
             </ul>
-        </div><!-- /.navbar-collapse -->
-    </div><!-- /.container-fluid -->
+        </div>
+    </div>
 </nav>
