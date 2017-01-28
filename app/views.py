@@ -78,6 +78,28 @@ def user(username):
     return redirect("/user/" + username + "/post/")
 
 
+@app.route('/settings/', methods=('GET', 'POST'))
+def settings():
+    if not current_user.is_authenticated:
+        return redirect('/')
+    form = forms.SettingsForm()
+    messages = []
+    if form.validate_on_submit():
+        if form.username.data:
+            current_user.username = form.username.data
+            messages.append('You username was correctly changed')
+        messages.append('Settings saved!')
+        db.session.add(current_user)
+        db.session.commit()
+    options = {
+        'title': 'settings',
+        'current_user': current_user,
+        'settings_form': form,
+        'messages': messages
+    }
+    return render_template("settings.html", **options)
+
+
 @app.route('/user/<username>/<subpage>/', methods=('GET', 'POST'))
 def user_page(username, subpage):
     # ajax request handling

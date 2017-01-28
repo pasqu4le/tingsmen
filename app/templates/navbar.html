@@ -1,24 +1,25 @@
 <nav class="navbar navbar-default navbar-inverse navbar-fixed-top">
     <div class="container">
         <div class="navbar-header">
-            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse"
-                    data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar-collapse-1" aria-expanded="false">
                 <span class="sr-only">Toggle navigation</span>
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
             </button>
             <a class="navbar-brand" href="/">TINGSMEN <small>BETA</small></a>
-
         </div>
         <!-- Collect the nav links, forms, and other content for toggling -->
-        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+        <div class="collapse navbar-collapse" id="navbar-collapse-1">
             <p class="nav navbar-nav navbar-left navbar-text hidden-xs hidden-sm">The democratic social network</p>
-
             <ul class="nav navbar-nav navbar-right">
                 <li><a href="/laws/">Laws</a></li>
-                <li><a href="/proposals/">Proposals</a></li>
+                <li><a href="/proposals/">Proposals </a></li>
                 {% if current_user.is_authenticated %}
+                <li><a href="/new-proposal/">
+                    <span class="hidden-md hidden-lg">Propose </span>
+                    <span class="glyphicon glyphicon-plus-sign"></span>
+                </a></li>
                 <li>
                     <a href="/user/{{ current_user.username }}/">
                         <img style="float:left" class="img-rounded img-responsive" src="{{ current_user.email | gravatar(size=25) }}"> @{{ current_user.username }}
@@ -29,7 +30,7 @@
                         <span class="hidden-md hidden-lg">Options </span><span class="caret"></span>
                     </a>
                     <ul class="dropdown-menu">
-                        <li><a href="#"><span class="glyphicon glyphicon-wrench"></span> Settings</a></li>
+                        <li><a href="/settings/"><span class="glyphicon glyphicon-wrench"></span> Settings</a></li>
                         <li role="separator" class="divider"></li>
                         <li><a href="/logout"><span class="glyphicon glyphicon-log-out"></span> Logout</a></li>
                     </ul>

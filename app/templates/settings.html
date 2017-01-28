@@ -1,0 +1,24 @@
+{% extends "columned.html" %}
+{% import "macros.html" as macros %}
+
+{% block head_custom %}
+{% endblock %}
+
+{% block central_column %}
+    <h1 class="page-header">Settings</h1>
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-success">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+    <form class="form" enctype="multipart/form-data" method="POST" name="settings_form" id="settings_form">
+        {{ settings_form.hidden_tag() }}
+        {{ macros.render_field(settings_form.username) }}
+        <hr>
+        {{ macros.render_field(settings_form.submit) }}
+    </form>
+{% endblock %}
+
+{% block side_column %}
+
+{% endblock %}

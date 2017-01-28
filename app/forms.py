@@ -51,6 +51,10 @@ class ProposalForm(FlaskForm):
     submit = InlineSubmitField('Submit', render_kw={'placeholder': 'Post', 'class': 'btn btn-lg btn-primary btn-block'})
 
 
+class SettingsForm(FlaskForm):
+    username = StringField('username', validators=[unique_user_email],
+                           render_kw={'placeholder': 'Username (leave blank to avoid changes)'})
+    submit = InlineSubmitField('Save', render_kw={'placeholder': 'Post', 'class': 'btn btn-lg btn-primary'})
 # ---------- custom flask-security forms
 
 
