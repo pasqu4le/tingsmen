@@ -1,9 +1,10 @@
 import flask_security
+from app.database import LawGroup
 from flask_security.forms import email_required, email_validator, unique_user_email, valid_user_email
 from flask_wtf import FlaskForm
 from flask_wtf.csrf import generate_csrf
 from werkzeug.datastructures import MultiDict
-from wtforms import StringField, PasswordField, BooleanField, TextAreaField, HiddenField, FieldList, FormField
+from wtforms import StringField, PasswordField, BooleanField, TextAreaField, HiddenField, FieldList, FormField, SelectMultipleField
 from wtforms.validators import DataRequired, EqualTo
 from wtforms.widgets.core import html_params
 from wtforms.widgets import HTMLString
@@ -39,7 +40,8 @@ class PostForm(FlaskForm):
 
 class LawForm(FlaskForm):
     content = TextAreaField(render_kw={'placeholder': 'Content', 'rows': '5'})
-    groups = StringField(render_kw={'placeholder': 'Groups'})
+    groups = SelectMultipleField(choices=[(g.name, g.name) for g in LawGroup.query.all() if g.name != 'Base'],
+                                 render_kw={'placeholder': 'Groups', 'class': 'form-control group_form'})
 
 
 class ProposalForm(FlaskForm):

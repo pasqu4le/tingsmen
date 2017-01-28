@@ -331,11 +331,12 @@ def submit_proposal():
                     db.session.add(law_tpc)
                 law.topic = law_tpc
                 law.topic_id = law_tpc.id
-                for group_name in groups.split():
-                    group = LawGroup.query.filter_by(name=group_name).first()
-                    if group:
-                        # group must exist before
-                        law.group.append(group)
+                for group_name in groups:
+                    if group_name != 'Base':
+                        group = LawGroup.query.filter_by(name=group_name).first()
+                        if group:
+                            # group must exist before
+                            law.group.append(group)
                 proposed = LawStatus.query.filter_by(name='proposed').first()
                 if proposed:
                     law.status.append(proposed)
