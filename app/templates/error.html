@@ -1,14 +1,16 @@
 {% extends "base.html" %}
+{% block head_custom %}
+    <script>
+        function goBack() {
+            window.history.back();
+        }
+    </script>
+{% endblock %}
 {% block content %}
-<script>
-    function goBack() {
-        window.history.back();
-    }
-</script>
-<div class="container top-container">
-    <div class="jumbotron">
-        <h1 class="text-center"><strong>{{ code }}</strong></h1>
-        <p class="text-center"><span class="glyphicon glyphicon-warning-sign"></span> {{ message }}, <a onclick="goBack()">go back</a>.</p>
+    <div class="container top-container">
+        <div class="jumbotron">
+            <h1 class="text-center"><strong>{{ code }}</strong></h1>
+            <p class="text-center"><span class="glyphicon glyphicon-warning-sign"></span> {{ message }}, <a onclick="goBack()">go back</a>.</p>
+        </div>
     </div>
-</div>
 {% endblock %}
