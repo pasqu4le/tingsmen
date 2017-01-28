@@ -1,0 +1,11 @@
+.top-container {
+    padding-top: 70px;
+}
+
+.main-content-text p, .main-content-text h1, .main-content-text li{
+    color: #777;
+}
+
+.main-content-text p, .main-content-text li{
+    font-size: 22px
+}
