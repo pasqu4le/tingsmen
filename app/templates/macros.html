@@ -18,9 +18,22 @@
     </div>
     <div class="list-group">
         {% for topic in topics %}
-            <a role="presentation" class="list-group-item{% if current_topic and topic == current_topic %} active{% endif %}" href="/topic/{{ topic.name }}/">#{{ topic.name }}</a>
+            <a class="list-group-item{% if current_topic and topic == current_topic %} active{% endif %}" href="/topic/{{ topic.name }}/">#{{ topic.name }}</a>
         {% endfor %}
         <a class="list-group-item list-group-item-info" href="/topics/">More topics<span class="badge">{{ more_topics_number }}</span></a>
+    </div>
+</div>
+{%- endmacro %}
+
+{% macro pages_widget(pages, current_page=None) -%}
+<div class="panel panel-default">
+    <div class="panel-heading">
+        <p class="panel-title">Read</p>
+    </div>
+    <div class="list-group">
+        {% for page in pages %}
+            <a class="list-group-item{% if current_page and page.name == current_page.name %} active{% endif %}" href="/page/{{ page.name }}/">{{ page.name }}</a>
+        {% endfor %}
     </div>
 </div>
 {%- endmacro %}

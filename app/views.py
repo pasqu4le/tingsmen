@@ -23,6 +23,7 @@ def home():
     posts = Post.get_more()
     options = {
         'title': 'Home',
+        'pages': Page.query.all(),
         'current_user': current_user,
         'posts': posts,
         'some_topics': Topic.query[:10],
@@ -32,6 +33,21 @@ def home():
         'form_init_js': form_init_js
     }
     return render_template("home.html", **options)
+
+
+@app.route('/page/<page_name>')
+def view_page(page_name):
+    # non-ajax handling:
+    current_page = Page.query.filter_by(name=page_name).first()
+    if not current_page:
+        abort(404)
+    options = {
+        'title': current_page.name,
+        'current_user': current_user,
+        'current_page': current_page,
+        'pages': Page.query.all()
+    }
+    return render_template("page.html", **options)
 
 
 @app.route('/topic/<topic_name>/', methods=('GET', 'POST'))
