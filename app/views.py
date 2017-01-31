@@ -5,6 +5,7 @@ from flask_admin.contrib import sqla
 from database import *
 import forms
 from sqlalchemy.sql import func
+from wtforms import TextAreaField
 
 
 # ---------------------------------------------- ROUTING FUNCTIONS
@@ -420,12 +421,14 @@ def subscribe(mailing_list):
 
 
 # Custom admin model view class
-class ModelView(sqla.ModelView):
+class AdminModelView(sqla.ModelView):
+    form_overrides = {
+        'description': TextAreaField,
+        'content': TextAreaField,
+    }
 
     def is_accessible(self):
-        if not current_user.is_active or not current_user.is_authenticated:
-            return False
-        if current_user.has_role('admin'):
+        if current_user.is_active and current_user.is_authenticated and current_user.has_role('admin'):
             return True
         return False
 

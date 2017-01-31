@@ -66,17 +66,17 @@ from app import views
 
 # Admin setup
 admin = Admin(app, name='Tingsmen', template_mode='bootstrap3')
-admin.add_view(views.ModelView(database.Globals, db.session))
-admin.add_view(views.ModelView(database.Page, db.session))
-admin.add_view(views.ModelView(database.MailingList, db.session))
-admin.add_view(views.ModelView(database.User, db.session))
-admin.add_view(views.ModelView(database.Role, db.session))
-admin.add_view(views.ModelView(database.Post, db.session))
-admin.add_view(views.ModelView(database.Topic, db.session))
-admin.add_view(views.ModelView(database.Proposal, db.session))
-admin.add_view(views.ModelView(database.Law, db.session))
-admin.add_view(views.ModelView(database.LawStatus, db.session))
-admin.add_view(views.ModelView(database.LawGroup, db.session))
+admin.add_view(views.AdminModelView(database.Globals, db.session))
+admin.add_view(views.AdminModelView(database.Page, db.session))
+admin.add_view(views.AdminModelView(database.MailingList, db.session))
+admin.add_view(views.AdminModelView(database.User, db.session))
+admin.add_view(views.AdminModelView(database.Role, db.session))
+admin.add_view(views.AdminModelView(database.Post, db.session))
+admin.add_view(views.AdminModelView(database.Topic, db.session))
+admin.add_view(views.AdminModelView(database.Proposal, db.session))
+admin.add_view(views.AdminModelView(database.Law, db.session))
+admin.add_view(views.AdminModelView(database.LawStatus, db.session))
+admin.add_view(views.AdminModelView(database.LawGroup, db.session))
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
