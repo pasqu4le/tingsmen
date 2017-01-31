@@ -181,34 +181,58 @@ class Proposal(db.Model):
         return self.points() < 0
 
     def confirmed(self):
-        proposed = LawStatus.query.filter_by(name='proposed').first()
-        approved = LawStatus.query.filter_by(name='approved').first()
-        removed = LawStatus.query.filter_by(name='removed').first()
-        # check that all statuses do exist
-        if proposed and approved and removed:
-            for law in self.add_laws:
-                if proposed in law.status or approved not in law.status:
-                    return False
-            for law in self.remove_laws:
-                if removed not in law.status:
-                    return False
-        return True
+        if self.approved():
+            proposed = LawStatus.query.filter_by(name='proposed').first()
+            approved = LawStatus.query.filter_by(name='approved').first()
+            removed = LawStatus.query.filter_by(name='removed').first()
+            # check that all statuses do exist
+            if proposed and approved and removed:
+                for law in self.add_laws:
+                    if proposed in law.status or approved not in law.status:
+                        return False
+                for law in self.remove_laws:
+                    if removed not in law.status:
+                        return False
+                return True
+        elif self.rejected():
+            proposed = LawStatus.query.filter_by(name='proposed').first()
+            rejected = LawStatus.query.filter_by(name='rejected').first()
+            # check that all statuses do exist
+            if proposed and rejected:
+                for law in self.add_laws:
+                    if proposed in law.status or rejected not in law.status:
+                        return False
+                return True
+        # if anything went wrong or the proposal is open:
+        return False
 
     def confirm(self):
         # method to set all laws statuses in this proposal correctly
-        proposed = LawStatus.query.filter_by(name='proposed').first()
-        approved = LawStatus.query.filter_by(name='approved').first()
-        removed = LawStatus.query.filter_by(name='removed').first()
-        # check that all statuses do exist
-        if proposed and approved and removed:
-            for law in self.add_laws:
-                if proposed in law.status:
-                    law.status.remove(proposed)
-                if approved not in law.status:
-                    law.status.append(approved)
-            for law in self.remove_laws:
-                law.status = [removed]
-            db.session.commit()
+        if self.approved():
+            proposed = LawStatus.query.filter_by(name='proposed').first()
+            approved = LawStatus.query.filter_by(name='approved').first()
+            removed = LawStatus.query.filter_by(name='removed').first()
+            # check that all statuses do exist
+            if proposed and approved and removed:
+                for law in self.add_laws:
+                    if proposed in law.status:
+                        law.status.remove(proposed)
+                    if approved not in law.status:
+                        law.status.append(approved)
+                for law in self.remove_laws:
+                    law.status = [removed]
+        elif self.rejected():
+            proposed = LawStatus.query.filter_by(name='proposed').first()
+            rejected = LawStatus.query.filter_by(name='rejected').first()
+            # check that all statuses do exist
+            if proposed and rejected:
+                for law in self.add_laws:
+                    if proposed in law.status:
+                        law.status.remove(proposed)
+                    if rejected not in law.status:
+                        law.status.append(rejected)
+        # commit the changes at the end
+        db.session.commit()
 
     def points(self):
         return len(self.upvotes) - len(self.downvotes)
