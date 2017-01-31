@@ -149,8 +149,11 @@
                 {% if current_user.has_role('admin') and not proposal.confirmed() %}
                     <button class="btn btn-link" href="javascript://" onclick="Sijax.request('confirm_proposal', ['{{ proposal.id}}']);">Confirm</button>
                 {% endif %}
+
                 {% if comment_here %}
                     <a class="btn btn-link collapser" data-autofill='{"destination":"#proposal-{{ proposal.id }}_form_space","topics":"#{{ proposal.topic.name }}"}'><span class="glyphicon glyphicon-share-alt"></span> comment</a>
+                {% else %}
+                    <a class="btn btn-link collapser" href="/proposal/{{ proposal.id }}/"><span class="glyphicon glyphicon-share-alt"></span> comment</a>
                 {% endif %}
             </div>
         </div>
