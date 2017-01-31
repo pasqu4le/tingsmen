@@ -240,7 +240,7 @@
             </div>
             <div class="col-md-10 col-xs-9">
                 <div class="row">
-                    <p class="lead text-info col-xs-5"><a href="/user/{{ post.poster.username }}/"> –@{{ post.poster.username }}</a></p>
+                    <p class="lead text-info col-xs-5"><a href="/user/{{ post.poster.username }}/"> –@{{ post.poster.username }}</a>{% if post.poster.roles %}<small> {% for role in post.poster.roles %}<span class="label label-primary">{{ role.name }}</span>{% endfor %}</small>{% endif%}</p>
                     <a href="/post/{{ post.id }}/" class="col-xs-7 text-right text-muted">{{ post.date.year }}-{{ post.date.month }}-{{ post.date.day }} {{ post.date.hour }}:{{ post.date.minute }} <span class="glyphicon glyphicon-link"></span></a>
                 </div>
                 <div class="main-content-text">{{ post.content|markdown }}</div>
