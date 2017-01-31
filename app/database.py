@@ -21,6 +21,17 @@ class Globals(db.Model):
     def __repr__(self):
         return self.key
 
+
+class Page(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(20), unique=True)
+    title = db.Column(db.String(50))
+    content = db.Column(db.String(1000))
+
+    def __repr__(self):
+        return self.name
+
+
 roles_users = db.Table('roles_users',
                        db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
                        db.Column('role_id', db.Integer(), db.ForeignKey('role.id')))

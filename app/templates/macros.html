@@ -18,9 +18,22 @@
     </div>
     <div class="list-group">
         {% for topic in topics %}
-            <a role="presentation" class="list-group-item{% if current_topic and topic == current_topic %} active{% endif %}" href="/topic/{{ topic.name }}/">#{{ topic.name }}</a>
+            <a class="list-group-item{% if current_topic and topic == current_topic %} active{% endif %}" href="/topic/{{ topic.name }}/">#{{ topic.name }}</a>
         {% endfor %}
         <a class="list-group-item list-group-item-info" href="/topics/">More topics<span class="badge">{{ more_topics_number }}</span></a>
+    </div>
+</div>
+{%- endmacro %}
+
+{% macro pages_widget(pages, current_page=None) -%}
+<div class="panel panel-default">
+    <div class="panel-heading">
+        <p class="panel-title">Read</p>
+    </div>
+    <div class="list-group">
+        {% for page in pages %}
+            <a class="list-group-item{% if current_page and page.name == current_page.name %} active{% endif %}" href="/page/{{ page.name }}/">{{ page.name }}</a>
+        {% endfor %}
     </div>
 </div>
 {%- endmacro %}
@@ -136,8 +149,11 @@
                 {% if current_user.has_role('admin') and not proposal.confirmed() %}
                     <button class="btn btn-link" href="javascript://" onclick="Sijax.request('confirm_proposal', ['{{ proposal.id}}']);">Confirm</button>
                 {% endif %}
+
                 {% if comment_here %}
                     <a class="btn btn-link collapser" data-autofill='{"destination":"#proposal-{{ proposal.id }}_form_space","topics":"#{{ proposal.topic.name }}"}'><span class="glyphicon glyphicon-share-alt"></span> comment</a>
+                {% else %}
+                    <a class="btn btn-link collapser" href="/proposal/{{ proposal.id }}/"><span class="glyphicon glyphicon-share-alt"></span> comment</a>
                 {% endif %}
             </div>
         </div>
@@ -227,7 +243,7 @@
             </div>
             <div class="col-md-10 col-xs-9">
                 <div class="row">
-                    <p class="lead text-info col-xs-5"><a href="/user/{{ post.poster.username }}/"> –@{{ post.poster.username }}</a></p>
+                    <p class="lead text-info col-xs-5"><a href="/user/{{ post.poster.username }}/"> –@{{ post.poster.username }}</a>{% if post.poster.roles %}<small> {% for role in post.poster.roles %}<span class="label label-primary">{{ role.name }}</span>{% endfor %}</small>{% endif%}</p>
                     <a href="/post/{{ post.id }}/" class="col-xs-7 text-right text-muted">{{ post.date.year }}-{{ post.date.month }}-{{ post.date.day }} {{ post.date.hour }}:{{ post.date.minute }} <span class="glyphicon glyphicon-link"></span></a>
                 </div>
                 <div class="main-content-text">{{ post.content|markdown }}</div>

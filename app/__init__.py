@@ -67,6 +67,7 @@ from app import views
 # Admin setup
 admin = Admin(app, name='Tingsmen', template_mode='bootstrap3')
 admin.add_view(views.ModelView(database.Globals, db.session))
+admin.add_view(views.ModelView(database.Page, db.session))
 admin.add_view(views.ModelView(database.MailingList, db.session))
 admin.add_view(views.ModelView(database.User, db.session))
 admin.add_view(views.ModelView(database.Role, db.session))

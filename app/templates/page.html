@@ -1,0 +1,11 @@
+{% extends "columned.html" %}
+{% import "macros.html" as macros %}
+
+{% block central_column %}
+    <h1 class="page-header">{{ current_page.title }}</h1>
+    <div class="main-content-text">{{ current_page.content|markdown }}</div>
+{% endblock %}
+
+{% block side_column %}
+    {{ macros.pages_widget(pages, current_page) }}
+{% endblock %}

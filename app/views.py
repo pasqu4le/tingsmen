@@ -23,6 +23,7 @@ def home():
     posts = Post.get_more()
     options = {
         'title': 'Home',
+        'pages': Page.query.all(),
         'current_user': current_user,
         'posts': posts,
         'some_topics': Topic.query[:10],
@@ -32,6 +33,21 @@ def home():
         'form_init_js': form_init_js
     }
     return render_template("home.html", **options)
+
+
+@app.route('/page/<page_name>')
+def view_page(page_name):
+    # non-ajax handling:
+    current_page = Page.query.filter_by(name=page_name).first()
+    if not current_page:
+        abort(404)
+    options = {
+        'title': current_page.name,
+        'current_user': current_user,
+        'current_page': current_page,
+        'pages': Page.query.all()
+    }
+    return render_template("page.html", **options)
 
 
 @app.route('/topic/<topic_name>/', methods=('GET', 'POST'))
@@ -49,6 +65,7 @@ def topic(topic_name):
     posts = Post.get_more(group='topic', name=topic_name)
     options = {
         'title': '#' + current_topic.name,
+        'pages': Page.query.all(),
         'current_user': current_user,
         'current_topic': current_topic,
         'posts': posts,
@@ -66,6 +83,7 @@ def topics():
     topic_list = Topic.query.all()
     options = {
         'title': 'Topics',
+        'pages': Page.query.all(),
         'topic_list': topic_list,
         'current_user': current_user,
     }
@@ -92,6 +110,7 @@ def settings():
         db.session.commit()
     options = {
         'title': 'settings',
+        'pages': Page.query.all(),
         'current_user': current_user,
         'settings_form': form,
         'messages': messages
@@ -123,6 +142,7 @@ def user_page(username, subpage):
         group = 'downvotes'
     options = {
         'title': main_user.username,
+        'pages': Page.query.all(),
         'current_user': current_user,
         'user': main_user,
         'posts': posts,
@@ -155,6 +175,7 @@ def view_post(post_id):
             old_parent = old_parent.parent
     options = {
         'title': 'Post',
+        'pages': Page.query.all(),
         'current_user': current_user,
         'main_post': main_post,
         'old_parent': old_parent,
@@ -184,6 +205,7 @@ def view_proposal(proposal_id):
         abort(404)
     options = {
         'title': 'Proposal',
+        'pages': Page.query.all(),
         'current_user': current_user,
         'proposal': proposal,
         'statuses': ['all', 'open'],
@@ -217,6 +239,7 @@ def proposal_status(status):
         proposals = Proposal.get_more()
     options = {
         'title': ' '.join([status, 'proposals']),
+        'pages': Page.query.all(),
         'current_user': current_user,
         'statuses': ['all', 'open'],
         'current_status': status,
@@ -240,6 +263,7 @@ def view_law(law_id):
         abort(404)
     options = {
         'title': 'Law',
+        'pages': Page.query.all(),
         'current_user': current_user,
         'law': law,
         'posts': Post.get_more(group='topic', name=law.topic.name),
@@ -269,6 +293,7 @@ def law_group_status(group_name, status_name):
         abort(404)
     options = {
         'title': ' '.join([group_name, 'laws -', status_name]),
+        'pages': Page.query.all(),
         'current_user': current_user,
         'group': group,
         'laws': Law.get_more(group_name=group_name, status_name=status_name),
@@ -295,6 +320,7 @@ def law_status(status_name):
         abort(404)
     options = {
         'title': ' '.join([status_name, 'laws']),
+        'pages': Page.query.all(),
         'current_user': current_user,
         'current_status': current_status,
         'laws': Law.get_more(status_name=status_name),
@@ -377,6 +403,8 @@ def submit_proposal():
 
 def new_proposal(form):
     options = {
+        'title': 'propose',
+        'pages': Page.query.all(),
         'current_user': current_user,
         'proposal_form': form
     }
@@ -412,7 +440,7 @@ class ModelView(sqla.ModelView):
                 return redirect(url_for('security.login', next=request.url))
 
 
-# ---------------------------------------------- SECURITY CONTECT PROCESSORS
+# ---------------------------------------------- SECURITY CONTEXT PROCESSORS
 
 @security.register_context_processor
 def security_register_processor():
@@ -429,6 +457,7 @@ def security_register_processor():
 def page_not_found(error):
     options = {
         'code': 404,
+        'pages': Page.query.all(),
         'message': 'The page you are looking for cannot be found',
         'current_user': current_user
     }
@@ -437,7 +466,13 @@ def page_not_found(error):
 
 @app.errorhandler(403)
 def permission_denied(error):
-    return render_template("error.html", code=403, message="Access forbidden", current_user=current_user)
+    options = {
+        'code': 403,
+        'pages': Page.query.all(),
+        'message': 'Access forbidden',
+        'current_user': current_user
+    }
+    return render_template("error.html", **options)
 
 
 # ---------------------------------------------- SIJAX FUNCTIONS

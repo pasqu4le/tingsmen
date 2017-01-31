@@ -1,8 +1,9 @@
 <nav class="navbar navbar-default navbar-inverse navbar-fixed-top">
     <div class="container">
         <div class="navbar-header">
-            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar-collapse-1" aria-expanded="false">
+            <button type="button" class="navbar-toggle btn-primary collapsed" data-toggle="collapse" data-target="#navbar-collapse-1" aria-expanded="false">
                 <span class="sr-only">Toggle navigation</span>
+                <span class="glyphicon glyphicon-menu-hamburger"></span>
             </button>
             <a class="navbar-brand" href="/">TINGSMEN <small>BETA</small></a>
         </div>
@@ -10,6 +11,18 @@
         <div class="collapse navbar-collapse" id="navbar-collapse-1">
             <p class="nav navbar-nav navbar-left navbar-text hidden-xs hidden-sm">The democratic social network</p>
             <ul class="nav navbar-nav navbar-right">
+                {% if pages %}
+                    <li class="dropdown">
+                        <a class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+                            <span>About </span><span class="caret"></span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            {% for page in pages %}
+                                <li><a href="/page/{{ page.name }}">{{ page.name }}</a></li>
+                            {% endfor %}
+                        </ul>
+                    </li>
+                {% endif %}
                 <li><a href="/laws/">Laws</a></li>
                 <li><a href="/proposals/">Proposals</a></li>
                 {% if current_user.is_authenticated %}
