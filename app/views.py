@@ -363,6 +363,7 @@ def submit_proposal():
                             date=func.now())
         db.session.add(proposal)
         db.session.flush()
+        proposal.set_vote_day()
         prop_tpc = Topic.query.filter_by(name="proposal." + str(proposal.id)).first()
         if not prop_tpc:
             prop_tpc = Topic(name="proposal." + str(proposal.id))
