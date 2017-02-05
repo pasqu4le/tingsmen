@@ -1,7 +1,8 @@
 from app import db
-from datetime import datetime
+from datetime import datetime, timedelta, date
 from flask_security import UserMixin, RoleMixin
 from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy import func
 
 
 class MailingList(db.Model):
@@ -148,6 +149,7 @@ class Proposal(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     description = db.Column(db.String(2000))
     date = db.Column(db.DateTime())
+    vote_day = db.Column(db.Date())
     poster_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     poster = db.relationship("User", backref=db.backref('proposals', lazy='dynamic'))
     topic_id = db.Column(db.Integer, db.ForeignKey('topic.id'))
@@ -156,14 +158,12 @@ class Proposal(db.Model):
     downvotes = db.relationship('User', secondary=proposal_downvote, backref=db.backref('downvoted_prop',
                                                                                         lazy='dynamic'))
 
+    def set_vote_day(self):
+        self.vote_day = self.date.date() + timedelta(days=7-self.date.weekday())
+
     @hybrid_property
     def is_open(self):
-        today = datetime.today()
-        if today.weekday() == 0:
-            window = today - self.date
-            if window.days <= 6:
-                return True
-        return False
+        return date.today() == self.vote_day
 
     @staticmethod
     def get_more(num=5, open=False, older_than=None):
