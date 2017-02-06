@@ -22,7 +22,7 @@ $(document).ready(function() {
         $('#remove-law-container').children().last().clone().appendTo('#remove-law-container')
         nw = $('#remove-law-container').children().last()
         // get the progressive number in his id
-        rn = nw.children().first().children().first().attr("id").match(/\d+/);
+        rn = nw.children().first().children().last().children().first().children().first().attr("id").match(/\d+/);
         rn = rn * 1 + 1
         // set next number his input's attributes
         nw.find('input').each(function(){

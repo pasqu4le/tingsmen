@@ -165,11 +165,17 @@ class Proposal(db.Model):
     def is_open(self):
         return date.today() == self.vote_day
 
+    @hybrid_property
+    def is_pending(self):
+        return date.today() < self.vote_day
+
     @staticmethod
-    def get_more(num=5, open=False, older_than=None):
+    def get_more(num=5, open=False, pending=False, older_than=None):
         query = Proposal.query
         if open:
             query = query.filter_by(is_open=True)
+        if pending:
+            query = query.filter_by(is_pending=True)
         if older_than:
             query = query.filter(Proposal.date < older_than)
         return query.order_by(Proposal.date.desc())[:num]

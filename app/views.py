@@ -219,7 +219,7 @@ def view_proposal(proposal_id):
         'pages': Page.query.all(),
         'current_user': current_user,
         'proposal': proposal,
-        'statuses': ['all', 'open'],
+        'statuses': ['all', 'open', 'pending'],
         'posts': Post.get_more(group='topic', name=proposal.topic.name),
         'topics_all': Topic.query.all(),
         'submit_post_form': forms.PostForm(),
@@ -230,7 +230,10 @@ def view_proposal(proposal_id):
 
 @app.route('/proposals/')
 def view_proposals():
-    return redirect("/proposals/open/")
+    # show open proposals if there is at least one
+    if Proposal.query.filter_by(is_open=True).count():
+        return redirect("/proposals/open/")
+    return redirect("/proposals/pending/")
 
 
 @app.route('/proposals/<status>/', methods=('GET', 'POST'))
@@ -243,16 +246,20 @@ def proposal_status(status):
         return g.sijax.process_request()
     # non-ajax handling:
     proposals = []
-    description = 'here is one'
+    description = None
     if status == 'open':
         proposals = Proposal.get_more(open=True)
+        description = 'can be voted today'
+    if status == 'pending':
+        proposals = Proposal.get_more(pending=True)
+        description = 'waiting for their vote day'
     elif status == 'all':
         proposals = Proposal.get_more()
     options = {
         'title': ' '.join([status, 'proposals']),
         'pages': Page.query.all(),
         'current_user': current_user,
-        'statuses': ['all', 'open'],
+        'statuses': ['all', 'open', 'pending'],
         'current_status': status,
         'proposals': proposals,
         'description': description
@@ -593,13 +600,14 @@ def load_more_laws(obj_response, group_name, status_name, older_than):
         obj_response.html('#load_laws_container', more_laws_panel(group_name, status_name, None).unescape())
 
 
-def load_more_proposals(obj_response, open, older_than):
-    proposals = Proposal.get_more(open=open, older_than=older_than)
+def load_more_proposals(obj_response, open, pending, older_than):
+    proposals = Proposal.get_more(open=open, pending=pending, older_than=older_than)
     render_proposal = get_template_attribute('macros.html', 'render_proposal')
     more_proposals_panel = get_template_attribute('macros.html', 'more_proposals_panel')
     if proposals:
         for proposal in proposals:
             obj_response.html_append('#proposals-container', render_proposal(proposal, current_user).unescape())
-        obj_response.html('#load_proposals_container', more_proposals_panel(open, proposals[-1].date).unescape())
+        obj_response.html('#load_proposals_container',
+                          more_proposals_panel(proposals[-1].date, open=open, pending=pending).unescape())
     else:
-        obj_response.html('#load_proposals_container', more_proposals_panel(open, None).unescape())
+        obj_response.html('#load_proposals_container', more_proposals_panel(None).unescape())
