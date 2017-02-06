@@ -13,7 +13,12 @@ from wtforms import TextAreaField
 def home():
     # not allowed user handling:
     if not current_user.is_authenticated:
-        return render_template("index.html", title="Welcome")
+        options = {
+            'title': 'Welcome',
+            'pages': Page.query.all(),
+            'current_user': current_user,
+        }
+        return render_template("index.html", **options)
     # ajax request handling
     form_init_js = g.sijax.register_upload_callback('post_form', submit_post)
     if g.sijax.is_sijax_request:
@@ -41,7 +46,7 @@ def cookie_policy():
     return render_template("cookies.html", title='Cookie policy')
 
 
-@app.route('/page/<page_name>')
+@app.route('/page/<page_name>/')
 def view_page(page_name):
     # non-ajax handling:
     current_page = Page.query.filter_by(name=page_name).first()
