@@ -36,6 +36,11 @@ def home():
     return render_template("home.html", **options)
 
 
+@app.route('/cookies/')
+def cookie_policy():
+    return render_template("cookies.html", title='Cookie policy')
+
+
 @app.route('/page/<page_name>')
 def view_page(page_name):
     # non-ajax handling:
