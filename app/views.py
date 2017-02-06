@@ -567,6 +567,8 @@ def submit_post(obj_response, files, form_values):
         form.reset()
     render_post_form = get_template_attribute('macros.html', 'render_post_form')
     obj_response.html('#collapsable_post_form', render_post_form(form, current_user).unescape())
+    # register again the sijax upload plugin
+    obj_response.script('sjxUpload.registerForm({"callback": "post_form_upload", "formId": "post_form"});')
 
 
 def load_more_laws(obj_response, group_name, status_name, older_than):
