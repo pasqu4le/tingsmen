@@ -90,9 +90,9 @@
                 <p class="lead col-xs-7">
                     <a href="/proposal/{{ proposal.id }}/">Proposal n. {{ proposal.id }}</a>, by <a href="/user/{{ proposal.poster.username }}/">@{{ proposal.poster.username }}</a>
                 </p>
-                <a href="/proposal/{{ proposal.id }}/" class="col-xs-5 text-right text-muted">{{ proposal.date.year }}-{{ proposal.date.month }}-{{ proposal.date.day }} {{ proposal.date.hour }}:{{ proposal.date.minute }} <span class="glyphicon glyphicon-link"></span></a>
+                <a href="/proposal/{{ proposal.id }}/" class="col-xs-5 text-right text-muted">{{ render_date(proposal.date) }}</a>
             </div>
-            <div class="main-content-text">{{ proposal.description|markdown }}</div>
+            <div class="text-muted lead">{{ proposal.description|markdown }}</div>
             <hr>
             <div class="row">
                 <div class="col-md-6">
@@ -109,7 +109,7 @@
                 </div>
             </div>
             {% if proposal.is_pending %}
-                <div class="alert alert-info">This proposal is pending, will be voted on {{ proposal.vote_day.year }}-{{ proposal.vote_day.month }}-{{ proposal.vote_day.day }}</div>
+                <div class="alert alert-info">This proposal is pending, will be voted on the {{ render_literal_date(proposal.vote_day) }}</div>
             {% endif %}
         </div>
         <div class="panel-footer btn-group btn-group-justified">
@@ -177,7 +177,7 @@
             </div>
         </div>
         <div class="panel-body">
-            <div class="main-content-text">{{ law.content|markdown }}</div>
+            <div class="text-muted lead">{{ law.content|markdown }}</div>
         </div>
         {% if actions_footer %}
             <div class="panel-footer btn-group btn-group-justified">
@@ -217,7 +217,7 @@
     <div class="panel panel-default">
         <div class="row panel-body">
             <div class="col-md-2 col-xs-3">
-                <img class="img-rounded img-responsive center-block" src="{{ post.poster.email | gravatar }}">
+                <a href="/user/{{ post.poster.username }}/"><img class="img-rounded img-responsive center-block" src="{{ post.poster.email | gravatar }}"></a>
                 <p></p>
                 {# render vote form #}
                 <div class="btn-group-vertical btn-block">
@@ -247,25 +247,101 @@
             <div class="col-md-10 col-xs-9">
                 <div class="row">
                     <p class="lead text-info col-xs-5"><a href="/user/{{ post.poster.username }}/"> –@{{ post.poster.username }}</a>{% if post.poster.roles %}<small> {% for role in post.poster.roles %}<span class="label label-primary">{{ role.name }}</span>{% endfor %}</small>{% endif%}</p>
-                    <a href="/post/{{ post.id }}/" class="col-xs-7 text-right text-muted">{{ post.date.year }}-{{ post.date.month }}-{{ post.date.day }} {{ post.date.hour }}:{{ post.date.minute }} <span class="glyphicon glyphicon-link"></span></a>
+                    <a href="/post/{{ post.id }}/" class="col-xs-7 text-right text-muted">{{ render_date(post.date) }}</a>
                 </div>
-                <div class="main-content-text">{{ post.content|markdown }}</div>
+                <div class="text-muted lead">{{ post.content|markdown }}</div>
             </div>
         </div>
         <div class="panel-footer">
             <div class="row">
-                <div class="col-md-10 col-xs-8">
+                <div class="col-md-7 col-xs-5">
                     <span class="glyphicon glyphicon-tags"></span> -{% for topic in post.topics %}
                     <a href="/topic/{{ topic.name }}/"> #{{ topic.name }}</a>{% endfor %}
                 </div>
-                <div class="col-md-2 col-xs-4">
-                    <button class="collapser btn btn-primary btn-block" data-autofill='{"destination":"#post-{{ post.id }}_form_space","id":{{ post.id }},"topics":"{% for topic in post.topics %}#{{topic.name}} {% endfor %}"}'><span class="glyphicon glyphicon-share-alt"></span> reply</button>
+                <div class="col-md-5 col-xs-7">
+                    <div class="btn-group pull-right">
+                        <a class="btn btn-info" href="javascript://" onclick="Sijax.request('load_comments', ['{{ post.id }}', 1]);" id="load_comment_button_{{ post.id }}">
+                            <span class="badge">{{ post.children | count }}</span> <span class="hidden-xs hidden-sm">comments </span><span class="glyphicon glyphicon-comment"></span>
+                        </a>
+                        <button class="collapser btn btn-primary" data-autofill='{"destination":"#post-{{ post.id }}-comments","id":{{ post.id }},"topics":"{% for topic in post.topics %}#{{topic.name}} {% endfor %}"}'><span class="glyphicon glyphicon-share-alt"></span> reply</button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-    <div id="post-{{ post.id }}_form_space"></div>
+    <div class="post-comments comment_dep_2" id="post-{{ post.id }}-comments"></div>
 </div>
+{%- endmacro %}
+
+{% macro render_comment(post, current_user, depth=0) -%}
+<div id="post-{{ post.id }}">
+    <div class="panel panel-default">
+        <div class="row panel-body">
+            <div class="col-md-2 col-xs-3">
+                <a href="/user/{{ post.poster.username }}/"><img class="img-rounded img-responsive center-block" src="{{ post.poster.email | gravatar }}"></a>
+            </div>
+            <div class="col-md-10 col-xs-9">
+                <p class="text-info"><a href="/user/{{ post.poster.username }}/"> –@{{ post.poster.username }}</a>{% if post.poster.roles %}<small> {% for role in post.poster.roles %}<span class="label label-primary">{{ role.name }}</span>{% endfor %}</small>{% endif%}</p>
+                <div class="text-muted lead">{{ post.content|markdown }}</div>
+                <div>
+                    <span class="glyphicon glyphicon-tags"></span> -{% for topic in post.topics %}
+                    <a href="/topic/{{ topic.name }}/"> #{{ topic.name }}</a>{% endfor %}
+                </div>
+                <hr>
+                <div class="btn-group btn-group-justified">
+                    <div class="btn-group">
+                        <a href="/post/{{ post.id }}/" class="text-muted">{{ render_date(post.date) }}</a>
+                    </div>
+                    {# render vote form #}
+                    <div class="btn-group text-center">
+                        {% if current_user.is_authenticated %}
+                            <a href="javascript://" onclick="Sijax.request('vote_post', ['{{ post.id}}', true]);">
+                                <span class="glyphicon glyphicon-thumbs-up"></span>
+                            </a>
+                            •
+                            <a class="disabled">
+                                <strong class="{{ post.current_vote_style(current_user) }}" id="post_vote_{{ post.id }}">{{ post.points()}}</strong>
+                            </a>
+                            •
+                            <a href="javascript://" onclick="Sijax.request('vote_post', ['{{ post.id}}', false]);">
+                                <span class="glyphicon glyphicon-thumbs-down"></span>
+                            </a>
+                        {% else %}
+                            <a href="/login">
+                                <span class="glyphicon glyphicon-thumbs-up"></span>
+                            </a>
+                            •
+                            <a class="disabled">
+                                <strong>{{ post.points()}}</strong>
+                            </a>
+                            •
+                            <a href="/login">
+                                <span class="glyphicon glyphicon-thumbs-down"></span>
+                            </a>
+                        {% endif %}
+                    </div>
+                    <div class="btn-group">
+                        <a class="btn btn-link" href="javascript://" onclick="Sijax.request('load_comments', ['{{ post.id }}', {{ depth + 1 }}]);" id="load_comment_button_{{ post.id }}">
+                            <span class="badge">{{ post.children | count }}</span> <span class="glyphicon glyphicon-comment"></span>
+                        </a>
+                    </div>
+                    <div class="btn-group text-right">
+                        <a class="btn btn-link collapser" href="javascript://" data-autofill='{"destination":"#post-{{ post.id }}-comments","id":{{ post.id }},"topics":"{% for topic in post.topics %}#{{topic.name}} {% endfor %}"}'><span class="glyphicon glyphicon-share-alt"></span> reply</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="post-comments comment_dep_{{ depth + 1 }}" id="post-{{ post.id }}-comments"></div>
+</div>
+{%- endmacro %}
+
+{% macro render_date(date) -%}
+<span class="glyphicon glyphicon-link"></span> {{ date.year }}-{{ date.month }}-{{ date.day }}<span class="hidden-xs hidden-sm"> {{ date.hour }}:{{ date.minute }}</span>
+{%- endmacro %}
+
+{% macro render_literal_date(date) -%}
+{{ date.day }}{% if date.day == 1 %}st{% elif date.day == 2 %}nd{% elif date.day == 3 %}rd{%else%}th{% endif %} {{ date.strftime("%B") }} {{ date.year }}
 {%- endmacro %}
 
 {% macro render_field(field, label_visible=false) -%}
@@ -364,10 +440,10 @@
         </div>
     </div>
     <div class="row">
-        <div class="col-md-10 col-xs-8">
+        <div class="col-lg-10 col-sm-9 col-xs-7">
             {{ render_field(submit_post_form.topics) }}
         </div>
-        <div class="col-md-2 col-xs-4">
+        <div class="col-lg-2 col-sm-3 col-xs-5">
             {{ render_field(submit_post_form.submit) }}
         </div>
     </div>

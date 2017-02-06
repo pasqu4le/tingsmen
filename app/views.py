@@ -23,6 +23,7 @@ def home():
     form_init_js = g.sijax.register_upload_callback('post_form', submit_post)
     if g.sijax.is_sijax_request:
         g.sijax.register_callback('load_more_posts', load_more_posts)
+        g.sijax.register_callback('load_comments', load_comments)
         g.sijax.register_callback('vote_post', vote_post)
         return g.sijax.process_request()
     # non-ajax handling:
@@ -67,6 +68,7 @@ def topic(topic_name):
     form_init_js = g.sijax.register_upload_callback('post_form', submit_post)
     if g.sijax.is_sijax_request:
         g.sijax.register_callback('load_more_posts', load_more_posts)
+        g.sijax.register_callback('load_comments', load_comments)
         g.sijax.register_callback('vote_post', vote_post)
         return g.sijax.process_request()
     # non-ajax handling:
@@ -135,6 +137,7 @@ def user_page(username, subpage):
     form_init_js = g.sijax.register_upload_callback('post_form', submit_post)
     if g.sijax.is_sijax_request:
         g.sijax.register_callback('load_more_posts', load_more_posts)
+        g.sijax.register_callback('load_comments', load_comments)
         g.sijax.register_callback('vote_post', vote_post)
         return g.sijax.process_request()
     # non-ajax handling:
@@ -172,6 +175,7 @@ def view_post(post_id):
     # ajax request handling
     form_init_js = g.sijax.register_upload_callback('post_form', submit_post)
     if g.sijax.is_sijax_request:
+        g.sijax.register_callback('load_comments', load_comments)
         g.sijax.register_callback('vote_post', vote_post)
         return g.sijax.process_request()
     # non-ajax handling:
@@ -206,6 +210,7 @@ def view_proposal(proposal_id):
     form_init_js = g.sijax.register_upload_callback('post_form', submit_post)
     if g.sijax.is_sijax_request:
         g.sijax.register_callback('load_more_posts', load_more_posts)
+        g.sijax.register_callback('load_comments', load_comments)
         g.sijax.register_callback('vote_post', vote_post)
         g.sijax.register_callback('vote_proposal', vote_proposal)
         g.sijax.register_callback('confirm_proposal', confirm_proposal)
@@ -273,6 +278,7 @@ def view_law(law_id):
     form_init_js = g.sijax.register_upload_callback('post_form', submit_post)
     if g.sijax.is_sijax_request:
         g.sijax.register_callback('load_more_posts', load_more_posts)
+        g.sijax.register_callback('load_comments', load_comments)
         g.sijax.register_callback('vote_post', vote_post)
         return g.sijax.process_request()
     # non-ajax handling:
@@ -577,15 +583,30 @@ def submit_post(obj_response, files, form_values):
             post.topics.append(tpc)
         db.session.add(post)
         db.session.commit()
-        render_post = get_template_attribute('macros.html', 'render_post')
-        obj_response.html_prepend('#post-container', render_post(post, current_user).unescape())
+        if form.parent_id.data:
+            render_comment = get_template_attribute('macros.html', 'render_comment')
+            obj_response.html_prepend(''.join(['#post-', form.parent_id.data, '-comments']),
+                                      render_comment(post, current_user).unescape())
+        else:
+            render_post = get_template_attribute('macros.html', 'render_post')
+            obj_response.html_prepend('#post-container', render_post(post, current_user).unescape())
         obj_response.script("$('#collapsable_post_form').collapse('hide');")
-        obj_response.script("$('html, body').animate({ scrollTop: $('#post-%s').position().top }, 500);" % str(post.id))
         form.reset()
     render_post_form = get_template_attribute('macros.html', 'render_post_form')
     obj_response.html('#collapsable_post_form', render_post_form(form, current_user).unescape())
     # register again the sijax upload plugin
     obj_response.script('sjxUpload.registerForm({"callback": "post_form_upload", "formId": "post_form"});')
+
+
+def load_comments(obj_response, post_id, depth):
+    comments = Post.query.filter_by(id=post_id).first().children
+    if comments:
+        render_comment = get_template_attribute('macros.html', 'render_comment')
+        for comment in comments:
+            obj_response.html_append(''.join(['#post-', str(post_id), '-comments']),
+                                     render_comment(comment, current_user, depth).unescape())
+        # deactivate the button to avoid multiple spawning
+        obj_response.script('$("#load_comment_button_' + str(post_id) + '").attr("onclick", "")')
 
 
 def load_more_laws(obj_response, group_name, status_name, older_than):

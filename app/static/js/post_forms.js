@@ -8,7 +8,7 @@ $(document).on("click", ".collapser", function(event) {
     post_form.attr('class', 'collapse');
 
     // move in the correct position:
-    post_form.appendTo(autofill.destination);
+    post_form.prependTo(autofill.destination);
 
     // reset or set data:
     post_form.find('#content').val("");
