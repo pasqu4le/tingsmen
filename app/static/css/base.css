@@ -1,11 +1,28 @@
-.top-container {
+.base-content {
     padding-top: 70px;
 }
 
-.main-content-text p, .main-content-text h1, .main-content-text li{
-    color: #777;
+hr {
+    margin-top: 5px !important;
+    margin-bottom: 10px !important;
 }
 
-.main-content-text p, .main-content-text li{
-    font-size: 22px
+.post-comments.comment_dep_1 {
+    margin-left: 8%;
+}
+
+.post-comments.comment_dep_2 {
+    margin-left: 5%;
+}
+
+.post-comments.comment_dep_3 {
+    margin-left: 3%;
+}
+
+.post-comments.comment_dep_4 {
+    margin-left: 2%;
+}
+
+.post-comments.comment_dep_5 {
+    margin-left: 1%;
 }

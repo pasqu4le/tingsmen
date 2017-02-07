@@ -16,9 +16,13 @@
     </div>
     <div class="panel panel-info" id="load_proposals_container">
         {% if proposals %}
-            {{ macros.more_proposals_panel(open, proposals[-1].date) }}
+            {% if current_status == 'open' %}
+                {{ macros.more_proposals_panel(proposals[-1].date, open=True) }}
+            {% elif current_status == 'pending' %}
+                {{ macros.more_proposals_panel(proposals[-1].date, pending=True) }}
+            {% endif %}
         {% else %}
-            {{ macros.more_proposals_panel(False, None) }}
+            {{ macros.more_proposals_panel(None) }}
         {% endif %}
     </div>
 {% endblock %}

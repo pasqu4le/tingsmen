@@ -13,11 +13,17 @@ from wtforms import TextAreaField
 def home():
     # not allowed user handling:
     if not current_user.is_authenticated:
-        return render_template("index.html", title="Welcome")
+        options = {
+            'title': 'Welcome',
+            'pages': Page.query.all(),
+            'current_user': current_user,
+        }
+        return render_template("index.html", **options)
     # ajax request handling
     form_init_js = g.sijax.register_upload_callback('post_form', submit_post)
     if g.sijax.is_sijax_request:
         g.sijax.register_callback('load_more_posts', load_more_posts)
+        g.sijax.register_callback('load_comments', load_comments)
         g.sijax.register_callback('vote_post', vote_post)
         return g.sijax.process_request()
     # non-ajax handling:
@@ -36,7 +42,12 @@ def home():
     return render_template("home.html", **options)
 
 
-@app.route('/page/<page_name>')
+@app.route('/cookies/')
+def cookie_policy():
+    return render_template("cookies.html", title='Cookie policy')
+
+
+@app.route('/page/<page_name>/')
 def view_page(page_name):
     # non-ajax handling:
     current_page = Page.query.filter_by(name=page_name).first()
@@ -57,6 +68,7 @@ def topic(topic_name):
     form_init_js = g.sijax.register_upload_callback('post_form', submit_post)
     if g.sijax.is_sijax_request:
         g.sijax.register_callback('load_more_posts', load_more_posts)
+        g.sijax.register_callback('load_comments', load_comments)
         g.sijax.register_callback('vote_post', vote_post)
         return g.sijax.process_request()
     # non-ajax handling:
@@ -125,6 +137,7 @@ def user_page(username, subpage):
     form_init_js = g.sijax.register_upload_callback('post_form', submit_post)
     if g.sijax.is_sijax_request:
         g.sijax.register_callback('load_more_posts', load_more_posts)
+        g.sijax.register_callback('load_comments', load_comments)
         g.sijax.register_callback('vote_post', vote_post)
         return g.sijax.process_request()
     # non-ajax handling:
@@ -162,6 +175,7 @@ def view_post(post_id):
     # ajax request handling
     form_init_js = g.sijax.register_upload_callback('post_form', submit_post)
     if g.sijax.is_sijax_request:
+        g.sijax.register_callback('load_comments', load_comments)
         g.sijax.register_callback('vote_post', vote_post)
         return g.sijax.process_request()
     # non-ajax handling:
@@ -196,6 +210,7 @@ def view_proposal(proposal_id):
     form_init_js = g.sijax.register_upload_callback('post_form', submit_post)
     if g.sijax.is_sijax_request:
         g.sijax.register_callback('load_more_posts', load_more_posts)
+        g.sijax.register_callback('load_comments', load_comments)
         g.sijax.register_callback('vote_post', vote_post)
         g.sijax.register_callback('vote_proposal', vote_proposal)
         g.sijax.register_callback('confirm_proposal', confirm_proposal)
@@ -209,7 +224,7 @@ def view_proposal(proposal_id):
         'pages': Page.query.all(),
         'current_user': current_user,
         'proposal': proposal,
-        'statuses': ['all', 'open'],
+        'statuses': ['all', 'open', 'pending'],
         'posts': Post.get_more(group='topic', name=proposal.topic.name),
         'topics_all': Topic.query.all(),
         'submit_post_form': forms.PostForm(),
@@ -220,7 +235,10 @@ def view_proposal(proposal_id):
 
 @app.route('/proposals/')
 def view_proposals():
-    return redirect("/proposals/open/")
+    # show open proposals if there is at least one
+    if Proposal.query.filter_by(is_open=True).count():
+        return redirect("/proposals/open/")
+    return redirect("/proposals/pending/")
 
 
 @app.route('/proposals/<status>/', methods=('GET', 'POST'))
@@ -233,16 +251,20 @@ def proposal_status(status):
         return g.sijax.process_request()
     # non-ajax handling:
     proposals = []
-    description = 'here is one'
+    description = None
     if status == 'open':
         proposals = Proposal.get_more(open=True)
+        description = 'can be voted today'
+    if status == 'pending':
+        proposals = Proposal.get_more(pending=True)
+        description = 'waiting for their vote day'
     elif status == 'all':
         proposals = Proposal.get_more()
     options = {
         'title': ' '.join([status, 'proposals']),
         'pages': Page.query.all(),
         'current_user': current_user,
-        'statuses': ['all', 'open'],
+        'statuses': ['all', 'open', 'pending'],
         'current_status': status,
         'proposals': proposals,
         'description': description
@@ -256,6 +278,7 @@ def view_law(law_id):
     form_init_js = g.sijax.register_upload_callback('post_form', submit_post)
     if g.sijax.is_sijax_request:
         g.sijax.register_callback('load_more_posts', load_more_posts)
+        g.sijax.register_callback('load_comments', load_comments)
         g.sijax.register_callback('vote_post', vote_post)
         return g.sijax.process_request()
     # non-ajax handling:
@@ -560,13 +583,30 @@ def submit_post(obj_response, files, form_values):
             post.topics.append(tpc)
         db.session.add(post)
         db.session.commit()
-        render_post = get_template_attribute('macros.html', 'render_post')
-        obj_response.html_prepend('#post-container', render_post(post, current_user).unescape())
+        if form.parent_id.data:
+            render_comment = get_template_attribute('macros.html', 'render_comment')
+            obj_response.html_prepend(''.join(['#post-', form.parent_id.data, '-comments']),
+                                      render_comment(post, current_user).unescape())
+        else:
+            render_post = get_template_attribute('macros.html', 'render_post')
+            obj_response.html_prepend('#post-container', render_post(post, current_user).unescape())
         obj_response.script("$('#collapsable_post_form').collapse('hide');")
-        obj_response.script("$('html, body').animate({ scrollTop: $('#post-%s').position().top }, 500);" % str(post.id))
         form.reset()
     render_post_form = get_template_attribute('macros.html', 'render_post_form')
     obj_response.html('#collapsable_post_form', render_post_form(form, current_user).unescape())
+    # register again the sijax upload plugin
+    obj_response.script('sjxUpload.registerForm({"callback": "post_form_upload", "formId": "post_form"});')
+
+
+def load_comments(obj_response, post_id, depth):
+    comments = Post.query.filter_by(id=post_id).first().children
+    if comments:
+        render_comment = get_template_attribute('macros.html', 'render_comment')
+        for comment in comments:
+            obj_response.html_append(''.join(['#post-', str(post_id), '-comments']),
+                                     render_comment(comment, current_user, depth).unescape())
+        # deactivate the button to avoid multiple spawning
+        obj_response.script('$("#load_comment_button_' + str(post_id) + '").attr("onclick", "")')
 
 
 def load_more_laws(obj_response, group_name, status_name, older_than):
@@ -581,13 +621,14 @@ def load_more_laws(obj_response, group_name, status_name, older_than):
         obj_response.html('#load_laws_container', more_laws_panel(group_name, status_name, None).unescape())
 
 
-def load_more_proposals(obj_response, open, older_than):
-    proposals = Proposal.get_more(open=open, older_than=older_than)
+def load_more_proposals(obj_response, open, pending, older_than):
+    proposals = Proposal.get_more(open=open, pending=pending, older_than=older_than)
     render_proposal = get_template_attribute('macros.html', 'render_proposal')
     more_proposals_panel = get_template_attribute('macros.html', 'more_proposals_panel')
     if proposals:
         for proposal in proposals:
             obj_response.html_append('#proposals-container', render_proposal(proposal, current_user).unescape())
-        obj_response.html('#load_proposals_container', more_proposals_panel(open, proposals[-1].date).unescape())
+        obj_response.html('#load_proposals_container',
+                          more_proposals_panel(proposals[-1].date, open=open, pending=pending).unescape())
     else:
-        obj_response.html('#load_proposals_container', more_proposals_panel(open, None).unescape())
+        obj_response.html('#load_proposals_container', more_proposals_panel(None).unescape())
