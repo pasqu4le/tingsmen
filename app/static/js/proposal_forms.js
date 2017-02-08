@@ -14,6 +14,10 @@ $(document).ready(function() {
             $(this).attr("id", $(this).attr("id").replace(/\d+/, rn) );
             $(this).val("")
         });
+        nw.find('input').each(function(){
+            $(this).attr("name", $(this).attr("name").replace(/\d+/, rn) );
+            $(this).attr("id", $(this).attr("id").replace(/\d+/, rn) );
+        });
         // (re)attach select2 to every group field
         $(".group_form").select2();
     });

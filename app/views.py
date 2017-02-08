@@ -367,11 +367,11 @@ def new_proposal_change(proposal_id):
     proposal = Proposal.query.filter_by(id=proposal_id).first()
     if proposal:
         form.description.data = proposal.description
-        if proposal.add_laws:
+        if proposal.add_laws.count():
             form.new_laws.pop_entry()
             for law in proposal.add_laws:
-                form.new_laws.append_entry({'content': law.content, 'groups': " ".join([gr.name for gr in law.group])})
-        if proposal.remove_laws:
+                form.new_laws.append_entry({'content': law.content, 'groups': [gr.name for gr in law.group]})
+        if proposal.remove_laws.count():
             form.remove_laws.pop_entry()
             for law in proposal.remove_laws:
                 form.remove_laws.append_entry(law.id)
