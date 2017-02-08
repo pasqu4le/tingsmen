@@ -20,6 +20,8 @@
                 {{ macros.more_proposals_panel(proposals[-1].date, open=True) }}
             {% elif current_status == 'pending' %}
                 {{ macros.more_proposals_panel(proposals[-1].date, pending=True) }}
+            {% else %}
+                {{ macros.more_proposals_panel(proposals[-1].date) }}
             {% endif %}
         {% else %}
             {{ macros.more_proposals_panel(None) }}
