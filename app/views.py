@@ -584,9 +584,13 @@ def submit_post(obj_response, files, form_values):
         db.session.add(post)
         db.session.commit()
         if form.parent_id.data:
+            par_id = form.parent_id.data
             render_comment = get_template_attribute('macros.html', 'render_comment')
-            obj_response.html_prepend(''.join(['#post-', form.parent_id.data, '-comments']),
+            obj_response.html_prepend(''.join(['#post-', par_id, '-comments']),
                                       render_comment(post, current_user).unescape())
+            # update parent comments counter
+            obj_response.script(''.join(['$("#load_comment_button_', par_id, '").children(".badge").html(',
+                                         str(Post.query.filter_by(parent_id=par_id).count()), ')']))
         else:
             render_post = get_template_attribute('macros.html', 'render_post')
             obj_response.html_prepend('#post-container', render_post(post, current_user).unescape())
@@ -602,6 +606,8 @@ def load_comments(obj_response, post_id, depth):
     comments = Post.query.filter_by(id=post_id).first().children
     if comments:
         render_comment = get_template_attribute('macros.html', 'render_comment')
+        # clear the comments displayed (to avoid double loading of inserted comments)
+        obj_response.html(''.join(['#post-', str(post_id), '-comments']), '')
         for comment in comments:
             obj_response.html_append(''.join(['#post-', str(post_id), '-comments']),
                                      render_comment(comment, current_user, depth).unescape())
