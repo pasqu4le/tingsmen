@@ -34,7 +34,8 @@
                 </li>
                 <li>
                     <a href="/user/{{ current_user.username }}/">
-                        <img style="float:left" class="img-rounded img-responsive" src="{{ current_user.email | gravatar(size=25) }}"> @{{ current_user.username }}
+                        <img style="float:left" class="img-rounded img-responsive" src="{{ current_user.email | gravatar(size=25) }}">
+                        <span class="navbar-username">@{{ current_user.username }}</span>
                     </a>
                 </li>
                 <li class="dropdown">
@@ -48,7 +49,7 @@
                     </ul>
                 </li>
                 {% else %}
-                <li><a href="/login"><span class="glyphicon glyphicon-user"></span> Login</a></li>
+                <li><a href="/login"><span class="glyphicon glyphicon-user"></span><span class="navbar-username">Login</span></a></li>
                 {% endif %}
             </ul>
         </div>

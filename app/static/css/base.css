@@ -2,6 +2,10 @@
     padding-top: 70px;
 }
 
+.navbar-username {
+    padding-left: 10px;
+}
+
 hr {
     margin-top: 5px !important;
     margin-bottom: 10px !important;
