@@ -411,13 +411,10 @@
 {% if current_user.is_authenticated %}
     <div class="panel panel-default">
         <div class="panel-body">
-            <div class="row">
-                <h4 class="col-xs-7 col-md-9">Hey there {{ current_user.username }}, do you have something to share?</h4>
-                <button type="button" class="collapser btn btn-primary btn-lg col-xs-5 col-md-3" data-autofill='{"destination":"#panel_form_space"{% if topic %},"topics":"#{{ topic.name }}"{% endif %}}'>Make a post!</button>
-            </div>
-            <p></p>
-            <div id="panel_form_space"></div>
+            <h4 class="pull-left">Hey there {{ current_user.username }}, do you have something to share?</h4>
+            <button type="button" class="collapser btn btn-primary btn-lg pull-right" data-autofill='{"destination":"#panel_form_space"{% if topic %},"topics":"#{{ topic.name }}"{% endif %}}'>Make a post!</button>
         </div>
+        <div id="panel_form_space"></div>
     </div>
 {% endif %}
 {%- endmacro %}
