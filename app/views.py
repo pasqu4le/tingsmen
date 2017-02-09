@@ -605,7 +605,7 @@ def submit_post(obj_response, files, form_values):
 
 
 def load_comments(obj_response, post_id, depth):
-    comments = Post.query.filter_by(id=post_id).first().children
+    comments = Post.query.filter_by(parent_id=post_id).order_by(Post.date)
     if comments:
         render_comment = get_template_attribute('macros.html', 'render_comment')
         # clear the comments displayed (to avoid double loading of inserted comments)
