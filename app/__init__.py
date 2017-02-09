@@ -1,11 +1,14 @@
 import os
+import utils
 from flask import Flask
+
 from flask_sqlalchemy import SQLAlchemy
 from flask_security import Security, SQLAlchemyUserDatastore
 from flask_admin import Admin
 from flask_migrate import Migrate
 from flask_gravatar import Gravatar
 from flask_misaka import Misaka
+from misaka import HTML_SKIP_HTML
 from flask_mail import Mail
 import flask_sijax
 
@@ -35,10 +38,9 @@ mark_opt = {
     'autolink': True,
     'underline': True,
     'smartypants': True,
-    'strikethrough': True,
-    'skip_html': True
+    'strikethrough': True
 }
-Misaka(app, **mark_opt)
+Misaka(app, renderer=utils.CustomMisakaRenderer(flags=HTML_SKIP_HTML), **mark_opt)
 # use sijax for ajax requests
 flask_sijax.Sijax(app)
 # Gravatar setup
