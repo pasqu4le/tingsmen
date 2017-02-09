@@ -1,4 +1,5 @@
 from app import app, security
+import utils
 from flask import g, render_template, abort, redirect, url_for, request, get_template_attribute
 from flask_security import current_user
 from flask_admin.contrib import sqla
@@ -575,12 +576,13 @@ def submit_post(obj_response, files, form_values):
         if form.parent_id.data:
             post.parent_id = int(form.parent_id.data)
         for tn in form.topics.data.split():
-            topic_name = tn.strip('#').lower()
-            tpc = Topic.query.filter_by(name=topic_name).first()
-            if not tpc:
-                tpc = Topic(name=topic_name, description='')
-                db.session.add(tpc)
-            post.topics.append(tpc)
+            topic_name = utils.get_topic_name(tn)
+            if topic_name:
+                tpc = Topic.query.filter_by(name=topic_name).first()
+                if not tpc:
+                    tpc = Topic(name=topic_name, description='')
+                    db.session.add(tpc)
+                post.topics.append(tpc)
         db.session.add(post)
         db.session.commit()
         if form.parent_id.data:

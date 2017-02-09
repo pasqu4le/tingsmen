@@ -21,3 +21,16 @@ class CustomMisakaRenderer(HtmlRenderer):
 
     def image(self, link, title, alt):
         return '<img class="img-responsive" src="{0}" title="{1}" alt="{2}">'.format(link, title, alt)
+
+
+def get_topic_name(name):
+    topic_name = []
+    after_hyphens = False
+    for l in name:
+        if l.isalnum():
+            topic_name.append(l)
+            after_hyphens = False
+        elif l == '-' and not after_hyphens:
+            topic_name.append(l)
+            after_hyphens = True
+    return ''.join(topic_name).strip('-').lower()
