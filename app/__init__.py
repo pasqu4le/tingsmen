@@ -10,6 +10,7 @@ from flask_gravatar import Gravatar
 from flask_misaka import Misaka
 from misaka import HTML_SKIP_HTML
 from flask_mail import Mail
+from flask_compress import Compress
 import flask_sijax
 
 app = Flask(__name__)
@@ -79,6 +80,9 @@ admin.add_view(views.AdminModelView(database.Proposal, db.session))
 admin.add_view(views.AdminModelView(database.Law, db.session))
 admin.add_view(views.AdminModelView(database.LawStatus, db.session))
 admin.add_view(views.AdminModelView(database.LawGroup, db.session))
+
+# use compress to gzip compression
+Compress(app)
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))

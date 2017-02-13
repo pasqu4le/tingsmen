@@ -388,8 +388,8 @@
 
 {% macro load_more_scripts() -%}
     {# --- needs to be rendered after the #load_more_container div to work --- #}
-    <script src="/static/js/jquery.waypoints.min.js"></script>
-    <script>
+    <script type="text/javascript" src="/static/js/jquery.waypoints.min.js"></script>
+    <script type="text/javascript">
     var waypoint = $('#load_more_container').waypoint({
         handler: function(direction) {
             if (direction == 'down'){
@@ -413,10 +413,10 @@
 {% macro post_form_scripts(current_user, topics_all) -%}
 {% if current_user.is_authenticated %}
     <link href="/static/css/sew.css" rel="stylesheet" media="screen">
-    <script src="https://code.jquery.com/jquery-migrate-1.4.1.js"></script>
-    <script src="/static/js/jquery.caretposition.js"></script>
-    <script src="/static/js/jquery.sew.js"></script>
-    <script>
+    <script type="text/javascript" src="https://code.jquery.com/jquery-migrate-1.4.1.js"></script>
+    <script type="text/javascript" src="/static/js/jquery.caretposition.js"></script>
+    <script type="text/javascript" src="/static/js/jquery.sew.js"></script>
+    <script type="text/javascript">
         $(document).ready(function() {
             var values = [{% for topic in topics_all%}{val:'{{ topic.name }}'},{% endfor %}];
 
@@ -431,8 +431,8 @@
             $('#topics').sew({values: values, elementFactory: elementFactory, token: '#'});
         });
     </script>
-    <script src="/static/js/post_forms.js"></script>
-    <script src="/static/js/hide_comments.js"></script>
+    <script type="text/javascript" src="/static/js/post_forms.js"></script>
+    <script type="text/javascript" src="/static/js/hide_comments.js"></script>
 {% endif %}
 {%- endmacro %}
 
