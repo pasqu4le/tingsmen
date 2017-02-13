@@ -11,7 +11,7 @@ from flask_misaka import Misaka
 from misaka import HTML_SKIP_HTML
 from flask_mail import Mail
 from flask_compress import Compress
-import flask_sijax
+from flask_sijax import Sijax
 
 app = Flask(__name__)
 # set configuration keys and take them from environment variables
@@ -33,18 +33,14 @@ app.config['MAIL_PORT'] = 587
 app.config['MAIL_USERNAME'] = 'tingsmen@gmail.com'
 app.config['MAIL_PASSWORD'] = os.environ['MAIL_PASSWORD']
 app.config['MAIL_USE_TLS'] = True
+
 # Mail creation
 mail = Mail(app)
 # use misaka for markdown
-mark_opt = {
-    'autolink': True,
-    'underline': True,
-    'smartypants': True,
-    'strikethrough': True
-}
-Misaka(app, renderer=utils.CustomMisakaRenderer(flags=HTML_SKIP_HTML), **mark_opt)
+Misaka(app, renderer=utils.CustomMisakaRenderer(flags=HTML_SKIP_HTML), autolink=True, underline=True, smartypants=True,
+       strikethrough=True)
 # use sijax for ajax requests
-flask_sijax.Sijax(app)
+Sijax(app)
 # Gravatar setup
 gravatar = Gravatar(app, size=150, rating='x', default='retro', force_default=False, force_lower=False, use_ssl=False,
                     base_url=None)

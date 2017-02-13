@@ -1,8 +1,7 @@
 from app import db
-from datetime import datetime, timedelta, date
+from datetime import timedelta, date
 from flask_security import UserMixin, RoleMixin
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy import func
 
 
 class MailingList(db.Model):
