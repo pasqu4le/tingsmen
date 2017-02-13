@@ -15,6 +15,7 @@ import flask_sijax
 
 app = Flask(__name__)
 # set configuration keys and take them from environment variables
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 3600
 app.config['SECRET_KEY'] = os.environ['SECRET_KEY']
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL']
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
