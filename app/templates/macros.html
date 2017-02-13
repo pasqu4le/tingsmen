@@ -206,9 +206,10 @@
     {% endfor %}
 </div>
 {% if posts and load_more %}
-    <div class="panel panel-info" id="load_more_container">
+    <div id="load_more_container">
         {{ more_posts_panel(posts_group, posts_name, posts[-1].date) }}
     </div>
+    {{ load_more_scripts() }}
 {% endif %}
 {%- endmacro %}
 
@@ -357,27 +358,52 @@
 {%- endmacro %}
 
 {% macro more_proposals_panel(older_than, open=False, pending=False) -%}
+{#-----     this needs to be contained in a div with id load_more_container to work     -----#}
 {% if older_than %}
-    <a class="panel-body btn btn-primary btn-lg btn-block" href="javascript://" onclick="Sijax.request('load_more_proposals', [{% if open %}true{% else %}false{% endif %}, {% if pending %}true{% else %}false{% endif %}, '{{ older_than }}']);">Load older proposals</a>
+    <div class="alert alert-info text-center lead" data-loader="load_more_proposals" data-load='[{% if open %}true{% else %}false{% endif %}, {% if pending %}true{% else %}false{% endif %}, "{{ older_than }}"]'></div>
 {% else %}
-    <a class="panel-body btn btn-default btn-lg btn-block disabled">There are no more proposals here</a>
+    <div class="alert alert-info text-center lead">There are no more proposals here</div>
 {% endif %}
 {%- endmacro %}
 
 {% macro more_laws_panel(group_name, status_name, older_than) -%}
+{#-----     this needs to be contained in a div with id load_more_container to work     -----#}
 {% if older_than %}
-    <a class="panel-body btn btn-primary btn-lg btn-block" href="javascript://" onclick="Sijax.request('load_more_laws', [{% if group_name %}'{{ group_name }}'{% else %}null{% endif %}, {% if status_name %}'{{ status_name }}'{% else %}null{% endif %}, '{{ older_than }}']);">Load older laws</a>
+    <div class="alert alert-info text-center lead" data-loader="load_more_laws" data-load='[{% if group_name %}"{{ group_name }}"{% else %}null{% endif %}, {% if status_name %}"{{ status_name }}"{% else %}null{% endif %}, "{{ older_than }}"]'></div>
 {% else %}
-    <a class="panel-body btn btn-default btn-lg btn-block disabled">There are no more laws here</a>
+    <div class="alert alert-info text-center lead">There are no more laws here</div>
 {% endif %}
 {%- endmacro %}
 
 {% macro more_posts_panel(group, name, older_than) -%}
+{#-----     this needs to be contained in a div with id load_more_container to work     -----#}
 {% if older_than %}
-    <a class="panel-body btn btn-primary btn-lg btn-block" href="javascript://" onclick="Sijax.request('load_more_posts', [{% if group %}'{{ group }}'{% else %}null{% endif %}, {% if name %}'{{ name }}'{% else %}null{% endif %}, '{{ older_than }}']);">Load older posts</a>
+    <div class="alert alert-info text-center lead" data-loader="load_more_posts" data-load='[{% if group %}"{{ group }}"{% else %}null{% endif %}, {% if name %}"{{ name }}"{% else %}null{% endif %}, "{{ older_than }}"]'></div>
 {% else %}
-    <a class="panel-body btn btn-default btn-lg btn-block disabled">There are no more posts here</a>
+    <div class="alert alert-info text-center lead">There are no more posts here</div>
 {% endif %}
+{%- endmacro %}
+
+{% macro load_more_scripts() -%}
+    {# --- needs to be rendered after the #load_more_container div to work --- #}
+    <script src="/static/js/jquery.waypoints.min.js"></script>
+    <script>
+    var waypoint = $('#load_more_container').waypoint({
+        handler: function(direction) {
+            if (direction == 'down'){
+                this.disable();
+                child = $('#load_more_container').children().last();
+                loader = child.data('loader');
+                load = child.data('load');
+                if (load != null){
+                    child.html('Loading ...');
+                    Sijax.request(loader, load);
+                }
+            }
+        },
+        offset: 'bottom-in-view'
+    })
+    </script>
 {%- endmacro %}
 
 {# --------------------------- Macros for the collapsable post form -------------------------------- #}

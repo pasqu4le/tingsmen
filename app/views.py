@@ -565,6 +565,9 @@ def load_more_posts(obj_response, group, name, older_than):
         for post in posts:
             obj_response.html_append('#post-container', render_post(post, current_user).unescape())
         obj_response.html('#load_more_container', more_posts_panel(group, name, posts[-1].date).unescape())
+        # refresh and re-enable waypoint to achieve continuous loading
+        obj_response.script('Waypoint.refreshAll()')
+        obj_response.script('Waypoint.enableAll()')
     else:
         obj_response.html('#load_more_container', more_posts_panel(group, name, None).unescape())
 
@@ -624,9 +627,12 @@ def load_more_laws(obj_response, group_name, status_name, older_than):
     if laws:
         for law in laws:
             obj_response.html_append('#laws-container', render_law(law, current_user, actions_footer=True).unescape())
-        obj_response.html('#load_laws_container', more_laws_panel(group_name, status_name, laws[-1].date).unescape())
+        obj_response.html('#load_more_container', more_laws_panel(group_name, status_name, laws[-1].date).unescape())
+        # refresh and re-enable waypoint to achieve continuous loading
+        obj_response.script('Waypoint.refreshAll()')
+        obj_response.script('Waypoint.enableAll()')
     else:
-        obj_response.html('#load_laws_container', more_laws_panel(group_name, status_name, None).unescape())
+        obj_response.html('#load_more_container', more_laws_panel(group_name, status_name, None).unescape())
 
 
 def load_more_proposals(obj_response, open, pending, older_than):
@@ -636,7 +642,10 @@ def load_more_proposals(obj_response, open, pending, older_than):
     if proposals:
         for proposal in proposals:
             obj_response.html_append('#proposals-container', render_proposal(proposal, current_user).unescape())
-        obj_response.html('#load_proposals_container',
+        obj_response.html('#load_more_container',
                           more_proposals_panel(proposals[-1].date, open=open, pending=pending).unescape())
+        # refresh and re-enable waypoint to achieve continuous loading
+        obj_response.script('Waypoint.refreshAll()')
+        obj_response.script('Waypoint.enableAll()')
     else:
-        obj_response.html('#load_proposals_container', more_proposals_panel(None).unescape())
+        obj_response.html('#load_more_container', more_proposals_panel(None).unescape())

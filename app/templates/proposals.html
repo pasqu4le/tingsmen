@@ -14,7 +14,7 @@
             {{ macros.render_proposal(proposal, current_user)}}
         {% endfor %}
     </div>
-    <div class="panel panel-info" id="load_proposals_container">
+    <div id="load_more_container">
         {% if proposals %}
             {% if current_status == 'open' %}
                 {{ macros.more_proposals_panel(proposals[-1].date, open=True) }}
@@ -27,6 +27,9 @@
             {{ macros.more_proposals_panel(None) }}
         {% endif %}
     </div>
+    {% if proposals %}
+        {{ macros.load_more_scripts() }}
+    {% endif %}
 {% endblock %}
 
 {% block side_column %}
