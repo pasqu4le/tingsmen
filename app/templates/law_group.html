@@ -17,7 +17,7 @@
     </div>
     <div id="load_more_container">
         {% if laws %}
-            {{ macros.more_laws_panel(group.name, current_status.name, laws[-1].date) }}
+            {{ macros.more_laws_panel(group.name, current_status.name, laws[-1].id) }}
         {% else %}
             {{ macros.more_laws_panel(group.name, current_status.name, None) }}
         {% endif %}

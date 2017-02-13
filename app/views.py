@@ -623,14 +623,14 @@ def load_comments(obj_response, post_id, depth):
         obj_response.script('$("#load_comment_button_' + str(post_id) + '").attr("onclick", "")')
 
 
-def load_more_laws(obj_response, group_name, status_name, older_than):
-    laws = Law.get_more(group_name=group_name, status_name=status_name, older_than=older_than)
+def load_more_laws(obj_response, group_name, status_name, last_id):
+    laws = Law.get_more(group_name=group_name, status_name=status_name, last_id=last_id)
     render_law = get_template_attribute('macros.html', 'render_law')
     more_laws_panel = get_template_attribute('macros.html', 'more_laws_panel')
     if laws:
         for law in laws:
             obj_response.html_append('#laws-container', render_law(law, current_user, actions_footer=True).unescape())
-        obj_response.html('#load_more_container', more_laws_panel(group_name, status_name, laws[-1].date).unescape())
+        obj_response.html('#load_more_container', more_laws_panel(group_name, status_name, laws[-1].id).unescape())
         # refresh and re-enable waypoint to achieve continuous loading
         obj_response.script('Waypoint.refreshAll()')
         obj_response.script('Waypoint.enableAll()')

@@ -366,10 +366,10 @@
 {% endif %}
 {%- endmacro %}
 
-{% macro more_laws_panel(group_name, status_name, older_than) -%}
+{% macro more_laws_panel(group_name, status_name, last_id=None) -%}
 {#-----     this needs to be contained in a div with id load_more_container to work     -----#}
-{% if older_than %}
-    <div class="alert alert-info text-center lead" data-loader="load_more_laws" data-load='[{% if group_name %}"{{ group_name }}"{% else %}null{% endif %}, {% if status_name %}"{{ status_name }}"{% else %}null{% endif %}, "{{ older_than }}"]'></div>
+{% if last_id %}
+    <div class="alert alert-info text-center lead" data-loader="load_more_laws" data-load='[{% if group_name %}"{{ group_name }}"{% else %}null{% endif %}, {% if status_name %}"{{ status_name }}"{% else %}null{% endif %}, {{ last_id }}]'></div>
 {% else %}
     <div class="alert alert-info text-center lead">There are no more laws here</div>
 {% endif %}

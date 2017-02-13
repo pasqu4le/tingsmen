@@ -282,15 +282,15 @@ class Law(db.Model):
     remove_by = db.relationship('Proposal', secondary=law_remove, backref=db.backref('remove_laws', lazy='dynamic'))
 
     @staticmethod
-    def get_more(num=5, group_name=None, status_name=None, older_than=None):
+    def get_more(num=5, group_name=None, status_name=None, last_id=None):
         query = Law.query
         if status_name:
             query = query.filter(Law.status.any(name=status_name))
         if group_name:
             query = query.filter(Law.group.any(name=group_name))
-        if older_than:
-            query = query.filter(Law.date < older_than)
-        return query.order_by(Law.date.desc())[:num]
+        if last_id:
+            query = query.filter(Law.id > last_id)
+        return query.order_by(Law.id)[:num]
 
     def __repr__(self):
         return "Law number: " + str(self.id)
