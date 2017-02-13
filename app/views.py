@@ -388,9 +388,9 @@ def submit_proposal():
         db.session.add(proposal)
         db.session.flush()
         proposal.set_vote_day()
-        prop_tpc = Topic.query.filter_by(name="proposal." + str(proposal.id)).first()
+        prop_tpc = Topic.query.filter_by(name="proposal-" + str(proposal.id)).first()
         if not prop_tpc:
-            prop_tpc = Topic(name="proposal." + str(proposal.id))
+            prop_tpc = Topic(name="proposal-" + str(proposal.id))
             db.session.add(prop_tpc)
         proposal.topic = prop_tpc
         proposal.topic_id = prop_tpc.id
@@ -399,9 +399,9 @@ def submit_proposal():
                 law = Law(content=content, date=func.now())
                 db.session.add(law)
                 db.session.flush()
-                law_tpc = Topic.query.filter_by(name="law." + str(law.id)).first()
+                law_tpc = Topic.query.filter_by(name="law-" + str(law.id)).first()
                 if not law_tpc:
-                    law_tpc = Topic(name="law." + str(law.id))
+                    law_tpc = Topic(name="law-" + str(law.id))
                     db.session.add(law_tpc)
                 law.topic = law_tpc
                 law.topic_id = law_tpc.id
