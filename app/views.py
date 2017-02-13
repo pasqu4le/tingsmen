@@ -619,8 +619,8 @@ def load_comments(obj_response, post_id, depth):
         for comment in comments:
             obj_response.html_append(''.join(['#post-', str(post_id), '-comments']),
                                      render_comment(comment, current_user, depth).unescape())
-        # deactivate the button to avoid multiple spawning
-        obj_response.script('$("#load_comment_button_' + str(post_id) + '").attr("onclick", "")')
+        # change the button to hide the comments if pressed again
+        obj_response.script('$("#load_comment_button_' + str(post_id) + '").attr("onclick", "hide_comments(' + str(post_id) + ',' + str(depth) + ')")')
 
 
 def load_more_laws(obj_response, group_name, status_name, last_id):

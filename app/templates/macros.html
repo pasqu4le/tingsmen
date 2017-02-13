@@ -264,13 +264,14 @@
                         <a class="btn btn-info" href="javascript://" onclick="Sijax.request('load_comments', ['{{ post.id }}', 1]);" id="load_comment_button_{{ post.id }}">
                             <span class="badge">{{ post.children | count }}</span> <span class="hidden-xs hidden-sm">comments </span><span class="glyphicon glyphicon-comment"></span>
                         </a>
-                        <button class="collapser btn btn-primary" data-autofill='{"destination":"#post-{{ post.id }}-comments","id":{{ post.id }},"topics":"{% for topic in post.topics %}#{{topic.name}} {% endfor %}"}'><span class="glyphicon glyphicon-share-alt"></span> reply</button>
+                        <button class="collapser btn btn-primary" data-autofill='{"destination":"#post-{{ post.id }}-form","id":{{ post.id }},"topics":"{% for topic in post.topics %}#{{topic.name}} {% endfor %}"}'><span class="glyphicon glyphicon-share-alt"></span> reply</button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="post-comments comment_dep_2" id="post-{{ post.id }}-comments"></div>
+    <div id="post-{{ post.id }}-form"></div>
+    <div class="post-comments comment_dep_1" id="post-{{ post.id }}-comments"></div>
 </div>
 {%- endmacro %}
 
@@ -327,12 +328,13 @@
                         </a>
                     </div>
                     <div class="btn-group text-right">
-                        <a class="btn btn-link collapser" href="javascript://" data-autofill='{"destination":"#post-{{ post.id }}-comments","id":{{ post.id }},"topics":"{% for topic in post.topics %}#{{topic.name}} {% endfor %}"}'><span class="glyphicon glyphicon-share-alt"></span> reply</a>
+                        <a class="btn btn-link collapser" href="javascript://" data-autofill='{"destination":"#post-{{ post.id }}-form","id":{{ post.id }},"topics":"{% for topic in post.topics %}#{{topic.name}} {% endfor %}"}'><span class="glyphicon glyphicon-share-alt"></span> reply</a>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+    <div id="post-{{ post.id }}-form"></div>
     <div class="post-comments comment_dep_{{ depth + 1 }}" id="post-{{ post.id }}-comments"></div>
 </div>
 {%- endmacro %}
@@ -430,6 +432,7 @@
         });
     </script>
     <script src="/static/js/post_forms.js"></script>
+    <script src="/static/js/hide_comments.js"></script>
 {% endif %}
 {%- endmacro %}
 
