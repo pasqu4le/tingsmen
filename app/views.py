@@ -588,6 +588,9 @@ def submit_post(obj_response, files, form_values):
                 post.topics.append(tpc)
         db.session.add(post)
         db.session.commit()
+        # update the new post and it's parent edit_date (recursively)
+        post.update_edit_date()
+        db.session.commit()
         if form.parent_id.data:
             par_id = form.parent_id.data
             render_comment = get_template_attribute('macros.html', 'render_comment')

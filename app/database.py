@@ -76,6 +76,7 @@ class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     content = db.Column(db.String(1000))
     date = db.Column(db.DateTime())
+    last_edit_date = db.Column(db.DateTime())
     poster_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     poster = db.relationship("User", backref=db.backref('posts', lazy='dynamic'))
     parent_id = db.Column(db.Integer, db.ForeignKey('post.id'))
@@ -87,7 +88,8 @@ class Post(db.Model):
     # static method to get a list of following posts (by date) in a 'group'
     @staticmethod
     def get_more(num=5, group=None, name=None, older_than=None):
-        query = Post.query
+        # start filtering by parent-only
+        query = Post.query.filter(Post.parent_id.is_(None))
         if group and name:
             if group == 'user':
                 query = query.filter(Post.poster.has(username=name))
@@ -98,8 +100,15 @@ class Post(db.Model):
             elif group == 'downvotes':
                 query = query.filter(Post.downvotes.any(username=name))
         if older_than:
-            query = query.filter(Post.date < older_than)
-        return query.order_by(Post.date.desc())[:num]
+            query = query.filter(Post.last_edit_date < older_than)
+        return query.order_by(Post.last_edit_date.desc())[:num]
+
+    def update_edit_date(self, new_date=None):
+        if not new_date:
+            new_date = self.date
+        self.last_edit_date = new_date
+        if self.parent:
+            self.parent.update_edit_date(new_date)
 
     def get_children(self, d=0):
         # utility function to get a post children tree
