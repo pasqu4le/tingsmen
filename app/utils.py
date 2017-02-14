@@ -7,13 +7,13 @@ class CustomMisakaRenderer(HtmlRenderer):
     def normal_text(self, text):
         processed = []
         for word in text.split(' '):
-            if word.startswith('@'):
+            if word.startswith('@') and len(word) > 1:
                 processed.append('<a href="/user/{0}">{1}</a>'.format(word[1:], word))
-            elif word.startswith('#'):
+            elif word.startswith('#') and len(word) > 1:
                 processed.append('<a href="/topic/{0}">{1}</a>'.format(word[1:].lower(), word))
-            elif word.startswith('$'):
+            elif word.startswith('$') and len(word) > 1:
                 processed.append('<a href="/law/{0}">Law {0}</a>'.format(word[1:]))
-            elif word.startswith('%'):
+            elif word.startswith('%') and len(word) > 1:
                 processed.append('<a href="/proposal/{0}">Proposal {0}</a>'.format(word[1:]))
             else:
                 processed.append(word)
