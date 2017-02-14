@@ -88,13 +88,16 @@
 <row name="date" null="1" autoincrement="0">
 <datatype>DATE</datatype>
 <default>NULL</default></row>
-<row name="parent_id" null="1" autoincrement="0">
-<datatype>INTEGER</datatype>
-<default>NULL</default><relation table="Post" row="id" />
-</row>
+<row name="last_edit_date" null="1" autoincrement="0">
+<datatype>DATE</datatype>
+<default>NULL</default></row>
 <row name="poster_id" null="1" autoincrement="0">
 <datatype>INTEGER</datatype>
 <default>NULL</default><relation table="User" row="id" />
+</row>
+<row name="parent_id" null="1" autoincrement="0">
+<datatype>INTEGER</datatype>
+<default>NULL</default><relation table="Post" row="id" />
 </row>
 <key type="PRIMARY" name="">
 <part>id</part>

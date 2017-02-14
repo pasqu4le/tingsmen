@@ -1,6 +1,6 @@
-import flask_security
 from app.database import LawGroup
 from flask_security.forms import email_required, email_validator, unique_user_email, valid_user_email
+from flask_security.forms import LoginForm, RegisterForm, ForgotPasswordForm, SendConfirmationForm
 from flask_wtf import FlaskForm
 from flask_wtf.csrf import generate_csrf
 from werkzeug.datastructures import MultiDict
@@ -62,14 +62,14 @@ class SettingsForm(FlaskForm):
 # ---------- custom flask-security forms
 
 
-class CustomLoginForm(flask_security.forms.LoginForm):
+class CustomLoginForm(LoginForm):
     email = StringField('email', validators=[DataRequired()], render_kw={'placeholder': 'Username or Email Address'})
     password = PasswordField('password', validators=[DataRequired()], render_kw={'placeholder': 'Password'})
     remember = BooleanField('Remember Me', render_kw={'class': 'form-inline'})
     submit = InlineSubmitField('Login', render_kw={'placeholder': 'Login', 'class': 'btn btn-lg btn-primary btn-block'})
 
 
-class CustomRegisterForm(flask_security.forms.RegisterForm):
+class CustomRegisterForm(RegisterForm):
     email = StringField('email', validators=[email_required, email_validator, unique_user_email],
                         render_kw={'placeholder': 'Email Address'})
     username = StringField('username', validators=[DataRequired(), unique_user_email],
@@ -82,14 +82,14 @@ class CustomRegisterForm(flask_security.forms.RegisterForm):
                                render_kw={'placeholder': 'Register', 'class': 'btn btn-lg btn-primary btn-block'})
 
 
-class CustomForgotPasswordForm(flask_security.forms.ForgotPasswordForm):
+class CustomForgotPasswordForm(ForgotPasswordForm):
     email = StringField('email', validators=[email_required, email_validator, valid_user_email],
                         render_kw={'placeholder': 'Email Address'})
     submit = InlineSubmitField('Recover Password', render_kw={'placeholder': 'Recover Password',
                                                               'class': 'btn btn-lg btn-primary btn-block'})
 
 
-class CustomSendConfirmationForm(flask_security.forms.SendConfirmationForm):
+class CustomSendConfirmationForm(SendConfirmationForm):
     email = StringField('email', validators=[email_required, email_validator, valid_user_email],
                         render_kw={'placeholder': 'Email Address'})
     submit = InlineSubmitField('Resend Confirmation Email', render_kw={'placeholder': 'Resend Confirmation Email',

@@ -1,4 +1,5 @@
 from app import app, security
+import utils
 from flask import g, render_template, abort, redirect, url_for, request, get_template_attribute
 from flask_security import current_user
 from flask_admin.contrib import sqla
@@ -387,9 +388,9 @@ def submit_proposal():
         db.session.add(proposal)
         db.session.flush()
         proposal.set_vote_day()
-        prop_tpc = Topic.query.filter_by(name="proposal." + str(proposal.id)).first()
+        prop_tpc = Topic.query.filter_by(name="proposal-" + str(proposal.id)).first()
         if not prop_tpc:
-            prop_tpc = Topic(name="proposal." + str(proposal.id))
+            prop_tpc = Topic(name="proposal-" + str(proposal.id))
             db.session.add(prop_tpc)
         proposal.topic = prop_tpc
         proposal.topic_id = prop_tpc.id
@@ -398,9 +399,9 @@ def submit_proposal():
                 law = Law(content=content, date=func.now())
                 db.session.add(law)
                 db.session.flush()
-                law_tpc = Topic.query.filter_by(name="law." + str(law.id)).first()
+                law_tpc = Topic.query.filter_by(name="law-" + str(law.id)).first()
                 if not law_tpc:
-                    law_tpc = Topic(name="law." + str(law.id))
+                    law_tpc = Topic(name="law-" + str(law.id))
                     db.session.add(law_tpc)
                 law.topic = law_tpc
                 law.topic_id = law_tpc.id
@@ -564,6 +565,9 @@ def load_more_posts(obj_response, group, name, older_than):
         for post in posts:
             obj_response.html_append('#post-container', render_post(post, current_user).unescape())
         obj_response.html('#load_more_container', more_posts_panel(group, name, posts[-1].date).unescape())
+        # refresh and re-enable waypoint to achieve continuous loading
+        obj_response.script('Waypoint.refreshAll()')
+        obj_response.script('Waypoint.enableAll()')
     else:
         obj_response.html('#load_more_container', more_posts_panel(group, name, None).unescape())
 
@@ -575,18 +579,26 @@ def submit_post(obj_response, files, form_values):
         if form.parent_id.data:
             post.parent_id = int(form.parent_id.data)
         for tn in form.topics.data.split():
-            topic_name = tn.strip('#').lower()
-            tpc = Topic.query.filter_by(name=topic_name).first()
-            if not tpc:
-                tpc = Topic(name=topic_name, description='')
-                db.session.add(tpc)
-            post.topics.append(tpc)
+            topic_name = utils.get_topic_name(tn)
+            if topic_name:
+                tpc = Topic.query.filter_by(name=topic_name).first()
+                if not tpc:
+                    tpc = Topic(name=topic_name, description='')
+                    db.session.add(tpc)
+                post.topics.append(tpc)
         db.session.add(post)
         db.session.commit()
+        # update the new post and it's parent edit_date (recursively)
+        post.update_edit_date()
+        db.session.commit()
         if form.parent_id.data:
+            par_id = form.parent_id.data
             render_comment = get_template_attribute('macros.html', 'render_comment')
-            obj_response.html_prepend(''.join(['#post-', form.parent_id.data, '-comments']),
+            obj_response.html_prepend(''.join(['#post-', par_id, '-comments']),
                                       render_comment(post, current_user).unescape())
+            # update parent comments counter
+            obj_response.script(''.join(['$("#load_comment_button_', par_id, '").children(".badge").html(',
+                                         str(Post.query.filter_by(parent_id=par_id).count()), ')']))
         else:
             render_post = get_template_attribute('macros.html', 'render_post')
             obj_response.html_prepend('#post-container', render_post(post, current_user).unescape())
@@ -599,26 +611,32 @@ def submit_post(obj_response, files, form_values):
 
 
 def load_comments(obj_response, post_id, depth):
-    comments = Post.query.filter_by(id=post_id).first().children
+    comments = Post.query.filter_by(parent_id=post_id).order_by(Post.date)
     if comments:
         render_comment = get_template_attribute('macros.html', 'render_comment')
+        # clear the comments displayed (to avoid double loading of inserted comments)
+        obj_response.html(''.join(['#post-', str(post_id), '-comments']), '')
         for comment in comments:
             obj_response.html_append(''.join(['#post-', str(post_id), '-comments']),
                                      render_comment(comment, current_user, depth).unescape())
-        # deactivate the button to avoid multiple spawning
-        obj_response.script('$("#load_comment_button_' + str(post_id) + '").attr("onclick", "")')
+        # change the button to hide the comments if pressed again
+        obj_response.script(''.join(['$("#load_comment_button_', str(post_id), '").attr("onclick", "hide_comments(',
+                                     str(post_id), ',', str(depth), ')")']))
 
 
-def load_more_laws(obj_response, group_name, status_name, older_than):
-    laws = Law.get_more(group_name=group_name, status_name=status_name, older_than=older_than)
+def load_more_laws(obj_response, group_name, status_name, last_id):
+    laws = Law.get_more(group_name=group_name, status_name=status_name, last_id=last_id)
     render_law = get_template_attribute('macros.html', 'render_law')
     more_laws_panel = get_template_attribute('macros.html', 'more_laws_panel')
     if laws:
         for law in laws:
             obj_response.html_append('#laws-container', render_law(law, current_user, actions_footer=True).unescape())
-        obj_response.html('#load_laws_container', more_laws_panel(group_name, status_name, laws[-1].date).unescape())
+        obj_response.html('#load_more_container', more_laws_panel(group_name, status_name, laws[-1].id).unescape())
+        # refresh and re-enable waypoint to achieve continuous loading
+        obj_response.script('Waypoint.refreshAll()')
+        obj_response.script('Waypoint.enableAll()')
     else:
-        obj_response.html('#load_laws_container', more_laws_panel(group_name, status_name, None).unescape())
+        obj_response.html('#load_more_container', more_laws_panel(group_name, status_name, None).unescape())
 
 
 def load_more_proposals(obj_response, open, pending, older_than):
@@ -628,7 +646,10 @@ def load_more_proposals(obj_response, open, pending, older_than):
     if proposals:
         for proposal in proposals:
             obj_response.html_append('#proposals-container', render_proposal(proposal, current_user).unescape())
-        obj_response.html('#load_proposals_container',
+        obj_response.html('#load_more_container',
                           more_proposals_panel(proposals[-1].date, open=open, pending=pending).unescape())
+        # refresh and re-enable waypoint to achieve continuous loading
+        obj_response.script('Waypoint.refreshAll()')
+        obj_response.script('Waypoint.enableAll()')
     else:
-        obj_response.html('#load_proposals_container', more_proposals_panel(None).unescape())
+        obj_response.html('#load_more_container', more_proposals_panel(None).unescape())

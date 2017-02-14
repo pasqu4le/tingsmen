@@ -14,13 +14,16 @@
             {{ macros.render_law(law, current_user, actions_footer=True)}}
         {% endfor %}
     </div>
-    <div class="panel panel-info" id="load_laws_container">
+    <div id="load_more_container">
         {% if laws %}
-            {{ macros.more_laws_panel(None, current_status.name, laws[-1].date) }}
+            {{ macros.more_laws_panel(None, current_status.name, laws[-1].id) }}
         {% else %}
             {{ macros.more_laws_panel(None, current_status.name, None) }}
         {% endif %}
     </div>
+    {% if laws %}
+        {{ macros.load_more_scripts() }}
+    {% endif %}
 {% endblock %}
 
 {% block side_column %}

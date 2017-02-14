@@ -154,9 +154,9 @@
                 {% endif %}
 
                 {% if comment_here %}
-                    <a class="btn btn-link collapser" data-autofill='{"destination":"#proposal-{{ proposal.id }}_form_space","topics":"#{{ proposal.topic.name }}"}'><span class="glyphicon glyphicon-share-alt"></span> comment</a>
+                    <a class="btn btn-link collapser" data-autofill='{"destination":"#proposal-{{ proposal.id }}_form_space","topics":"#{{ proposal.topic.name }}"}'><span class="glyphicon glyphicon-share-alt"></span> comment <span class="badge">{{ proposal.topic.posts.count() }}</span></a>
                 {% else %}
-                    <a class="btn btn-link collapser" href="/proposal/{{ proposal.id }}/"><span class="glyphicon glyphicon-share-alt"></span> comment</a>
+                    <a class="btn btn-link collapser" href="/proposal/{{ proposal.id }}/"><span class="glyphicon glyphicon-share-alt"></span> comment <span class="badge">{{ proposal.topic.posts.count() }}</span></a>
                 {% endif %}
             </div>
         </div>
@@ -206,9 +206,10 @@
     {% endfor %}
 </div>
 {% if posts and load_more %}
-    <div class="panel panel-info" id="load_more_container">
+    <div id="load_more_container">
         {{ more_posts_panel(posts_group, posts_name, posts[-1].date) }}
     </div>
+    {{ load_more_scripts() }}
 {% endif %}
 {%- endmacro %}
 
@@ -263,13 +264,14 @@
                         <a class="btn btn-info" href="javascript://" onclick="Sijax.request('load_comments', ['{{ post.id }}', 1]);" id="load_comment_button_{{ post.id }}">
                             <span class="badge">{{ post.children | count }}</span> <span class="hidden-xs hidden-sm">comments </span><span class="glyphicon glyphicon-comment"></span>
                         </a>
-                        <button class="collapser btn btn-primary" data-autofill='{"destination":"#post-{{ post.id }}-comments","id":{{ post.id }},"topics":"{% for topic in post.topics %}#{{topic.name}} {% endfor %}"}'><span class="glyphicon glyphicon-share-alt"></span> reply</button>
+                        <button class="collapser btn btn-primary" data-autofill='{"destination":"#post-{{ post.id }}-form","id":{{ post.id }},"topics":"{% for topic in post.topics %}#{{topic.name}} {% endfor %}"}'><span class="glyphicon glyphicon-share-alt"></span> reply</button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="post-comments comment_dep_2" id="post-{{ post.id }}-comments"></div>
+    <div id="post-{{ post.id }}-form"></div>
+    <div class="post-comments comment_dep_1" id="post-{{ post.id }}-comments"></div>
 </div>
 {%- endmacro %}
 
@@ -326,12 +328,13 @@
                         </a>
                     </div>
                     <div class="btn-group text-right">
-                        <a class="btn btn-link collapser" href="javascript://" data-autofill='{"destination":"#post-{{ post.id }}-comments","id":{{ post.id }},"topics":"{% for topic in post.topics %}#{{topic.name}} {% endfor %}"}'><span class="glyphicon glyphicon-share-alt"></span> reply</a>
+                        <a class="btn btn-link collapser" href="javascript://" data-autofill='{"destination":"#post-{{ post.id }}-form","id":{{ post.id }},"topics":"{% for topic in post.topics %}#{{topic.name}} {% endfor %}"}'><span class="glyphicon glyphicon-share-alt"></span> reply</a>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+    <div id="post-{{ post.id }}-form"></div>
     <div class="post-comments comment_dep_{{ depth + 1 }}" id="post-{{ post.id }}-comments"></div>
 </div>
 {%- endmacro %}
@@ -357,27 +360,52 @@
 {%- endmacro %}
 
 {% macro more_proposals_panel(older_than, open=False, pending=False) -%}
+{#-----     this needs to be contained in a div with id load_more_container to work     -----#}
 {% if older_than %}
-    <a class="panel-body btn btn-primary btn-lg btn-block" href="javascript://" onclick="Sijax.request('load_more_proposals', [{% if open %}true{% else %}false{% endif %}, {% if pending %}true{% else %}false{% endif %}, '{{ older_than }}']);">Load older proposals</a>
+    <div class="alert alert-info text-center lead" data-loader="load_more_proposals" data-load='[{% if open %}true{% else %}false{% endif %}, {% if pending %}true{% else %}false{% endif %}, "{{ older_than }}"]'></div>
 {% else %}
-    <a class="panel-body btn btn-default btn-lg btn-block disabled">There are no more proposals here</a>
+    <div class="alert alert-info text-center lead">There are no more proposals here</div>
 {% endif %}
 {%- endmacro %}
 
-{% macro more_laws_panel(group_name, status_name, older_than) -%}
-{% if older_than %}
-    <a class="panel-body btn btn-primary btn-lg btn-block" href="javascript://" onclick="Sijax.request('load_more_laws', [{% if group_name %}'{{ group_name }}'{% else %}null{% endif %}, {% if status_name %}'{{ status_name }}'{% else %}null{% endif %}, '{{ older_than }}']);">Load older laws</a>
+{% macro more_laws_panel(group_name, status_name, last_id=None) -%}
+{#-----     this needs to be contained in a div with id load_more_container to work     -----#}
+{% if last_id %}
+    <div class="alert alert-info text-center lead" data-loader="load_more_laws" data-load='[{% if group_name %}"{{ group_name }}"{% else %}null{% endif %}, {% if status_name %}"{{ status_name }}"{% else %}null{% endif %}, {{ last_id }}]'></div>
 {% else %}
-    <a class="panel-body btn btn-default btn-lg btn-block disabled">There are no more laws here</a>
+    <div class="alert alert-info text-center lead">There are no more laws here</div>
 {% endif %}
 {%- endmacro %}
 
 {% macro more_posts_panel(group, name, older_than) -%}
+{#-----     this needs to be contained in a div with id load_more_container to work     -----#}
 {% if older_than %}
-    <a class="panel-body btn btn-primary btn-lg btn-block" href="javascript://" onclick="Sijax.request('load_more_posts', [{% if group %}'{{ group }}'{% else %}null{% endif %}, {% if name %}'{{ name }}'{% else %}null{% endif %}, '{{ older_than }}']);">Load older posts</a>
+    <div class="alert alert-info text-center lead" data-loader="load_more_posts" data-load='[{% if group %}"{{ group }}"{% else %}null{% endif %}, {% if name %}"{{ name }}"{% else %}null{% endif %}, "{{ older_than }}"]'></div>
 {% else %}
-    <a class="panel-body btn btn-default btn-lg btn-block disabled">There are no more posts here</a>
+    <div class="alert alert-info text-center lead">There are no more posts here</div>
 {% endif %}
+{%- endmacro %}
+
+{% macro load_more_scripts() -%}
+    {# --- needs to be rendered after the #load_more_container div to work --- #}
+    <script type="text/javascript" src="/static/js/jquery.waypoints.min.js"></script>
+    <script type="text/javascript">
+    var waypoint = $('#load_more_container').waypoint({
+        handler: function(direction) {
+            if (direction == 'down'){
+                this.disable();
+                child = $('#load_more_container').children().last();
+                loader = child.data('loader');
+                load = child.data('load');
+                if (load != null){
+                    child.html('Loading ...');
+                    Sijax.request(loader, load);
+                }
+            }
+        },
+        offset: 'bottom-in-view'
+    })
+    </script>
 {%- endmacro %}
 
 {# --------------------------- Macros for the collapsable post form -------------------------------- #}
@@ -385,10 +413,10 @@
 {% macro post_form_scripts(current_user, topics_all) -%}
 {% if current_user.is_authenticated %}
     <link href="/static/css/sew.css" rel="stylesheet" media="screen">
-    <script src="https://code.jquery.com/jquery-migrate-1.4.1.js"></script>
-    <script src="/static/js/jquery.caretposition.js"></script>
-    <script src="/static/js/jquery.sew.js"></script>
-    <script>
+    <script type="text/javascript" src="https://code.jquery.com/jquery-migrate-1.4.1.js"></script>
+    <script type="text/javascript" src="/static/js/jquery.caretposition.js"></script>
+    <script type="text/javascript" src="/static/js/jquery.sew.js"></script>
+    <script type="text/javascript">
         $(document).ready(function() {
             var values = [{% for topic in topics_all%}{val:'{{ topic.name }}'},{% endfor %}];
 
@@ -403,7 +431,8 @@
             $('#topics').sew({values: values, elementFactory: elementFactory, token: '#'});
         });
     </script>
-    <script src="/static/js/post_forms.js"></script>
+    <script type="text/javascript" src="/static/js/post_forms.js"></script>
+    <script type="text/javascript" src="/static/js/hide_comments.js"></script>
 {% endif %}
 {%- endmacro %}
 
@@ -411,13 +440,10 @@
 {% if current_user.is_authenticated %}
     <div class="panel panel-default">
         <div class="panel-body">
-            <div class="row">
-                <h4 class="col-xs-7 col-md-9">Hey there {{ current_user.username }}, do you have something to share?</h4>
-                <button type="button" class="collapser btn btn-primary btn-lg col-xs-5 col-md-3" data-autofill='{"destination":"#panel_form_space"{% if topic %},"topics":"#{{ topic.name }}"{% endif %}}'>Make a post!</button>
-            </div>
-            <p></p>
-            <div id="panel_form_space"></div>
+            <h4 class="pull-left">Hey there {{ current_user.username }}, do you have something to share?</h4>
+            <button type="button" class="collapser btn btn-primary btn-lg pull-right" data-autofill='{"destination":"#panel_form_space"{% if topic %},"topics":"#{{ topic.name }}"{% endif %}}'>Make a post!</button>
         </div>
+        <div id="panel_form_space"></div>
     </div>
 {% endif %}
 {%- endmacro %}

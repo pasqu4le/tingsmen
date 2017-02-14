@@ -10,9 +10,9 @@
     {{ macros.render_collapsable_post_form(submit_post_form, current_user) }}
     {% if old_parent %}
         <div class="panel panel-info">
-            <div class="panel-body row">
-                <h4 class="col-xs-7 col-md-9">This post is a comment of a bigger discussion</h4>
-                <a class="btn btn-primary btn-lg col-xs-5 col-md-3" href="/post/{{ old_parent.id }}/">
+            <div class="panel-body">
+                <h4 class="pull-left">This post is a comment of a bigger discussion</h4>
+                <a class="btn btn-primary btn-lg pull-right" href="/post/{{ old_parent.id }}/">
                     Look at it
                 </a>
             </div>
