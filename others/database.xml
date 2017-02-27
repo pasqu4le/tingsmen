@@ -41,7 +41,7 @@
 		<type label="Inet CIDR Addr" length="0" sql="CIDR" quote="'"/>
 		<type label="Geometry" length="0" sql="GEOMETRY" quote="'"/>
 	</group>
-</datatypes><table x="54" y="5" name="MailingList">
+</datatypes><table x="22" y="805" name="MailingList">
 <row name="id" null="1" autoincrement="1">
 <datatype>INTEGER</datatype>
 <default>NULL</default></row>
@@ -55,7 +55,7 @@
 <part>id</part>
 </key>
 </table>
-<table x="303" y="5" name="User">
+<table x="309" y="10" name="User">
 <row name="id" null="1" autoincrement="1">
 <datatype>INTEGER</datatype>
 <default>NULL</default></row>
@@ -78,7 +78,7 @@
 <part>id</part>
 </key>
 </table>
-<table x="1203" y="51" name="Post">
+<table x="1506" y="57" name="Post">
 <row name="id" null="1" autoincrement="1">
 <datatype>INTEGER</datatype>
 <default>NULL</default></row>
@@ -103,7 +103,7 @@
 <part>id</part>
 </key>
 </table>
-<table x="503" y="542" name="Law">
+<table x="608" y="634" name="Law">
 <row name="id" null="1" autoincrement="1">
 <datatype>INTEGER</datatype>
 <default>NULL</default></row>
@@ -129,7 +129,7 @@
 <part>id</part>
 </key>
 </table>
-<table x="903" y="302" name="Proposal">
+<table x="763" y="252" name="Proposal">
 <row name="poster_id" null="1" autoincrement="0">
 <datatype>INTEGER</datatype>
 <default>NULL</default><relation table="User" row="id" />
@@ -154,21 +154,21 @@
 <part>id</part>
 </key>
 </table>
-<table x="705" y="504" name="LawAdd">
-<row name="law_id" null="1" autoincrement="0">
-<datatype>INTEGER</datatype>
-<default>NULL</default><relation table="Law" row="id" />
-</row>
+<table x="761" y="532" name="LawAdd">
 <row name="proposal_id" null="1" autoincrement="0">
 <datatype>INTEGER</datatype>
 <default>NULL</default><relation table="Proposal" row="id" />
+</row>
+<row name="law_id" null="1" autoincrement="0">
+<datatype>INTEGER</datatype>
+<default>NULL</default><relation table="Law" row="id" />
 </row>
 <key type="PRIMARY" name="">
 <part>law_id</part>
 <part>proposal_id</part>
 </key>
 </table>
-<table x="1203" y="304" name="TopicPost">
+<table x="1334" y="371" name="TopicPost">
 <row name="post_id" null="1" autoincrement="0">
 <datatype>INTEGER</datatype>
 <default>NULL</default><relation table="Post" row="id" />
@@ -182,7 +182,7 @@
 <part>post_id</part>
 </key>
 </table>
-<table x="1204" y="652" name="Topic">
+<table x="1402" y="607" name="Topic">
 <row name="id" null="1" autoincrement="1">
 <datatype>INTEGER</datatype>
 <default>NULL</default></row>
@@ -196,7 +196,7 @@
 <part>id</part>
 </key>
 </table>
-<table x="305" y="505" name="LawStatus">
+<table x="355" y="697" name="LawStatus">
 <row name="id" null="1" autoincrement="1">
 <datatype>INTEGER</datatype>
 <default>NULL</default></row>
@@ -210,7 +210,7 @@
 <part>id</part>
 </key>
 </table>
-<table x="303" y="304" name="Role">
+<table x="53" y="106" name="Role">
 <row name="id" null="1" autoincrement="1">
 <datatype>INTEGER</datatype>
 <default>NULL</default></row>
@@ -224,7 +224,7 @@
 <part>id</part>
 </key>
 </table>
-<table x="302" y="205" name="UserRole">
+<table x="54" y="13" name="UserRole">
 <row name="user_id" null="1" autoincrement="0">
 <datatype>INTEGER</datatype>
 <default>NULL</default><relation table="User" row="id" />
@@ -238,7 +238,7 @@
 <part>role_id</part>
 </key>
 </table>
-<table x="902" y="29" name="PostUpvote">
+<table x="1354" y="3" name="PostUpvote">
 <row name="user_id" null="1" autoincrement="0">
 <datatype>INTEGER</datatype>
 <default>NULL</default><relation table="User" row="id" />
@@ -252,7 +252,7 @@
 <part>post_id</part>
 </key>
 </table>
-<table x="904" y="179" name="PostDownvote">
+<table x="1237" y="145" name="PostDownvote">
 <row name="user_id" null="1" autoincrement="0">
 <datatype>INTEGER</datatype>
 <default>NULL</default><relation table="User" row="id" />
@@ -266,7 +266,7 @@
 <part>post_id</part>
 </key>
 </table>
-<table x="552" y="304" name="ProposalUpvote">
+<table x="563" y="302" name="ProposalUpvote">
 <row name="user_id" null="1" autoincrement="0">
 <datatype>INTEGER</datatype>
 <default>NULL</default><relation table="User" row="id" />
@@ -280,7 +280,7 @@
 <part>proposal_id</part>
 </key>
 </table>
-<table x="552" y="406" name="ProposalDownvote">
+<table x="545" y="379" name="ProposalDownvote">
 <row name="user_id" null="1" autoincrement="0">
 <datatype>INTEGER</datatype>
 <default>NULL</default><relation table="User" row="id" />
@@ -294,7 +294,7 @@
 <part>proposal_id</part>
 </key>
 </table>
-<table x="54" y="205" name="Globals">
+<table x="24" y="704" name="Globals">
 <row name="id" null="1" autoincrement="1">
 <datatype>INTEGER</datatype>
 <default>NULL</default></row>
@@ -308,21 +308,21 @@
 <part>id</part>
 </key>
 </table>
-<table x="704" y="583" name="LawRemove">
-<row name="law_id" null="1" autoincrement="0">
-<datatype>INTEGER</datatype>
-<default>NULL</default><relation table="Law" row="id" />
-</row>
+<table x="904" y="610" name="LawRemove">
 <row name="proposal_id" null="1" autoincrement="0">
 <datatype>INTEGER</datatype>
 <default>NULL</default><relation table="Proposal" row="id" />
+</row>
+<row name="law_id" null="1" autoincrement="0">
+<datatype>INTEGER</datatype>
+<default>NULL</default><relation table="Law" row="id" />
 </row>
 <key type="PRIMARY" name="">
 <part>law_id</part>
 <part>proposal_id</part>
 </key>
 </table>
-<table x="305" y="606" name="LawGroup">
+<table x="414" y="810" name="LawGroup">
 <row name="id" null="1" autoincrement="1">
 <datatype>INTEGER</datatype>
 <default>NULL</default></row>
@@ -336,7 +336,7 @@
 <part>id</part>
 </key>
 </table>
-<table x="56" y="353" name="Page">
+<table x="170" y="736" name="Page">
 <row name="id" null="1" autoincrement="1">
 <datatype>INTEGER</datatype>
 <default>NULL</default></row>
@@ -351,6 +351,92 @@
 <default>NULL</default></row>
 <key type="PRIMARY" name="">
 <part>id</part>
+</key>
+</table>
+<table x="723" y="171" name="ProposalSubscription">
+<row name="user_id" null="1" autoincrement="0">
+<datatype>INTEGER</datatype>
+<default>NULL</default><relation table="User" row="id" />
+</row>
+<row name="proposal_id" null="1" autoincrement="0">
+<datatype>INTEGER</datatype>
+<default>NULL</default><relation table="Proposal" row="id" />
+</row>
+<key type="PRIMARY" name="">
+<part>proposal_id</part>
+<part>user_id</part>
+</key>
+</table>
+<table x="1126" y="56" name="PostSubscription">
+<row name="user_id" null="1" autoincrement="0">
+<datatype>INTEGER</datatype>
+<default>NULL</default><relation table="User" row="id" />
+</row>
+<row name="post_id" null="1" autoincrement="0">
+<datatype>INTEGER</datatype>
+<default>NULL</default><relation table="Post" row="id" />
+</row>
+<key type="PRIMARY" name="">
+<part>user_id</part>
+<part>post_id</part>
+</key>
+</table>
+<table x="406" y="554" name="LawSubscription">
+<row name="user_id" null="1" autoincrement="0">
+<datatype>INTEGER</datatype>
+<default>NULL</default><relation table="User" row="id" />
+</row>
+<row name="law_id" null="1" autoincrement="0">
+<datatype>INTEGER</datatype>
+<default>NULL</default><relation table="Law" row="id" />
+</row>
+<key type="PRIMARY" name="">
+<part>user_id</part>
+<part>law_id</part>
+</key>
+</table>
+<table x="53" y="253" name="Notification">
+<row name="id" null="1" autoincrement="1">
+<datatype>INTEGER</datatype>
+<default>NULL</default></row>
+<row name="user_id" null="1" autoincrement="0">
+<datatype>INTEGER</datatype>
+<default>NULL</default><relation table="User" row="id" />
+</row>
+<row name="source_id" null="1" autoincrement="0">
+<datatype>VARCHAR(10)</datatype>
+<default>NULL</default></row>
+<row name="source_type" null="1" autoincrement="0">
+<datatype>VARCHAR(20)</datatype>
+<default>NULL</default></row>
+<row name="source_action" null="1" autoincrement="0">
+<datatype>VARCHAR(20)</datatype>
+<default>NULL</default></row>
+<row name="link" null="1" autoincrement="0">
+<datatype>VARCHAR(30)</datatype>
+<default>NULL</default></row>
+<row name="date" null="1" autoincrement="0">
+<datatype>DATE</datatype>
+<default>NULL</default></row>
+<row name="seen" null="1" autoincrement="0">
+<datatype>BOOLEAN</datatype>
+<default>NULL</default></row>
+<key type="PRIMARY" name="">
+<part>id</part>
+</key>
+</table>
+<table x="54" y="503" name="NotificationAuthor">
+<row name="user_id" null="1" autoincrement="0">
+<datatype>INTEGER</datatype>
+<default>NULL</default><relation table="User" row="id" />
+</row>
+<row name="notification_id" null="1" autoincrement="0">
+<datatype>INTEGER</datatype>
+<default>NULL</default><relation table="Notification" row="id" />
+</row>
+<key type="PRIMARY" name="">
+<part>user_id</part>
+<part>notification_id</part>
 </key>
 </table>
 </sql>

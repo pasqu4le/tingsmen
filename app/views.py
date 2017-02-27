@@ -12,7 +12,7 @@ from wtforms import TextAreaField
 # ---------------------------------------------- ROUTING FUNCTIONS
 @app.route('/', methods=('GET', 'POST'))
 def home():
-    # not allowed user handling:
+    # not authenticated user handling:
     if not current_user.is_authenticated:
         options = {
             'title': 'Welcome',

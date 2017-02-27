@@ -58,6 +58,27 @@ class User(db.Model, UserMixin):
     def __repr__(self):
         return self.username
 
+
+notification_author = db.Table('notification_author',
+                               db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
+                               db.Column('notification_id', db.Integer, db.ForeignKey('notification.id')))
+
+
+class Notification(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    user = db.relationship("User")
+    source_id = db.Column(db.String(10))
+    source_type = db.Column(db.String(20))
+    source_action = db.Column(db.String(20))
+    link = db.Column(db.String(30))
+    date = db.Column(db.DateTime())
+    seen = db.Column(db.Boolean())
+    authors = db.relationship('User', secondary=notification_author)
+
+    def __repr__(self):
+        return str(self.id)
+
 post_upvote = db.Table('post_upvote',
                        db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
                        db.Column('post_id', db.Integer, db.ForeignKey('post.id')))
@@ -69,6 +90,10 @@ post_downvote = db.Table('post_downvote',
 post_topic = db.Table('post_topic',
                       db.Column('topic_id', db.Integer(), db.ForeignKey('topic.id')),
                       db.Column('post_id', db.Integer, db.ForeignKey('post.id')))
+
+post_subscription = db.Table('post_subscription',
+                             db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
+                             db.Column('post_id', db.Integer, db.ForeignKey('post.id')))
 
 
 class Post(db.Model):
@@ -83,6 +108,8 @@ class Post(db.Model):
     upvotes = db.relationship('User', secondary=post_upvote, backref=db.backref('upvoted', lazy='dynamic'))
     downvotes = db.relationship('User', secondary=post_downvote, backref=db.backref('downvoted', lazy='dynamic'))
     topics = db.relationship('Topic', secondary=post_topic, backref=db.backref('posts', lazy='dynamic'))
+    subscribed = db.relationship('User', secondary=post_subscription, backref=db.backref('subscribed_posts',
+                                                                                         lazy='dynamic'))
 
     # static method to get a list of following posts (by date) in a 'group'
     @staticmethod
@@ -152,6 +179,10 @@ proposal_downvote = db.Table('proposal_downvote',
                              db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
                              db.Column('proposal_id', db.Integer, db.ForeignKey('proposal.id')))
 
+proposal_subscription = db.Table('proposal_subscription',
+                                 db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
+                                 db.Column('proposal_id', db.Integer, db.ForeignKey('proposal.id')))
+
 
 class Proposal(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -165,6 +196,8 @@ class Proposal(db.Model):
     upvotes = db.relationship('User', secondary=proposal_upvote, backref=db.backref('upvoted_prop', lazy='dynamic'))
     downvotes = db.relationship('User', secondary=proposal_downvote, backref=db.backref('downvoted_prop',
                                                                                         lazy='dynamic'))
+    subscribed = db.relationship('User', secondary=proposal_subscription, backref=db.backref('subscribed_prop',
+                                                                                             lazy='dynamic'))
 
     def set_vote_day(self):
         self.vote_day = self.date.date() + timedelta(days=7-self.date.weekday())
@@ -270,6 +303,10 @@ law_remove = db.Table('law_remove',
                       db.Column('law_id', db.Integer(), db.ForeignKey('law.id')),
                       db.Column('proposal_id', db.Integer, db.ForeignKey('proposal.id')))
 
+law_subscription = db.Table('law_subscription',
+                            db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
+                            db.Column('law_id', db.Integer, db.ForeignKey('law.id')))
+
 
 class Law(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -279,6 +316,8 @@ class Law(db.Model):
     topic = db.relationship("Topic")
     add_by = db.relationship('Proposal', secondary=law_add, backref=db.backref('add_laws', lazy='dynamic'))
     remove_by = db.relationship('Proposal', secondary=law_remove, backref=db.backref('remove_laws', lazy='dynamic'))
+    subscribed = db.relationship('User', secondary=law_subscription, backref=db.backref('subscribed_laws',
+                                                                                        lazy='dynamic'))
 
     @staticmethod
     def get_more(num=5, group_name=None, status_name=None, order='id', last=None):
