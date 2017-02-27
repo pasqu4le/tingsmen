@@ -10,7 +10,3 @@
     {{ macros.render_law(law, current_user, actions_footer=True, comment_here=True) }}
     {{ macros.render_post_group(posts, current_user, submit_post_form, new_post=False, load_more=True, posts_group='topic', posts_name=law.topic.name) }}
 {% endblock %}
-
-{% block side_column %}
-    {{ macros.law_widget(statuses) }}
-{% endblock %}

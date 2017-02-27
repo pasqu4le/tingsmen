@@ -38,16 +38,40 @@
 </div>
 {%- endmacro %}
 
-{% macro law_widget(statuses, current_status=None, group=None) -%}
-<div class="panel panel-default">
-    <div class="panel-heading text-center">
-        <p class="panel-title">{% if group %}{{ group.name }}{% endif %} Status</p>
-        {% if current_status and group %}<a class="small" href="/laws/status/{{ current_status.name }}/">Also not in {{ group.name }}</a>{% endif %}
+{% macro law_widget(statuses, groups, orders, current_status=None, current_group=None, current_order="id") -%}
+<div class="btn-group btn-group-justified">
+    <div class="btn-group">
+        <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Group: {% if current_group %}{{ current_group.name }}{% else %}All{% endif %} <span class="caret"></span></button>
+        <ul class="dropdown-menu">
+            {% if current_group %}
+                <li><a href="/laws/all/{{ current_status.name }}/{{ current_order }}/">All</a></li>
+            {% endif %}
+            {% for group in groups %}
+                {% if (not current_group) or (current_group and current_group.name != group.name) %}
+                    <li><a href="/laws/{{ group.name }}/{{ current_status.name }}/{{ current_order }}/">{{ group.name }}</a></li>
+                {% endif %}
+            {% endfor %}
+        </ul>
     </div>
-    <div class="list-group">
-        {% for status in statuses %}
-            <a role="presentation" class="list-group-item{% if current_status and current_status.name == status.name %} active{% endif %}" href="/laws/{% if group %}group/{{ group.name }}{% else %}status{% endif %}/{{ status.name }}/">{{ status.name }}</a>
-        {% endfor %}
+    <div class="btn-group">
+        <button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Status: {{ current_status.name }} <span class="caret"></span></button>
+        <ul class="dropdown-menu">
+            {% for status in statuses %}
+                {% if current_status and current_status.name != status.name %}
+                    <li><a href="/laws/{% if current_group %}{{ current_group.name }}{% else %}all{% endif %}/{{ status.name }}/{{ current_order }}/">{{ status.name }}</a></li>
+                {% endif %}
+            {% endfor %}
+        </ul>
+    </div>
+    <div class="btn-group">
+        <button type="button" class="btn btn-info dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Order by: {{ current_order }} <span class="caret"></span></button>
+        <ul class="dropdown-menu">
+            {% for order in orders %}
+                {% if current_order and current_order != order %}
+                    <li><a href="/laws/{% if current_group %}{{ current_group.name }}{% else %}all{% endif %}/{{ current_status.name }}/{{ order }}/">{{ order }}</a></li>
+                {% endif %}
+            {% endfor %}
+        </ul>
     </div>
 </div>
 {%- endmacro %}
@@ -166,7 +190,7 @@
 {%- endmacro %}
 
 {% macro render_law(law, current_user, actions_footer=False, comment_here=False) -%}
-<div id="law-{{ law.id }}">
+<div class="law" id="law-{{ law.id }}">
     <div class="panel panel-info">
         <div class="panel-heading">
             <div class="row">
@@ -368,10 +392,10 @@
 {% endif %}
 {%- endmacro %}
 
-{% macro more_laws_panel(group_name, status_name, last_id=None) -%}
+{% macro more_laws_panel(group_name=None, status_name=None, order='id', last=None) -%}
 {#-----     this needs to be contained in a div with id load_more_container to work     -----#}
-{% if last_id %}
-    <div class="alert alert-info text-center lead" data-loader="load_more_laws" data-load='[{% if group_name %}"{{ group_name }}"{% else %}null{% endif %}, {% if status_name %}"{{ status_name }}"{% else %}null{% endif %}, {{ last_id }}]'></div>
+{% if last %}
+    <div class="alert alert-info text-center lead" data-loader="load_more_laws" data-load='[{% if group_name %}"{{ group_name }}"{% else %}null{% endif %}, {% if status_name %}"{{ status_name }}"{% else %}null{% endif %}, "{{ order }}", "{{ last }}"]'></div>
 {% else %}
     <div class="alert alert-info text-center lead">There are no more laws here</div>
 {% endif %}

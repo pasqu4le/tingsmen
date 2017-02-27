@@ -300,58 +300,39 @@ def view_law(law_id):
     return render_template("law.html", **options)
 
 
-@app.route('/laws/group/<group_name>/', methods=('GET', 'POST'))
-def law_group(group_name):
-    return redirect("/laws/group/" + group_name + "/approved/")
-
-
-@app.route('/laws/group/<group_name>/<status_name>/', methods=('GET', 'POST'))
-def law_group_status(group_name, status_name):
-    # ajax request handling
-    if g.sijax.is_sijax_request:
-        g.sijax.register_callback('load_more_laws', load_more_laws)
-        return g.sijax.process_request()
-    # non-ajax handling:
-    group = LawGroup.query.filter_by(name=group_name).first()
-    current_status = LawStatus.query.filter_by(name=status_name).first()
-    if not (group and current_status):
-        abort(404)
-    options = {
-        'title': ' '.join([group_name, 'laws -', status_name]),
-        'pages': Page.query.all(),
-        'current_user': current_user,
-        'group': group,
-        'laws': Law.get_more(group_name=group_name, status_name=status_name),
-        'current_status': current_status,
-        'statuses': LawStatus.query.all()
-    }
-    return render_template("law_group.html", **options)
-
-
 @app.route('/laws/')
 def all_laws():
-    return redirect("/laws/status/approved/")
+    return redirect("/laws/all/active/id/")
 
 
-@app.route('/laws/status/<status_name>/', methods=('GET', 'POST'))
-def law_status(status_name):
+@app.route('/laws/<group_name>/<status_name>/<order>/', methods=('GET', 'POST'))
+def view_laws(group_name, status_name, order):
     # ajax request handling
     if g.sijax.is_sijax_request:
         g.sijax.register_callback('load_more_laws', load_more_laws)
         return g.sijax.process_request()
     # non-ajax handling:
+    current_group = LawGroup.query.filter_by(name=group_name).first()
     current_status = LawStatus.query.filter_by(name=status_name).first()
-    if not current_status:
+    if not (current_status and (current_group or group_name == 'all')):
         abort(404)
+    if group_name == 'all':
+        laws = Law.get_more(status_name=status_name, order=order)
+    else:
+        laws = Law.get_more(group_name=group_name, status_name=status_name, order=order)
     options = {
-        'title': ' '.join([status_name, 'laws']),
-        'pages': Page.query.all(),
+        'title': ' '.join([group_name, 'laws', '-', status_name]),
         'current_user': current_user,
+        'pages': Page.query.all(),
+        'laws': laws,
+        'groups': LawGroup.query.all(),
+        'current_group': current_group,
+        'statuses': LawStatus.query.all(),
         'current_status': current_status,
-        'laws': Law.get_more(status_name=status_name),
-        'statuses': LawStatus.query.all()
+        'orders': ['id', 'date'],
+        'order': order
     }
-    return render_template("law_status.html", **options)
+    return render_template("laws.html", **options)
 
 
 @app.route('/new-proposal/remove/<law_id>/')
@@ -398,6 +379,7 @@ def submit_proposal():
             if content:
                 law = Law(content=content, date=func.now())
                 db.session.add(law)
+                db.session.commit()
                 db.session.flush()
                 law_tpc = Topic.query.filter_by(name="law-" + str(law.id)).first()
                 if not law_tpc:
@@ -624,19 +606,26 @@ def load_comments(obj_response, post_id, depth):
                                      str(post_id), ',', str(depth), ')")']))
 
 
-def load_more_laws(obj_response, group_name, status_name, last_id):
-    laws = Law.get_more(group_name=group_name, status_name=status_name, last_id=last_id)
+def load_more_laws(obj_response, group_name, status_name, order, last):
+    laws = Law.get_more(group_name=group_name, status_name=status_name, order=order, last=last)
     render_law = get_template_attribute('macros.html', 'render_law')
     more_laws_panel = get_template_attribute('macros.html', 'more_laws_panel')
     if laws:
         for law in laws:
             obj_response.html_append('#laws-container', render_law(law, current_user, actions_footer=True).unescape())
-        obj_response.html('#load_more_container', more_laws_panel(group_name, status_name, laws[-1].id).unescape())
+        if order == 'id':
+            panel = more_laws_panel(group_name, status_name, order, laws[-1].id).unescape()
+        elif order == 'date':
+            panel = more_laws_panel(group_name, status_name, order, laws[-1].date).unescape()
+        obj_response.html('#load_more_container', panel)
+        # refresh masonry to load the new laws correctly
+        obj_response.script('$(".masonry-grid").masonry( "reloadItems" )')
+        obj_response.script('$(".masonry-grid").masonry()')
         # refresh and re-enable waypoint to achieve continuous loading
         obj_response.script('Waypoint.refreshAll()')
         obj_response.script('Waypoint.enableAll()')
     else:
-        obj_response.html('#load_more_container', more_laws_panel(group_name, status_name, None).unescape())
+        obj_response.html('#load_more_container', more_laws_panel().unescape())
 
 
 def load_more_proposals(obj_response, open, pending, older_than):

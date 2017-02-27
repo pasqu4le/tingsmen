@@ -1,0 +1,12 @@
+.law {
+    margin-bottom: 5px;
+    position: relative;
+    width: 370px;
+}
+
+// clearfix
+.masonry-grid:after {
+  content: '';
+  display: block;
+  clear: both;
+}

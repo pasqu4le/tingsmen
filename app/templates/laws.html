@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% import "macros.html" as macros %}
+
+{% block head_custom %}
+    {{ macros.sjiax_scripts() }}
+    <script src="/static/js/masonry.pkgd.min.js"></script>
+    <link href="/static/css/masonry-law.css" rel="stylesheet" media="screen">
+    <script>
+        $(document).ready(function() {
+            $('.masonry-grid').masonry({
+                // options
+                itemSelector: '.law',
+                fitWidth: true,
+                gutter: 5
+            });
+        });
+    </script>
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        {{ macros.law_widget(statuses, groups, orders, current_status=current_status, current_group=current_group, current_order=order) }}
+        <div class="jumbotron">
+            {% if current_group %}
+                <h3>{{ current_group.name }} laws{% if current_group.description %}: <small>{{ current_group.description }}</small>{% endif %}</h3>
+            {% endif %}
+            <h4>{{ current_status.name }}{% if current_status.description %}: <small>{{ current_status.description }}</small>{% endif %}</h4>
+        </div>
+        <div class="masonry-grid center-block" id="laws-container">
+            {% for law in laws %}
+                {{ macros.render_law(law, current_user, actions_footer=True)}}
+            {% endfor %}
+        </div>
+        <div id="load_more_container">
+            {% if not laws %}
+                {{ macros.more_laws_panel() }}
+            {% else %}
+                {# ---- set g_name for the more_laws_panel ---- #}
+                {% if current_group %}{% set g_name = current_group.name %}{% else %}{% set g_name = None %}{% endif %}
+                {# ---- use var for correct order ---- #}
+                {% if order == 'id' %}
+                    {{ macros.more_laws_panel(g_name, current_status.name, order, laws[-1].id) }}
+                {% elif order == 'date' %}
+                    {{ macros.more_laws_panel(g_name, current_status.name, order, laws[-1].date ) }}
+                {% endif %}
+            {% endif %}
+        </div>
+        {% if laws %}
+            {{ macros.load_more_scripts() }}
+        {% endif %}
+    </div>
+{% endblock %}
