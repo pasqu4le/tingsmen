@@ -1,6 +1,7 @@
 from app import db
 from datetime import timedelta, date
 from flask_security import UserMixin, RoleMixin
+from sqlalchemy.sql import func
 from sqlalchemy.ext.hybrid import hybrid_property
 
 
@@ -54,6 +55,12 @@ class User(db.Model, UserMixin):
     active = db.Column(db.Boolean())
     confirmed_at = db.Column(db.DateTime())
     roles = db.relationship('Role', secondary=roles_users, backref=db.backref('users', lazy='dynamic'))
+
+    def change_settings(self, username=None):
+        if username:
+            self.username = username
+            db.session.add(self)
+            db.session.commit()
 
     def __repr__(self):
         return self.username
@@ -129,6 +136,39 @@ class Post(db.Model):
             query = query.filter(Post.last_edit_date < older_than)
         return query.order_by(Post.last_edit_date.desc())[:num]
 
+    @staticmethod
+    def submit(content, poster, parent_id, topic_names):
+        post = Post(content=content, poster=poster, poster_id=poster.id, date=func.now())
+        if parent_id:
+            post.parent_id = parent_id
+        # set topics
+        for topic_name in topic_names:
+            if topic_name:
+                tpc = Topic.retrieve(topic_name)
+                post.topics.append(tpc)
+        db.session.add(post)
+        # update the new post and it's parent edit_date (recursively)
+        post.update_edit_date()
+        db.session.commit()
+        return post
+
+    def vote(self, user, up):
+        if up:
+            if user in self.upvotes:
+                self.upvotes.remove(user)
+            else:
+                if user in self.downvotes:
+                    self.downvotes.remove(user)
+                self.upvotes.append(user)
+        else:
+            if user in self.downvotes:
+                self.downvotes.remove(user)
+            else:
+                if user in self.upvotes:
+                    self.upvotes.remove(user)
+                self.downvotes.append(user)
+        db.session.commit()
+
     def update_edit_date(self, new_date=None):
         if not new_date:
             new_date = self.date
@@ -168,6 +208,31 @@ class Topic(db.Model):
     name = db.Column(db.String(100), unique=True)
     description = db.Column(db.String(500))
 
+    @staticmethod
+    def sane_name(name):
+        topic_name = []
+        after_hyphens = False
+        for l in name:
+            if l.isalnum():
+                topic_name.append(l)
+                after_hyphens = False
+            elif l == '-' and not after_hyphens:
+                topic_name.append(l)
+                after_hyphens = True
+        return ''.join(topic_name).strip('-').lower()
+
+    @staticmethod
+    def retrieve(name):
+        # sanitize the name
+        name = Topic.sane_name(name)
+        # make if does not exists and return:
+        topic = Topic.query.filter_by(name=name).first()
+        if not topic:
+            topic = Topic(name=name)
+            db.session.add(topic)
+            db.session.commit()
+        return topic
+
     def __repr__(self):
         return "Topic: #" + self.name
 
@@ -202,6 +267,51 @@ class Proposal(db.Model):
     def set_vote_day(self):
         self.vote_day = self.date.date() + timedelta(days=7-self.date.weekday())
 
+    @staticmethod
+    def submit(description, poster, new_laws, remove_laws):
+        proposal = Proposal(description=description, poster=poster, poster_id=poster.id, date=func.now())
+        db.session.add(proposal)
+        db.session.flush()
+        # set vote day
+        proposal.set_vote_day()
+        # set topic
+        tpc = Topic.retrieve("proposal-" + str(proposal.id))
+        proposal.topic = tpc
+        proposal.topic_id = tpc.id
+        # status for the newly added laws
+        proposed = LawStatus.query.filter_by(name='proposed').first()
+        # create and link new laws
+        for content, groups in new_laws:
+            if content:
+                law = Law(content=content, date=func.now())
+                db.session.add(law)
+                db.session.flush()
+                # set topic
+                tpc = Topic.retrieve("law-" + str(law.id))
+                law.topic = tpc
+                law.topic_id = tpc.id
+                # set groups
+                for group_name in groups:
+                    # new laws cannot be in the Base group
+                    if group_name != 'Base':
+                        group = LawGroup.query.filter_by(name=group_name).first()
+                        if group:
+                            # group must already exist
+                            law.group.append(group)
+                # set the law status as proposed
+                law.status.append(proposed)
+                # insert the law in the proposal
+                proposal.add_laws.append(law)
+        # create and link laws to remove
+        for law_id in remove_laws:
+            if law_id:
+                law = Law.query.filter_by(id=law_id).first()
+                if law:
+                    proposal.remove_laws.append(law)
+        # commit everything and return
+        db.session.commit()
+        return proposal
+
     @hybrid_property
     def is_open(self):
         return date.today() == self.vote_day
@@ -220,6 +330,24 @@ class Proposal(db.Model):
         if older_than:
             query = query.filter(Proposal.date < older_than)
         return query.order_by(Proposal.date.desc())[:num]
+
+    def vote(self, user, up):
+        if self.is_open:
+            if up:
+                if user in self.upvotes:
+                    self.upvotes.remove(user)
+                else:
+                    if user in self.downvotes:
+                        self.downvotes.remove(user)
+                    self.upvotes.append(user)
+            else:
+                if user in self.downvotes:
+                    self.downvotes.remove(user)
+                else:
+                    if user in self.upvotes:
+                        self.upvotes.remove(user)
+                    self.downvotes.append(user)
+            db.session.commit()
 
     def approved(self):
         return self.points() > 0

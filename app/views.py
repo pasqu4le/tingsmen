@@ -1,11 +1,9 @@
 from app import app, security
-import utils
 from flask import g, render_template, abort, redirect, url_for, request, get_template_attribute
 from flask_security import current_user
 from flask_admin.contrib import sqla
 from database import *
 import forms
-from sqlalchemy.sql import func
 from wtforms import TextAreaField
 
 
@@ -105,7 +103,7 @@ def topics():
 
 
 @app.route('/user/<username>/')
-def user(username):
+def view_user(username):
     return redirect("/user/" + username + "/post/")
 
 
@@ -117,11 +115,9 @@ def settings():
     messages = []
     if form.validate_on_submit():
         if form.username.data:
-            current_user.username = form.username.data
+            current_user.change_settings(username=form.username.data)
             messages.append('You username was correctly changed')
         messages.append('Settings saved!')
-        db.session.add(current_user)
-        db.session.commit()
     options = {
         'title': 'settings',
         'pages': Page.query.all(),
@@ -142,8 +138,8 @@ def user_page(username, subpage):
         g.sijax.register_callback('vote_post', vote_post)
         return g.sijax.process_request()
     # non-ajax handling:
-    main_user = User.query.filter_by(username=username).first()
-    if not main_user:
+    user = User.query.filter_by(username=username).first()
+    if not user:
         abort(404)
     posts = []
     group = 'user'
@@ -156,10 +152,10 @@ def user_page(username, subpage):
         posts = Post.get_more(group='downvotes', name=username)
         group = 'downvotes'
     options = {
-        'title': main_user.username,
+        'title': user.username,
         'pages': Page.query.all(),
         'current_user': current_user,
-        'user': main_user,
+        'user': user,
         'posts': posts,
         'posts_group': group,
         'current_page': subpage,
@@ -364,47 +360,9 @@ def new_proposal_change(proposal_id):
 def submit_proposal():
     form = forms.ProposalForm()
     if current_user.is_authenticated and form.validate_on_submit():
-        proposal = Proposal(description=form.description.data, poster=current_user, poster_id=current_user.id,
-                            date=func.now())
-        db.session.add(proposal)
-        db.session.flush()
-        proposal.set_vote_day()
-        prop_tpc = Topic.query.filter_by(name="proposal-" + str(proposal.id)).first()
-        if not prop_tpc:
-            prop_tpc = Topic(name="proposal-" + str(proposal.id))
-            db.session.add(prop_tpc)
-        proposal.topic = prop_tpc
-        proposal.topic_id = prop_tpc.id
-        for content, groups in [(e.data['content'], e.data['groups']) for e in form.new_laws.entries]:
-            if content:
-                law = Law(content=content, date=func.now())
-                db.session.add(law)
-                db.session.commit()
-                db.session.flush()
-                law_tpc = Topic.query.filter_by(name="law-" + str(law.id)).first()
-                if not law_tpc:
-                    law_tpc = Topic(name="law-" + str(law.id))
-                    db.session.add(law_tpc)
-                law.topic = law_tpc
-                law.topic_id = law_tpc.id
-                for group_name in groups:
-                    if group_name != 'Base':
-                        group = LawGroup.query.filter_by(name=group_name).first()
-                        if group:
-                            # group must exist before
-                            law.group.append(group)
-                proposed = LawStatus.query.filter_by(name='proposed').first()
-                if proposed:
-                    law.status.append(proposed)
-                db.session.add(law)
-                proposal.add_laws.append(law)
-        for law_id in [e.data for e in form.remove_laws.entries]:
-            if law_id:
-                law = Law.query.filter_by(id=law_id).first()
-                if law:
-                    proposal.remove_laws.append(law)
-        db.session.add(proposal)
-        db.session.commit()
+        proposal = Proposal.submit(form.description.data, current_user,
+                                   [(e.data['content'], e.data['groups']) for e in form.new_laws.entries],
+                                   [e.data for e in form.remove_laws.entries])
         return redirect("/proposal/" + str(proposal.id))
     return new_proposal(form)
 
@@ -489,43 +447,15 @@ def permission_denied(error):
 def vote_post(obj_response, post_id, up):
     post = Post.query.filter_by(id=post_id).first()
     if post and current_user.is_authenticated:
-        if up:
-            if current_user in post.upvotes:
-                post.upvotes.remove(current_user)
-            else:
-                if current_user in post.downvotes:
-                    post.downvotes.remove(current_user)
-                post.upvotes.append(current_user)
-        else:
-            if current_user in post.downvotes:
-                post.downvotes.remove(current_user)
-            else:
-                if current_user in post.upvotes:
-                    post.upvotes.remove(current_user)
-                post.downvotes.append(current_user)
-        db.session.commit()
+        post.vote(current_user, up)
         obj_response.html('#post_vote_' + post_id, str(post.points()))
         obj_response.attr('#post_vote_' + post_id, 'class', post.current_vote_style(current_user))
 
 
 def vote_proposal(obj_response, proposal_id, up):
     proposal = Proposal.query.filter_by(id=proposal_id).first()
-    if proposal and current_user.is_authenticated and proposal.is_open:
-        if up:
-            if current_user in proposal.upvotes:
-                proposal.upvotes.remove(current_user)
-            else:
-                if current_user in proposal.downvotes:
-                    proposal.downvotes.remove(current_user)
-                proposal.upvotes.append(current_user)
-        else:
-            if current_user in proposal.downvotes:
-                proposal.downvotes.remove(current_user)
-            else:
-                if current_user in proposal.upvotes:
-                    proposal.upvotes.remove(current_user)
-                proposal.downvotes.append(current_user)
-        db.session.commit()
+    if proposal and current_user.is_authenticated:
+        proposal.vote(current_user, up)
         obj_response.html('#proposal_vote_' + proposal_id, str(proposal.points()))
         obj_response.attr('#proposal_vote_' + proposal_id, 'class', proposal.current_vote_style(current_user))
 
@@ -557,30 +487,18 @@ def load_more_posts(obj_response, group, name, older_than):
 def submit_post(obj_response, files, form_values):
     form = forms.PostForm(**form_values)
     if form.validate():
-        post = Post(content=form.content.data, poster=current_user, poster_id=current_user.id, date=func.now())
+        parent_id = None
         if form.parent_id.data:
-            post.parent_id = int(form.parent_id.data)
-        for tn in form.topics.data.split():
-            topic_name = utils.get_topic_name(tn)
-            if topic_name:
-                tpc = Topic.query.filter_by(name=topic_name).first()
-                if not tpc:
-                    tpc = Topic(name=topic_name, description='')
-                    db.session.add(tpc)
-                post.topics.append(tpc)
-        db.session.add(post)
-        db.session.commit()
-        # update the new post and it's parent edit_date (recursively)
-        post.update_edit_date()
-        db.session.commit()
-        if form.parent_id.data:
-            par_id = form.parent_id.data
+            parent_id = form.parent_id.data
+        post = Post.submit(form.content.data, current_user, int(parent_id), form.topics.data.split())
+
+        if parent_id:
             render_comment = get_template_attribute('macros.html', 'render_comment')
-            obj_response.html_prepend(''.join(['#post-', par_id, '-comments']),
+            obj_response.html_prepend(''.join(['#post-', parent_id, '-comments']),
                                       render_comment(post, current_user).unescape())
             # update parent comments counter
-            obj_response.script(''.join(['$("#load_comment_button_', par_id, '").children(".badge").html(',
-                                         str(Post.query.filter_by(parent_id=par_id).count()), ')']))
+            obj_response.script(''.join(['$("#load_comment_button_', parent_id, '").children(".badge").html(',
+                                         str(Post.query.filter_by(parent_id=parent_id).count()), ')']))
         else:
             render_post = get_template_attribute('macros.html', 'render_post')
             obj_response.html_prepend('#post-container', render_post(post, current_user).unescape())
