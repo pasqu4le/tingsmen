@@ -31,9 +31,21 @@
                 {% if current_user.is_authenticated %}
                 <li>
                     <a href="/new-proposal/">
-                        <span class="hidden-md hidden-lg">Propose </span>
+                        <span class="visible-xs-inline">Propose </span>
                         <span class="glyphicon glyphicon-plus-sign"></span>
                     </a>
+                </li>
+                <li class="dropdown">
+                    <a class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+                        <span class="visible-xs-inline">Notifications </span><span class="glyphicon glyphicon-bell{% if current_user.has_new_notifications() %} notif-unseen{% endif %}"></span>
+                    </a>
+                    <ul class="dropdown-menu">
+                        {% for notification in current_user.get_notifications(10) %}
+                            <li {% if not notification.seen %}class="notif-unseen-back"{% endif %}><a href="{{notification.link_to()}}" ><span class="glyphicon glyphicon-chevron-right"></span> {{ notification.to_text() }}</a></li>
+                        {% endfor %}
+                        <li role="separator" class="divider"></li>
+                        <li><a href="/notifications/" class="text-center">See All</a></li>
+                    </ul>
                 </li>
                 <li>
                     <a href="/user/{{ current_user.username }}/">
@@ -43,7 +55,7 @@
                 </li>
                 <li class="dropdown">
                     <a class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
-                        <span class="hidden-md hidden-lg">Options </span><span class="caret"></span>
+                        <span class="visible-xs-inline">Options </span><span class="caret"></span>
                     </a>
                     <ul class="dropdown-menu">
                         <li><a href="/settings/"><span class="glyphicon glyphicon-wrench"></span> Settings</a></li>

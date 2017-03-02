@@ -18,7 +18,7 @@
     </div>
     <div class="list-group">
         {% for topic in topics %}
-            <a class="list-group-item{% if current_topic and topic == current_topic %} active{% endif %}" href="/topic/{{ topic.name }}/">#{{ topic.name }}</a>
+            <a class="list-group-item{% if current_topic and topic == current_topic %} active{% endif %}" href="{{ topic.link_to() }}">#{{ topic.name }}</a>
         {% endfor %}
         <a class="list-group-item list-group-item-info" href="/topics/">More topics<span class="badge">{{ more_topics_number }}</span></a>
     </div>
@@ -32,7 +32,7 @@
     </div>
     <div class="list-group">
         {% for page in pages %}
-            <a class="list-group-item{% if current_page and page.name == current_page.name %} active{% endif %}" href="/page/{{ page.name }}/">{{ page.name }}</a>
+            <a class="list-group-item{% if current_page and page.name == current_page.name %} active{% endif %}" href="{{ page.link_to() }}">{{ page.name }}</a>
         {% endfor %}
     </div>
 </div>
@@ -97,7 +97,7 @@
     </div>
     <ul class="panel-body nav nav-pills nav-stacked">
         {% for subpage in subpages %}
-            <li role="presentation" {% if main_subpage == subpage %}class="active"{% endif %}><a href="/user/{{ user.username }}/{{ subpage }}/">{{ subpage }}</a></li>
+            <li role="presentation" {% if main_subpage == subpage %}class="active"{% endif %}><a href="{{ user.link_to() }}/{{ subpage }}/">{{ subpage }}</a></li>
         {% endfor %}
     </ul>
 </div>
@@ -112,9 +112,9 @@
         <div class="panel-body">
             <div class="row">
                 <p class="lead col-xs-7">
-                    <a href="/proposal/{{ proposal.id }}/">Proposal n. {{ proposal.id }}</a>, by <a href="/user/{{ proposal.poster.username }}/">@{{ proposal.poster.username }}</a>
+                    <a href="{{ proposal.link_to() }}">Proposal n. {{ proposal.id }}</a>, by <a href="{{ proposal.poster.link_to() }}">@{{ proposal.poster.username }}</a>
                 </p>
-                <a href="/proposal/{{ proposal.id }}/" class="col-xs-5 text-right text-muted">{{ render_date(proposal.date) }}</a>
+                <a href="{{ proposal.link_to() }}" class="col-xs-5 text-right text-muted">{{ render_date(proposal.date) }}</a>
             </div>
             <div class="text-muted lead">{{ proposal.description|markdown }}</div>
             <hr>
@@ -180,7 +180,7 @@
                 {% if comment_here %}
                     <a class="btn btn-link collapser" data-autofill='{"destination":"#proposal-{{ proposal.id }}_form_space","topics":"#{{ proposal.topic.name }}"}'><span class="glyphicon glyphicon-share-alt"></span> comment <span class="badge">{{ proposal.topic.posts.count() }}</span></a>
                 {% else %}
-                    <a class="btn btn-link collapser" href="/proposal/{{ proposal.id }}/"><span class="glyphicon glyphicon-share-alt"></span> comment <span class="badge">{{ proposal.topic.posts.count() }}</span></a>
+                    <a class="btn btn-link collapser" href="{{ proposal.link_to() }}"><span class="glyphicon glyphicon-share-alt"></span> comment <span class="badge">{{ proposal.topic.posts.count() }}</span></a>
                 {% endif %}
             </div>
         </div>
@@ -194,10 +194,10 @@
     <div class="panel panel-info">
         <div class="panel-heading">
             <div class="row">
-                <div class="col-xs-7"><a href="/law/{{ law.id }}/" class="panel-title">Law n. {{ law.id }}</a>
-                    <small> in {% for group in law.group %}<a href="/laws/group/{{group.name}}/">{{group.name}}</a>{% if not loop.last %}, {% endif %}{% endfor %}</small>
+                <div class="col-xs-7"><a href="{{ law.link_to() }}" class="panel-title">Law n. {{ law.id }}</a>
+                    <small> in {% for group in law.group %}<a href="/laws/{{group.name}}/active/id">{{group.name}}</a>{% if not loop.last %}, {% endif %}{% endfor %}</small>
                 </div>
-                <div class="col-xs-5 text-right">{% for status in law.status %}<a href="/laws/status/{{status.name}}/" class="label label-success">{{status.name}}</a> {% endfor %}</div>
+                <div class="col-xs-5 text-right">{% for status in law.status %}<a href="/laws/all/{{status.name}}/id/" class="label label-success">{{status.name}}</a> {% endfor %}</div>
             </div>
         </div>
         <div class="panel-body">
@@ -205,12 +205,12 @@
         </div>
         {% if actions_footer %}
             <div class="panel-footer btn-group btn-group-justified">
-                <a class="btn btn-link" href="/law/{{ law.id }}/"><span class="glyphicon glyphicon-comment"></span> discussion <span class="badge">{{ law.topic.posts.count() }}</span></a>
+                <a class="btn btn-link" href="{{ law.link_to() }}"><span class="glyphicon glyphicon-comment"></span> discussion <span class="badge">{{ law.topic.posts.count() }}</span></a>
                 <a class="btn btn-link" href="/new-proposal/remove/{{ law.id }}/"><span class="glyphicon glyphicon-remove"></span> remove</a>
                 {% if comment_here %}
                     <a class="btn btn-link collapser" data-autofill='{"destination":"#law-{{ law.id }}_form_space","topics":"#{{ law.topic.name }}"}'><span class="glyphicon glyphicon-share-alt"></span> comment</a>
                 {% else %}
-                    <a class="btn btn-link" href="/law/{{ law.id }}/"><span class="glyphicon glyphicon-share-alt"></span> comment</a>
+                    <a class="btn btn-link" href="{{ law.link_to() }}"><span class="glyphicon glyphicon-share-alt"></span> comment</a>
                 {% endif %}
             </div>
         {% endif %}
@@ -242,7 +242,7 @@
     <div class="panel panel-default">
         <div class="row panel-body">
             <div class="col-md-2 col-xs-3">
-                <a href="/user/{{ post.poster.username }}/"><img class="img-rounded img-responsive center-block" src="{{ post.poster.email | gravatar }}"></a>
+                <a href="{{ post.poster.link_to() }}"><img class="img-rounded img-responsive center-block" src="{{ post.poster.email | gravatar }}"></a>
                 <p></p>
                 {# render vote form #}
                 <div class="btn-group-vertical btn-block">
@@ -271,8 +271,8 @@
             </div>
             <div class="col-md-10 col-xs-9">
                 <div class="row">
-                    <p class="lead text-info col-xs-5"><a href="/user/{{ post.poster.username }}/"> –@{{ post.poster.username }}</a>{% if post.poster.roles %}<small> {% for role in post.poster.roles %}<span class="label label-primary">{{ role.name }}</span>{% endfor %}</small>{% endif%}</p>
-                    <a href="/post/{{ post.id }}/" class="col-xs-7 text-right text-muted">{{ render_date(post.date) }}</a>
+                    <p class="lead text-info col-xs-5"><a href="{{ post.poster.link_to() }}"> –@{{ post.poster.username }}</a>{% if post.poster.roles %}<small> {% for role in post.poster.roles %}<span class="label label-primary">{{ role.name }}</span>{% endfor %}</small>{% endif%}</p>
+                    <a href="{{ post.link_to() }}" class="col-xs-7 text-right text-muted">{{ render_date(post.date) }}</a>
                 </div>
                 <div class="text-muted lead">{{ post.content|markdown }}</div>
             </div>
@@ -304,19 +304,19 @@
     <div class="panel panel-default">
         <div class="row panel-body">
             <div class="col-md-2 col-xs-3">
-                <a href="/user/{{ post.poster.username }}/"><img class="img-rounded img-responsive center-block" src="{{ post.poster.email | gravatar }}"></a>
+                <a href="{{ post.poster.link_to() }}"><img class="img-rounded img-responsive center-block" src="{{ post.poster.email | gravatar }}"></a>
             </div>
             <div class="col-md-10 col-xs-9">
-                <p class="text-info"><a href="/user/{{ post.poster.username }}/"> –@{{ post.poster.username }}</a>{% if post.poster.roles %}<small> {% for role in post.poster.roles %}<span class="label label-primary">{{ role.name }}</span>{% endfor %}</small>{% endif%}</p>
+                <p class="text-info"><a href="{{ post.poster.link_to() }}"> –@{{ post.poster.username }}</a>{% if post.poster.roles %}<small> {% for role in post.poster.roles %}<span class="label label-primary">{{ role.name }}</span>{% endfor %}</small>{% endif%}</p>
                 <div class="text-muted lead">{{ post.content|markdown }}</div>
                 <div>
                     <span class="glyphicon glyphicon-tags"></span> -{% for topic in post.topics %}
-                    <a href="/topic/{{ topic.name }}/"> #{{ topic.name }}</a>{% endfor %}
+                    <a href="{{ topic.link_to() }}"> #{{ topic.name }}</a>{% endfor %}
                 </div>
                 <hr>
                 <div class="btn-group btn-group-justified">
                     <div class="btn-group">
-                        <a href="/post/{{ post.id }}/" class="text-muted">{{ render_date(post.date) }}</a>
+                        <a href="{{ post.link_to() }}" class="text-muted">{{ render_date(post.date) }}</a>
                     </div>
                     {# render vote form #}
                     <div class="btn-group text-center">

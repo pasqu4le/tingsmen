@@ -1,0 +1,14 @@
+{% extends "columned.html" %}
+{% import "macros.html" as macros %}
+
+{% block central_column %}
+    <ul class="list-group">
+        {% for notif in notifs %}
+            <li class="list-group-item{% if not notif.seen %} notif-unseen-back{% endif %}">
+                <a href="{{ notif.link_to() }}" class="lead">
+                    <span class="glyphicon glyphicon-chevron-right"></span> {{ notif.to_text() }}
+                </a>
+            </li>
+        {% endfor %}
+    </ul>
+{% endblock %}

@@ -7,6 +7,14 @@ import forms
 from wtforms import TextAreaField
 
 
+def base_options():
+    # a function for the options required by every page
+    return {
+        'pages': Page.query.all(),
+        'current_user': current_user
+    }
+
+
 # ---------------------------------------------- ROUTING FUNCTIONS
 @app.route('/', methods=('GET', 'POST'))
 def home():
@@ -14,9 +22,8 @@ def home():
     if not current_user.is_authenticated:
         options = {
             'title': 'Welcome',
-            'pages': Page.query.all(),
-            'current_user': current_user,
         }
+        options.update(base_options())
         return render_template("index.html", **options)
     # ajax request handling
     form_init_js = g.sijax.register_upload_callback('post_form', submit_post)
@@ -29,8 +36,6 @@ def home():
     posts = Post.get_more()
     options = {
         'title': 'Home',
-        'pages': Page.query.all(),
-        'current_user': current_user,
         'posts': posts,
         'some_topics': Topic.query[:10],
         'topics_all': Topic.query.all(),
@@ -38,6 +43,7 @@ def home():
         'submit_post_form': forms.PostForm(),
         'form_init_js': form_init_js
     }
+    options.update(base_options())
     return render_template("home.html", **options)
 
 
@@ -54,10 +60,9 @@ def view_page(page_name):
         abort(404)
     options = {
         'title': current_page.name,
-        'current_user': current_user,
-        'current_page': current_page,
-        'pages': Page.query.all()
+        'current_page': current_page
     }
+    options.update(base_options())
     return render_template("page.html", **options)
 
 
@@ -77,8 +82,6 @@ def topic(topic_name):
     posts = Post.get_more(group='topic', name=topic_name)
     options = {
         'title': '#' + current_topic.name,
-        'pages': Page.query.all(),
-        'current_user': current_user,
         'current_topic': current_topic,
         'posts': posts,
         'some_topics': Topic.query[:10],
@@ -87,6 +90,7 @@ def topic(topic_name):
         'submit_post_form': forms.PostForm(),
         'form_init_js': form_init_js
     }
+    options.update(base_options())
     return render_template("topic.html", **options)
 
 
@@ -95,11 +99,36 @@ def topics():
     topic_list = Topic.query.all()
     options = {
         'title': 'Topics',
-        'pages': Page.query.all(),
-        'topic_list': topic_list,
-        'current_user': current_user,
+        'topic_list': topic_list
     }
+    options.update(base_options())
     return render_template("topics.html", **options)
+
+
+@app.route('/notifications/')
+def notifications():
+    if current_user.is_authenticated:
+        notifs = current_user.get_notifications()
+        options = {
+            'title': 'Topics',
+            'notifs': notifs
+        }
+        options.update(base_options())
+        return render_template("notifications.html", **options)
+    return redirect('/')
+
+
+@app.route('/notification/<notif_id>/')
+def open_notification(notif_id):
+    if current_user.is_authenticated:
+        notif = Notification.query.filter_by(id=notif_id).first()
+        # check if the notification exists and is for current_user
+        if notif and notif.user == current_user:
+            if not notif.seen:
+                notif.seen = True
+                db.session.commit()
+            return redirect(notif.link)
+    return redirect('/')
 
 
 @app.route('/user/<username>/')
@@ -120,11 +149,10 @@ def settings():
         messages.append('Settings saved!')
     options = {
         'title': 'settings',
-        'pages': Page.query.all(),
-        'current_user': current_user,
         'settings_form': form,
         'messages': messages
     }
+    options.update(base_options())
     return render_template("settings.html", **options)
 
 
@@ -153,8 +181,6 @@ def user_page(username, subpage):
         group = 'downvotes'
     options = {
         'title': user.username,
-        'pages': Page.query.all(),
-        'current_user': current_user,
         'user': user,
         'posts': posts,
         'posts_group': group,
@@ -164,6 +190,7 @@ def user_page(username, subpage):
         'submit_post_form': forms.PostForm(),
         'form_init_js': form_init_js
     }
+    options.update(base_options())
     return render_template("user.html", **options)
 
 
@@ -187,8 +214,6 @@ def view_post(post_id):
             old_parent = old_parent.parent
     options = {
         'title': 'Post',
-        'pages': Page.query.all(),
-        'current_user': current_user,
         'main_post': main_post,
         'old_parent': old_parent,
         'children': main_post.get_children(),
@@ -198,6 +223,7 @@ def view_post(post_id):
         'submit_post_form': forms.PostForm(),
         'form_init_js': form_init_js
     }
+    options.update(base_options())
     return render_template("post.html", **options)
 
 
@@ -218,8 +244,6 @@ def view_proposal(proposal_id):
         abort(404)
     options = {
         'title': 'Proposal',
-        'pages': Page.query.all(),
-        'current_user': current_user,
         'proposal': proposal,
         'statuses': ['all', 'open', 'pending'],
         'posts': Post.get_more(group='topic', name=proposal.topic.name),
@@ -227,6 +251,7 @@ def view_proposal(proposal_id):
         'submit_post_form': forms.PostForm(),
         'form_init_js': form_init_js
     }
+    options.update(base_options())
     return render_template("proposal.html", **options)
 
 
@@ -259,13 +284,12 @@ def proposal_status(status):
         proposals = Proposal.get_more()
     options = {
         'title': ' '.join([status, 'proposals']),
-        'pages': Page.query.all(),
-        'current_user': current_user,
         'statuses': ['all', 'open', 'pending'],
         'current_status': status,
         'proposals': proposals,
         'description': description
     }
+    options.update(base_options())
     return render_template("proposals.html", **options)
 
 
@@ -284,8 +308,6 @@ def view_law(law_id):
         abort(404)
     options = {
         'title': 'Law',
-        'pages': Page.query.all(),
-        'current_user': current_user,
         'law': law,
         'posts': Post.get_more(group='topic', name=law.topic.name),
         'topics_all': Topic.query.all(),
@@ -293,6 +315,7 @@ def view_law(law_id):
         'statuses': LawStatus.query.all(),
         'form_init_js': form_init_js
     }
+    options.update(base_options())
     return render_template("law.html", **options)
 
 
@@ -318,8 +341,6 @@ def view_laws(group_name, status_name, order):
         laws = Law.get_more(group_name=group_name, status_name=status_name, order=order)
     options = {
         'title': ' '.join([group_name, 'laws', '-', status_name]),
-        'current_user': current_user,
-        'pages': Page.query.all(),
         'laws': laws,
         'groups': LawGroup.query.all(),
         'current_group': current_group,
@@ -328,6 +349,7 @@ def view_laws(group_name, status_name, order):
         'orders': ['id', 'date'],
         'order': order
     }
+    options.update(base_options())
     return render_template("laws.html", **options)
 
 
@@ -370,10 +392,9 @@ def submit_proposal():
 def new_proposal(form):
     options = {
         'title': 'propose',
-        'pages': Page.query.all(),
-        'current_user': current_user,
         'proposal_form': form
     }
+    options.update(base_options())
     return render_template("new_proposal.html", **options)
 
 
@@ -425,10 +446,9 @@ def security_register_processor():
 def page_not_found(error):
     options = {
         'code': 404,
-        'pages': Page.query.all(),
-        'message': 'The page you are looking for cannot be found',
-        'current_user': current_user
+        'message': 'The page you are looking for cannot be found'
     }
+    options.update(base_options())
     return render_template("error.html", **options)
 
 
@@ -436,10 +456,9 @@ def page_not_found(error):
 def permission_denied(error):
     options = {
         'code': 403,
-        'pages': Page.query.all(),
-        'message': 'Access forbidden',
-        'current_user': current_user
+        'message': 'Access forbidden'
     }
+    options.update(base_options())
     return render_template("error.html", **options)
 
 
@@ -490,7 +509,9 @@ def submit_post(obj_response, files, form_values):
         parent_id = None
         if form.parent_id.data:
             parent_id = form.parent_id.data
-        post = Post.submit(form.content.data, current_user, int(parent_id), form.topics.data.split())
+            post = Post.submit(form.content.data, current_user, int(parent_id), form.topics.data.split())
+        else:
+            post = Post.submit(form.content.data, current_user, None, form.topics.data.split())
 
         if parent_id:
             render_comment = get_template_attribute('macros.html', 'render_comment')

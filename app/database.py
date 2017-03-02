@@ -29,6 +29,9 @@ class Page(db.Model):
     title = db.Column(db.String(50))
     content = db.Column(db.String(1000))
 
+    def link_to(self):
+        return '/page/' + self.name
+
     def __repr__(self):
         return self.name
 
@@ -56,11 +59,27 @@ class User(db.Model, UserMixin):
     confirmed_at = db.Column(db.DateTime())
     roles = db.relationship('Role', secondary=roles_users, backref=db.backref('users', lazy='dynamic'))
 
+    @staticmethod
+    def get_admin():
+        return Role.query.filter_by(name='admin').first().users[0]
+
+    def has_new_notifications(self):
+        return Notification.query.filter_by(user=self).filter_by(seen=False).count() > 0
+
+    def get_notifications(self, num=0):
+        query = Notification.query.filter_by(user=self).order_by(Notification.date.desc())
+        if num:
+            return query[:num]
+        return query.all()
+
     def change_settings(self, username=None):
         if username:
             self.username = username
             db.session.add(self)
             db.session.commit()
+
+    def link_to(self):
+        return '/user/' + self.username
 
     def __repr__(self):
         return self.username
@@ -82,6 +101,78 @@ class Notification(db.Model):
     date = db.Column(db.DateTime())
     seen = db.Column(db.Boolean())
     authors = db.relationship('User', secondary=notification_author)
+
+    @staticmethod
+    def notify(user, source_id, source_type, source_action, link, author):
+        # check if there is already a notification from the same source (id, type) and action
+        notif = Notification.query.filter_by(user=user).filter_by(source_id=source_id).\
+            filter_by(source_type=source_type).filter_by(source_action=source_action).first()
+        if notif:
+            # update the existing notification:
+            notif.authors.append(author)
+            notif.date = func.now()
+            notif.seen = False
+            db.session.commit()
+            return
+        # if not, a new notification is needed:
+        notif = Notification(user=user, user_id=user.id, source_id=source_id, source_type=source_type,
+                             source_action=source_action, link=link, date=func.now(), seen=False)
+        notif.authors.append(author)
+        db.session.add(notif)
+        db.session.commit()
+
+    def to_text(self):
+        if len(self.authors) == 1:
+            res = ['@' + self.authors[0].username]
+        elif len(self.authors) == 2:
+            res = ['@' + self.authors[0].username, 'and', '@' + self.authors[1].username]
+        else:
+            res = ['@' + self.authors[0].username, ',', '@' + self.authors[1].username, 'and', str(len(self.authors)-2),
+                   'others']
+        if self.source_type == 'post':
+            if self.source_action == 'upvote':
+                res.append('upvoted your post')
+                return " ".join(res)
+            elif self.source_action == 'downvote':
+                res.append('downvoted your post')
+                return " ".join(res)
+            elif self.source_action == 'comment':
+                res.append('commented your post')
+                return " ".join(res)
+            elif self.source_action == 'mention':
+                res.append('mentioned you in a post')
+                return " ".join(res)
+        elif self.source_type == 'proposal':
+            if self.source_action == 'upvote':
+                res.append('upvoted your proposal')
+                return " ".join(res)
+            elif self.source_action == 'downvote':
+                res.append('downvoted your proposal')
+                return " ".join(res)
+            elif self.source_action == 'approved':
+                return " ".join(['proposal', self.source_id, 'has been approved'])
+            elif self.source_action == 'rejected':
+                return " ".join(['proposal', self.source_id, 'has been rejected'])
+            elif self.source_action == 'post':
+                res.append('posted about your proposal')
+                return " ".join(res)
+        elif self.source_type == 'law':
+            if self.source_action == 'active':
+                return " ".join(['law', self.source_id, 'is now active'])
+            elif self.source_action == 'premature':
+                return " ".join(['law', self.source_id, 'is considered premature'])
+            elif self.source_action == 'impossible':
+                return " ".join(['law', self.source_id, 'has been judged impossible'])
+            elif self.source_action == 'post':
+                res.append('posted about your law')
+                return " ".join(res)
+        else:
+            # just in case
+            res.append('made something that you should be interested in, maybe')
+            return " ".join(res)
+
+    def link_to(self):
+        return '/notification/' + str(self.id)
 
     def __repr__(self):
         return str(self.id)
@@ -142,14 +233,37 @@ class Post(db.Model):
         if parent_id:
             post.parent_id = parent_id
         # set topics
+        lnkd_laws = []
+        lnkd_prop = []
         for topic_name in topic_names:
             if topic_name:
                 tpc = Topic.retrieve(topic_name)
                 post.topics.append(tpc)
+                # check if the post is in a topic of a law or proposal
+                lw = Law.query.filter_by(topic=tpc).first()
+                if lw:
+                    lnkd_laws.append(lw)
+                else:
+                    prp = Proposal.query.filter_by(topic=tpc).first()
+                    if prp:
+                        lnkd_prop.append(prp)
         db.session.add(post)
-        # update the new post and it's parent edit_date (recursively)
-        post.update_edit_date()
+        post.last_edit_date = post.date
+        post.subscribed.append(poster)
         db.session.commit()
+        # notify a user only once
+        notified = set()
+        # do not notify the author of the post
+        notified.add(poster)
+        # notify parent(s) of the new comment
+        if post.parent:
+            notified = post.parent.notify_comment(poster, post.date, notified)
+        # notify subscribers to law and proposals:
+        notified = Law.notify_post(lnkd_laws, poster, notified)
+        notified = Proposal.notify_post(lnkd_prop, poster, notified)
+        # notify mentions
+        mentions = [word[1:] for word in content.split() if word.startswith('@')]
+        post.notify_mentions(poster, mentions, notified)
         return post
 
     def vote(self, user, up):
@@ -160,6 +274,9 @@ class Post(db.Model):
                 if user in self.downvotes:
                     self.downvotes.remove(user)
                 self.upvotes.append(user)
+                # notify the poster if it's not the one who voted
+                if self.poster != user:
+                    Notification.notify(self.poster, str(self.id), 'post', 'upvote', self.link_to(), user)
         else:
             if user in self.downvotes:
                 self.downvotes.remove(user)
@@ -167,14 +284,29 @@ class Post(db.Model):
                 if user in self.upvotes:
                     self.upvotes.remove(user)
                 self.downvotes.append(user)
+                # notify the poster if it's not the one who voted
+                if self.poster != user:
+                    Notification.notify(self.poster, str(self.id), 'post', 'downvote', self.link_to(), user)
         db.session.commit()
 
-    def update_edit_date(self, new_date=None):
-        if not new_date:
-            new_date = self.date
+    def notify_comment(self, poster, new_date, notified):
+        # update your date
         self.last_edit_date = new_date
+        # notify every not notified user
+        for user in self.subscribed:
+            if user not in notified:
+                Notification.notify(user, str(self.id), 'post', 'comment', self.link_to(), poster)
+                notified.add(user)
         if self.parent:
-            self.parent.update_edit_date(new_date)
+            return self.parent.notify_comment(poster, new_date, notified)
+        return notified
+
+    def notify_mentions(self, poster, mentions, notified):
+        for name in mentions:
+            user = User.query.filter_by(username=name).first()
+            if user and user not in notified:
+                Notification.notify(user, str(self.id), 'post', 'mention', self.link_to(), poster)
+                notified.add(user)
 
     def get_children(self, d=0):
         # utility function to get a post children tree
@@ -198,6 +330,9 @@ class Post(db.Model):
 
     def points(self):
         return len(self.upvotes) - len(self.downvotes)
+
+    def link_to(self):
+        return '/post/' + str(self.id)
 
     def __repr__(self):
         return "Post n." + str(self.id) + " by " + str(self.poster)
@@ -233,6 +368,9 @@ class Topic(db.Model):
             db.session.commit()
         return topic
 
+    def link_to(self):
+        return '/topic/' + self.name
+
     def __repr__(self):
         return "Topic: #" + self.name
 
@@ -264,8 +402,17 @@ class Proposal(db.Model):
     subscribed = db.relationship('User', secondary=proposal_subscription, backref=db.backref('subscribed_prop',
                                                                                              lazy='dynamic'))
 
-    def set_vote_day(self):
-        self.vote_day = self.date.date() + timedelta(days=7-self.date.weekday())
+    @hybrid_property
+    def is_open(self):
+        return date.today() == self.vote_day
+
+    @hybrid_property
+    def is_pending(self):
+        return date.today() < self.vote_day
+
+    @hybrid_property
+    def is_closed(self):
+        return date.today() > self.vote_day
 
     @staticmethod
     def submit(description, poster, new_laws, remove_laws):
@@ -283,23 +430,7 @@ class Proposal(db.Model):
         # create and link new laws
         for content, groups in new_laws:
             if content:
-                law = Law(content=content, date=func.now())
-                db.session.add(law)
-                db.session.flush()
-                # set topic
-                tpc = Topic.retrieve("law-" + str(law.id))
-                law.topic = tpc
-                law.topic_id = tpc.id
-                # set groups
-                for group_name in groups:
-                    # new laws cannot be in the Base group
-                    if group_name != 'Base':
-                        group = LawGroup.query.filter_by(name=group_name).first()
-                        if group:
-                            # group must already exist
-                            law.group.append(group)
-                # set the law status as proposed
-                law.status.append(proposed)
+                law = Law.submit(content,groups, proposed, poster)
                 # insert the law in the proposal
                 proposal.add_laws.append(law)
         # create and link laws to remove
@@ -308,17 +439,20 @@ class Proposal(db.Model):
                 law = Law.query.filter_by(id=law_id).first()
                 if law:
                     proposal.remove_laws.append(law)
+        # subscribe the poster
+        proposal.subscribed.append(poster)
         # commit everything and return
         db.session.commit()
         return proposal
 
-    @hybrid_property
-    def is_open(self):
-        return date.today() == self.vote_day
-
-    @hybrid_property
-    def is_pending(self):
-        return date.today() < self.vote_day
+    @staticmethod
+    def notify_post(proposals, poster, notified):
+        for proposal in proposals:
+            for user in proposal.subscribed:
+                if user not in notified:
+                    Notification.notify(user, str(proposal.id), 'proposal', 'post', proposal.link_to(), poster)
+                    notified.add(user)
+        return notified
 
     @staticmethod
     def get_more(num=5, open=False, pending=False, older_than=None):
@@ -331,6 +465,9 @@ class Proposal(db.Model):
             query = query.filter(Proposal.date < older_than)
         return query.order_by(Proposal.date.desc())[:num]
 
+    def set_vote_day(self):
+        self.vote_day = self.date.date() + timedelta(days=7-self.date.weekday())
+
     def vote(self, user, up):
         if self.is_open:
             if up:
@@ -340,6 +477,9 @@ class Proposal(db.Model):
                     if user in self.downvotes:
                         self.downvotes.remove(user)
                     self.upvotes.append(user)
+                    # notify the poster if it's not the one who voted
+                    if self.poster != user:
+                        Notification.notify(self.poster, str(self.id), 'proposal', 'upvote', self.link_to(), user)
             else:
                 if user in self.downvotes:
                     self.downvotes.remove(user)
@@ -347,13 +487,16 @@ class Proposal(db.Model):
                     if user in self.upvotes:
                         self.upvotes.remove(user)
                     self.downvotes.append(user)
+                    # notify the poster if it's not the one who voted
+                    if self.poster != user:
+                        Notification.notify(self.poster, str(self.id), 'proposal', 'downvote', self.link_to(), user)
             db.session.commit()
 
     def approved(self):
-        return self.points() > 0
+        return self.points() > 0 and self.is_closed
 
     def rejected(self):
-        return self.points() < 0
+        return self.points() <= 0 and self.is_closed
 
     def confirmed(self):
         if self.approved():
@@ -386,28 +529,37 @@ class Proposal(db.Model):
         if self.approved():
             proposed = LawStatus.query.filter_by(name='proposed').first()
             approved = LawStatus.query.filter_by(name='approved').first()
+            developing = LawStatus.query.filter_by(name='developing').first()
             removed = LawStatus.query.filter_by(name='removed').first()
-            # check that all statuses do exist
-            if proposed and approved and removed:
-                for law in self.add_laws:
-                    if proposed in law.status:
-                        law.status.remove(proposed)
-                    if approved not in law.status:
-                        law.status.append(approved)
-                for law in self.remove_laws:
-                    law.status = [removed]
+            for law in self.add_laws:
+                if proposed in law.status:
+                    law.status.remove(proposed)
+                if approved not in law.status:
+                    law.status.append(approved)
+                if developing not in law.status:
+                    law.status.append(developing)
+            for law in self.remove_laws:
+                law.status = [removed]
         elif self.rejected():
             proposed = LawStatus.query.filter_by(name='proposed').first()
             rejected = LawStatus.query.filter_by(name='rejected').first()
-            # check that all statuses do exist
-            if proposed and rejected:
-                for law in self.add_laws:
-                    if proposed in law.status:
-                        law.status.remove(proposed)
-                    if rejected not in law.status:
-                        law.status.append(rejected)
+            for law in self.add_laws:
+                if proposed in law.status:
+                    law.status.remove(proposed)
+                if rejected not in law.status:
+                    law.status.append(rejected)
         # commit the changes at the end
         db.session.commit()
+        # notify the result
+        self.notify_confirm()
+
+    def notify_confirm(self):
+        if self.approved():
+            result = 'approved'
+        else:
+            result = 'rejected'
+        for user in self.subscribed:
+            Notification.notify(user, str(self.id), 'proposal', result, self.link_to(), User.get_admin())
 
     def points(self):
         return len(self.upvotes) - len(self.downvotes)
@@ -419,6 +571,9 @@ class Proposal(db.Model):
         if user in self.downvotes:
             return 'text-danger'
         return 'text-muted'
+
+    def link_to(self):
+        return '/proposal/' + str(self.id)
 
     def __repr__(self):
         return "Proposal number: " + str(self.id)
@@ -448,6 +603,30 @@ class Law(db.Model):
                                                                                         lazy='dynamic'))
 
     @staticmethod
+    def submit(content, groups, proposed, poster):
+        law = Law(content=content, date=func.now())
+        db.session.add(law)
+        db.session.flush()
+        # set topic
+        tpc = Topic.retrieve("law-" + str(law.id))
+        law.topic = tpc
+        law.topic_id = tpc.id
+        # set groups
+        for group_name in groups:
+            # new laws cannot be in the Base group
+            if group_name != 'Base':
+                group = LawGroup.query.filter_by(name=group_name).first()
+                if group:
+                    # group must already exist
+                    law.group.append(group)
+        # set the law status as proposed
+        law.status.append(proposed)
+        # subscribe the poster
+        law.subscribed.append(poster)
+        # finally return the law
+        return law
+
+    @staticmethod
     def get_more(num=5, group_name=None, status_name=None, order='id', last=None):
         query = Law.query
         if status_name:
@@ -463,6 +642,51 @@ class Law(db.Model):
                 query = query.filter(Law.date < last)
             query = query.order_by(Law.date.desc())
         return query[:num]
+
+    @staticmethod
+    def notify_post(laws, poster, notified):
+        for law in laws:
+            for user in law.subscribed:
+                if user not in notified:
+                    Notification.notify(user, str(law.id), 'law', 'post', law.link_to(), poster)
+                    notified.add(user)
+        return notified
+
+    def set_active(self):
+        active = LawStatus.query.filter_by(name='active').first()
+        developing = LawStatus.query.filter_by(name='developing').first()
+        if developing in self.status:
+            self.status.remove(developing)
+        if active not in self.status:
+            self.status.append(active)
+        # commit
+        db.session.commit()
+        # notify the subscribers
+        for user in self.subscribed:
+            Notification.notify(user, str(self.id), 'law', 'active', self.link_to(), User.get_admin())
+
+    def set_premature(self):
+        premature = LawStatus.query.filter_by(name='premature').first()
+        if premature not in self.status:
+            self.status.append(premature)
+        # commit
+        db.session.commit()
+        # notify the subscribers
+        for user in self.subscribed:
+            Notification.notify(user, str(self.id), 'law', 'premature', self.link_to(), User.get_admin())
+
+    def set_impossible(self):
+        impossible = LawStatus.query.filter_by(name='impossible').first()
+        if impossible not in self.status:
+            self.status.append(impossible)
+        # commit
+        db.session.commit()
+        # notify the subscribers
+        for user in self.subscribed:
+            Notification.notify(user, str(self.id), 'law', 'impossible', self.link_to(), User.get_admin())
+
+    def link_to(self):
+        return '/law/' + str(self.id)
 
     def __repr__(self):
         return "Law number: " + str(self.id)

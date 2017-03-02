@@ -6,6 +6,22 @@
     padding-left: 10px;
 }
 
+.notif-unseen {
+    color: green !important;
+}
+
+.notif-unseen-back {
+    background-color: LimeGreen !important;
+}
+
+.notif-unseen-back>a {
+    color: white !important;
+}
+
+.notif-unseen-back>a:hover {
+    color: black !important;
+}
+
 hr {
     margin-top: 5px !important;
     margin-bottom: 10px !important;
