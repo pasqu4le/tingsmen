@@ -32,6 +32,7 @@ def home():
         g.sijax.register_callback('load_comments', load_comments)
         g.sijax.register_callback('vote_post', vote_post)
         g.sijax.register_callback('update_notifications', update_notifications)
+        g.sijax.register_callback('toggle_subscription', toggle_subscription)
         return g.sijax.process_request()
     # non-ajax handling:
     posts = Post.get_more()
@@ -85,6 +86,7 @@ def topic(topic_name):
         g.sijax.register_callback('load_comments', load_comments)
         g.sijax.register_callback('vote_post', vote_post)
         g.sijax.register_callback('update_notifications', update_notifications)
+        g.sijax.register_callback('toggle_subscription', toggle_subscription)
         return g.sijax.process_request()
     # non-ajax handling:
     current_topic = Topic.query.filter_by(name=topic_name).first()
@@ -192,6 +194,7 @@ def user_page(username, subpage):
         g.sijax.register_callback('load_comments', load_comments)
         g.sijax.register_callback('vote_post', vote_post)
         g.sijax.register_callback('update_notifications', update_notifications)
+        g.sijax.register_callback('toggle_subscription', toggle_subscription)
         return g.sijax.process_request()
     # non-ajax handling:
     user = User.query.filter_by(username=username).first()
@@ -230,6 +233,7 @@ def view_post(post_id):
         g.sijax.register_callback('load_comments', load_comments)
         g.sijax.register_callback('vote_post', vote_post)
         g.sijax.register_callback('update_notifications', update_notifications)
+        g.sijax.register_callback('toggle_subscription', toggle_subscription)
         return g.sijax.process_request()
     # non-ajax handling:
     main_post = Post.query.filter_by(id=post_id).first()
@@ -267,6 +271,7 @@ def view_proposal(proposal_id):
         g.sijax.register_callback('vote_proposal', vote_proposal)
         g.sijax.register_callback('confirm_proposal', confirm_proposal)
         g.sijax.register_callback('update_notifications', update_notifications)
+        g.sijax.register_callback('toggle_subscription', toggle_subscription)
         return g.sijax.process_request()
     # non-ajax handling:
     proposal = Proposal.query.filter_by(id=proposal_id).first()
@@ -301,6 +306,7 @@ def proposal_status(status):
         g.sijax.register_callback('confirm_proposal', confirm_proposal)
         g.sijax.register_callback('load_more_proposals', load_more_proposals)
         g.sijax.register_callback('update_notifications', update_notifications)
+        g.sijax.register_callback('toggle_subscription', toggle_subscription)
         return g.sijax.process_request()
     # non-ajax handling:
     proposals = []
@@ -333,6 +339,7 @@ def view_law(law_id):
         g.sijax.register_callback('load_comments', load_comments)
         g.sijax.register_callback('vote_post', vote_post)
         g.sijax.register_callback('update_notifications', update_notifications)
+        g.sijax.register_callback('toggle_subscription', toggle_subscription)
         return g.sijax.process_request()
     # non-ajax handling:
     law = Law.query.filter_by(id=law_id).first()
@@ -362,6 +369,7 @@ def view_laws(group_name, status_name, order):
     if g.sijax.is_sijax_request:
         g.sijax.register_callback('load_more_laws', load_more_laws)
         g.sijax.register_callback('update_notifications', update_notifications)
+        g.sijax.register_callback('toggle_subscription', toggle_subscription)
         return g.sijax.process_request()
     # non-ajax handling:
     current_group = LawGroup.query.filter_by(name=group_name).first()
@@ -682,3 +690,20 @@ def update_notifications(obj_response, newer_than):
         obj_response.script('document.getElementById("bleep_sound").play()')
         # show the newer notifications
         obj_response.html_prepend('#notifications_list', "".join([render_notif(notif).unescape() for notif in notifs]))
+
+
+def toggle_subscription(obj_response, item_type, item_id):
+    render_subscription = get_template_attribute('macros.html', 'render_subscription')
+    if item_type == 'proposal':
+        query = Proposal.query
+    elif item_type == 'law':
+        query = Law.query
+    elif item_type == 'post':
+        query = Post.query
+    else:
+        return
+    item = query.filter_by(id=item_id).first()
+    if item:
+        item.toggle_subscription(current_user)
+        obj_response.html('#' + item_type + '-' + str(item_id) + '-subscription',
+                          render_subscription(current_user, item, item_type).unescape())

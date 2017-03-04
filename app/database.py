@@ -273,6 +273,13 @@ class Post(db.Model):
         post.notify_mentions(poster, mentions, notified)
         return post
 
+    def toggle_subscription(self, user):
+        if user in self.subscribed:
+            self.subscribed.remove(user)
+        else:
+            self.subscribed.append(user)
+        db.session.commit()
+
     def vote(self, user, up):
         if up:
             if user in self.upvotes:
@@ -475,6 +482,13 @@ class Proposal(db.Model):
     def set_vote_day(self):
         self.vote_day = self.date.date() + timedelta(days=7-self.date.weekday())
 
+    def toggle_subscription(self, user):
+        if user in self.subscribed:
+            self.subscribed.remove(user)
+        else:
+            self.subscribed.append(user)
+        db.session.commit()
+
     def vote(self, user, up):
         if self.is_open:
             if up:
@@ -658,6 +672,13 @@ class Law(db.Model):
                     Notification.notify(user, str(law.id), 'law', 'post', law.link_to(), poster)
                     notified.add(user)
         return notified
+
+    def toggle_subscription(self, user):
+        if user in self.subscribed:
+            self.subscribed.remove(user)
+        else:
+            self.subscribed.append(user)
+        db.session.commit()
 
     def set_active(self):
         active = LawStatus.query.filter_by(name='active').first()
