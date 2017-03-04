@@ -111,8 +111,12 @@
                         </a>
                         <ul class="dropdown-menu dropdown-menu-right">
                             <li id="proposal-{{ proposal.id }}-subscription">{{ render_subscription(current_user, proposal, 'proposal') }}</li>
-                            <li role="separator" class="divider"></li>
-                            <li><a href="#">Separated link</a></li>
+                            {% if current_user.has_role('admin') %}
+                                <li role="separator" class="divider"></li>
+                                {% if not proposal.confirmed() %}
+                                    <li><a href="javascript://" onclick="Sijax.request('confirm_proposal', ['{{ proposal.id}}']);">Confirm</a></li>
+                                {% endif %}
+                            {% endif %}
                         </ul>
                     {% endif %}
                 </div>
@@ -174,10 +178,6 @@
                 <a class="btn btn-link" href="/new-proposal/change/{{ proposal.id }}/"><span class="glyphicon glyphicon-pencil"></span> change</a>
             </div>
             <div class="btn-group">
-                {% if current_user.has_role('admin') and not proposal.confirmed() %}
-                    <button class="btn btn-link" href="javascript://" onclick="Sijax.request('confirm_proposal', ['{{ proposal.id}}']);">Confirm</button>
-                {% endif %}
-
                 {% if comment_here %}
                     <a class="btn btn-link collapser" data-autofill='{"destination":"#proposal-{{ proposal.id }}_form_space","topics":"#{{ proposal.topic.name }}"}'><span class="glyphicon glyphicon-share-alt"></span> comment <span class="badge">{{ proposal.topic.posts.count() }}</span></a>
                 {% else %}
@@ -206,8 +206,12 @@
                         </a>
                         <ul class="dropdown-menu dropdown-menu-right">
                             <li id="law-{{ law.id }}-subscription">{{ render_subscription(current_user, law, 'law') }}</li>
-                            <li role="separator" class="divider"></li>
-                            <li><a href="#">Separated link</a></li>
+                            {% if current_user.has_role('admin') %}
+                                <li role="separator" class="divider"></li>
+                                <li><a href="javascript://" onclick="Sijax.request('set_law_active', ['{{ law.id}}']);">set active</a></li>
+                                <li><a href="javascript://" onclick="Sijax.request('set_law_premature', ['{{ law.id}}']);">set premature</a></li>
+                                <li><a href="javascript://" onclick="Sijax.request('set_law_impossible', ['{{ law.id}}']);">set impossible</a></li>
+                            {% endif %}
                         </ul>
                     {% endif %}
                 </div>
@@ -293,8 +297,6 @@
                             </a>
                             <ul class="dropdown-menu dropdown-menu-right">
                                 <li id="post-{{ post.id }}-subscription">{{ render_subscription(current_user, post, 'post') }}</li>
-                                <li role="separator" class="divider"></li>
-                                <li><a href="#">Separated link</a></li>
                             </ul>
                         {% endif %}
                     </div>
@@ -347,8 +349,6 @@
                             </a>
                             <ul class="dropdown-menu">
                                 <li id="post-{{ post.id }}-subscription">{{ render_subscription(current_user, post, 'post') }}</li>
-                                <li role="separator" class="divider"></li>
-                                <li><a href="#">Separated link</a></li>
                             </ul>
                         {% endif %}
                         <a href="{{ post.link_to() }}" class="text-muted">{{ render_date(post.date) }}</a>

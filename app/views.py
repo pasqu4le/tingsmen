@@ -272,6 +272,9 @@ def view_proposal(proposal_id):
         g.sijax.register_callback('confirm_proposal', confirm_proposal)
         g.sijax.register_callback('update_notifications', update_notifications)
         g.sijax.register_callback('toggle_subscription', toggle_subscription)
+        g.sijax.register_callback('set_law_active', set_law_active)
+        g.sijax.register_callback('set_law_premature', set_law_premature)
+        g.sijax.register_callback('set_law_impossible', set_law_impossible)
         return g.sijax.process_request()
     # non-ajax handling:
     proposal = Proposal.query.filter_by(id=proposal_id).first()
@@ -307,6 +310,9 @@ def proposal_status(status):
         g.sijax.register_callback('load_more_proposals', load_more_proposals)
         g.sijax.register_callback('update_notifications', update_notifications)
         g.sijax.register_callback('toggle_subscription', toggle_subscription)
+        g.sijax.register_callback('set_law_active', set_law_active)
+        g.sijax.register_callback('set_law_premature', set_law_premature)
+        g.sijax.register_callback('set_law_impossible', set_law_impossible)
         return g.sijax.process_request()
     # non-ajax handling:
     proposals = []
@@ -340,6 +346,9 @@ def view_law(law_id):
         g.sijax.register_callback('vote_post', vote_post)
         g.sijax.register_callback('update_notifications', update_notifications)
         g.sijax.register_callback('toggle_subscription', toggle_subscription)
+        g.sijax.register_callback('set_law_active', set_law_active)
+        g.sijax.register_callback('set_law_premature', set_law_premature)
+        g.sijax.register_callback('set_law_impossible', set_law_impossible)
         return g.sijax.process_request()
     # non-ajax handling:
     law = Law.query.filter_by(id=law_id).first()
@@ -370,6 +379,9 @@ def view_laws(group_name, status_name, order):
         g.sijax.register_callback('load_more_laws', load_more_laws)
         g.sijax.register_callback('update_notifications', update_notifications)
         g.sijax.register_callback('toggle_subscription', toggle_subscription)
+        g.sijax.register_callback('set_law_active', set_law_active)
+        g.sijax.register_callback('set_law_premature', set_law_premature)
+        g.sijax.register_callback('set_law_impossible', set_law_impossible)
         return g.sijax.process_request()
     # non-ajax handling:
     current_group = LawGroup.query.filter_by(name=group_name).first()
@@ -566,7 +578,34 @@ def confirm_proposal(obj_response, proposal_id):
         proposal.confirm()
         obj_response.alert('proposal confirmed')
     else:
-        obj_response.alert('proposal not confirmed')
+        obj_response.alert('Error: something occurred')
+
+
+def set_law_active(obj_response, law_id):
+    law = Law.query.filter_by(id=law_id).first()
+    if law and current_user.has_role('admin'):
+        law.set_active()
+        obj_response.alert('law is active')
+    else:
+        obj_response.alert('Error: something occurred')
+
+
+def set_law_premature(obj_response, law_id):
+    law = Law.query.filter_by(id=law_id).first()
+    if law and current_user.has_role('admin'):
+        law.set_premature()
+        obj_response.alert('law is premature')
+    else:
+        obj_response.alert('Error: something occurred')
+
+
+def set_law_impossible(obj_response, law_id):
+    law = Law.query.filter_by(id=law_id).first()
+    if law and current_user.has_role('admin'):
+        law.set_impossible()
+        obj_response.alert('law is impossible')
+    else:
+        obj_response.alert('Error: something occurred')
 
 
 def load_more_posts(obj_response, group, name, older_than):
