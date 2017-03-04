@@ -17,10 +17,35 @@
         <link rel="icon" href="/static/img/favicon.ico">
         <link href="/static/css/base.css" rel="stylesheet" media="screen">
         {% block head_custom %}{% endblock %}
+        <!-- sijax scripts -->
+        <script type="text/javascript" src="/static/js/sijax/sijax.js"></script>
+        <script type="text/javascript" src="/static/js/sijax/sijax_upload.js"></script>
+        <script type="text/javascript">
+            {{ g.sijax.get_js()|safe }}
+            {% if form_init_js %}
+                {{ form_init_js|safe }}
+            {% endif %}
+        </script>
+        {% if current_user.is_authenticated %}
+            <script>
+                setInterval(function(){
+                    first_child = $('#notifications_list').children().first();
+                    if (first_child != null){
+                        newer_than = first_child.data('date');
+                    } else {
+                        newer_than = null;
+                    }
+                    Sijax.request('update_notifications', [newer_than]);
+                }, 10000);
+            </script>
+        {% endif %}
         <!-- cookie policy banner -->
         <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.0.3/cookieconsent.min.css">
         <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.0.3/cookieconsent.min.js"></script>
         <script type="text/javascript" src="/static/js/cookies.js"></script>
+        <audio id="bleep_sound">
+            <source src="/static/bleep.wav" type="audio/wav">
+        </audio>
     </head>
     <body>
         {% include "navbar.html" %}

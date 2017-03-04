@@ -1,24 +1,29 @@
 from app import app, security
-import utils
 from flask import g, render_template, abort, redirect, url_for, request, get_template_attribute
 from flask_security import current_user
 from flask_admin.contrib import sqla
 from database import *
 import forms
-from sqlalchemy.sql import func
 from wtforms import TextAreaField
+
+
+def base_options():
+    # a function for the options required by every page
+    return {
+        'pages': Page.query.all(),
+        'current_user': current_user
+    }
 
 
 # ---------------------------------------------- ROUTING FUNCTIONS
 @app.route('/', methods=('GET', 'POST'))
 def home():
-    # not allowed user handling:
+    # not authenticated user handling:
     if not current_user.is_authenticated:
         options = {
             'title': 'Welcome',
-            'pages': Page.query.all(),
-            'current_user': current_user,
         }
+        options.update(base_options())
         return render_template("index.html", **options)
     # ajax request handling
     form_init_js = g.sijax.register_upload_callback('post_form', submit_post)
@@ -26,13 +31,13 @@ def home():
         g.sijax.register_callback('load_more_posts', load_more_posts)
         g.sijax.register_callback('load_comments', load_comments)
         g.sijax.register_callback('vote_post', vote_post)
+        g.sijax.register_callback('update_notifications', update_notifications)
+        g.sijax.register_callback('toggle_subscription', toggle_subscription)
         return g.sijax.process_request()
     # non-ajax handling:
     posts = Post.get_more()
     options = {
         'title': 'Home',
-        'pages': Page.query.all(),
-        'current_user': current_user,
         'posts': posts,
         'some_topics': Topic.query[:10],
         'topics_all': Topic.query.all(),
@@ -40,26 +45,35 @@ def home():
         'submit_post_form': forms.PostForm(),
         'form_init_js': form_init_js
     }
+    options.update(base_options())
     return render_template("home.html", **options)
 
 
-@app.route('/cookies/')
+@app.route('/cookies/', methods=('GET', 'POST'))
 def cookie_policy():
+    # ajax request handling
+    if g.sijax.is_sijax_request:
+        g.sijax.register_callback('update_notifications', update_notifications)
+        return g.sijax.process_request()
+    # non-ajax handling:
     return render_template("cookies.html", title='Cookie policy')
 
 
-@app.route('/page/<page_name>/')
+@app.route('/page/<page_name>/', methods=('GET', 'POST'))
 def view_page(page_name):
+    # ajax request handling
+    if g.sijax.is_sijax_request:
+        g.sijax.register_callback('update_notifications', update_notifications)
+        return g.sijax.process_request()
     # non-ajax handling:
     current_page = Page.query.filter_by(name=page_name).first()
     if not current_page:
         abort(404)
     options = {
         'title': current_page.name,
-        'current_user': current_user,
-        'current_page': current_page,
-        'pages': Page.query.all()
+        'current_page': current_page
     }
+    options.update(base_options())
     return render_template("page.html", **options)
 
 
@@ -71,6 +85,8 @@ def topic(topic_name):
         g.sijax.register_callback('load_more_posts', load_more_posts)
         g.sijax.register_callback('load_comments', load_comments)
         g.sijax.register_callback('vote_post', vote_post)
+        g.sijax.register_callback('update_notifications', update_notifications)
+        g.sijax.register_callback('toggle_subscription', toggle_subscription)
         return g.sijax.process_request()
     # non-ajax handling:
     current_topic = Topic.query.filter_by(name=topic_name).first()
@@ -79,8 +95,6 @@ def topic(topic_name):
     posts = Post.get_more(group='topic', name=topic_name)
     options = {
         'title': '#' + current_topic.name,
-        'pages': Page.query.all(),
-        'current_user': current_user,
         'current_topic': current_topic,
         'posts': posts,
         'some_topics': Topic.query[:10],
@@ -89,23 +103,60 @@ def topic(topic_name):
         'submit_post_form': forms.PostForm(),
         'form_init_js': form_init_js
     }
+    options.update(base_options())
     return render_template("topic.html", **options)
 
 
-@app.route('/topics/')
+@app.route('/topics/', methods=('GET', 'POST'))
 def topics():
+    # ajax request handling
+    if g.sijax.is_sijax_request:
+        g.sijax.register_callback('update_notifications', update_notifications)
+        return g.sijax.process_request()
+    # non-ajax handling:
     topic_list = Topic.query.all()
     options = {
         'title': 'Topics',
-        'pages': Page.query.all(),
-        'topic_list': topic_list,
-        'current_user': current_user,
+        'topic_list': topic_list
     }
+    options.update(base_options())
     return render_template("topics.html", **options)
 
 
+@app.route('/notifications/', methods=('GET', 'POST'))
+def notifications():
+    if current_user.is_authenticated:
+        # ajax request handling
+        if g.sijax.is_sijax_request:
+            g.sijax.register_callback('load_more_notifications', load_more_notifications)
+            g.sijax.register_callback('update_notifications', update_notifications)
+            return g.sijax.process_request()
+        # non-ajax handling:
+        notifs = Notification.get_more(current_user, num=30)
+        options = {
+            'title': 'Topics',
+            'notifs': notifs
+        }
+        options.update(base_options())
+        return render_template("notifications.html", **options)
+    return redirect('/')
+
+
+@app.route('/notification/<notif_id>/')
+def open_notification(notif_id):
+    if current_user.is_authenticated:
+        notif = Notification.query.filter_by(id=notif_id).first()
+        # check if the notification exists and is for current_user
+        if notif and notif.user == current_user:
+            if not notif.seen:
+                notif.seen = True
+                db.session.commit()
+            return redirect(notif.link)
+    return redirect('/')
+
+
 @app.route('/user/<username>/')
-def user(username):
+def view_user(username):
     return redirect("/user/" + username + "/post/")
 
 
@@ -113,22 +164,24 @@ def user(username):
 def settings():
     if not current_user.is_authenticated:
         return redirect('/')
+    # ajax request handling
+    if g.sijax.is_sijax_request:
+        g.sijax.register_callback('update_notifications', update_notifications)
+        return g.sijax.process_request()
+    # non-ajax handling:
     form = forms.SettingsForm()
     messages = []
     if form.validate_on_submit():
         if form.username.data:
-            current_user.username = form.username.data
+            current_user.change_settings(username=form.username.data)
             messages.append('You username was correctly changed')
         messages.append('Settings saved!')
-        db.session.add(current_user)
-        db.session.commit()
     options = {
         'title': 'settings',
-        'pages': Page.query.all(),
-        'current_user': current_user,
         'settings_form': form,
         'messages': messages
     }
+    options.update(base_options())
     return render_template("settings.html", **options)
 
 
@@ -140,10 +193,12 @@ def user_page(username, subpage):
         g.sijax.register_callback('load_more_posts', load_more_posts)
         g.sijax.register_callback('load_comments', load_comments)
         g.sijax.register_callback('vote_post', vote_post)
+        g.sijax.register_callback('update_notifications', update_notifications)
+        g.sijax.register_callback('toggle_subscription', toggle_subscription)
         return g.sijax.process_request()
     # non-ajax handling:
-    main_user = User.query.filter_by(username=username).first()
-    if not main_user:
+    user = User.query.filter_by(username=username).first()
+    if not user:
         abort(404)
     posts = []
     group = 'user'
@@ -156,10 +211,8 @@ def user_page(username, subpage):
         posts = Post.get_more(group='downvotes', name=username)
         group = 'downvotes'
     options = {
-        'title': main_user.username,
-        'pages': Page.query.all(),
-        'current_user': current_user,
-        'user': main_user,
+        'title': user.username,
+        'user': user,
         'posts': posts,
         'posts_group': group,
         'current_page': subpage,
@@ -168,6 +221,7 @@ def user_page(username, subpage):
         'submit_post_form': forms.PostForm(),
         'form_init_js': form_init_js
     }
+    options.update(base_options())
     return render_template("user.html", **options)
 
 
@@ -178,6 +232,8 @@ def view_post(post_id):
     if g.sijax.is_sijax_request:
         g.sijax.register_callback('load_comments', load_comments)
         g.sijax.register_callback('vote_post', vote_post)
+        g.sijax.register_callback('update_notifications', update_notifications)
+        g.sijax.register_callback('toggle_subscription', toggle_subscription)
         return g.sijax.process_request()
     # non-ajax handling:
     main_post = Post.query.filter_by(id=post_id).first()
@@ -191,8 +247,6 @@ def view_post(post_id):
             old_parent = old_parent.parent
     options = {
         'title': 'Post',
-        'pages': Page.query.all(),
-        'current_user': current_user,
         'main_post': main_post,
         'old_parent': old_parent,
         'children': main_post.get_children(),
@@ -202,6 +256,7 @@ def view_post(post_id):
         'submit_post_form': forms.PostForm(),
         'form_init_js': form_init_js
     }
+    options.update(base_options())
     return render_template("post.html", **options)
 
 
@@ -215,6 +270,11 @@ def view_proposal(proposal_id):
         g.sijax.register_callback('vote_post', vote_post)
         g.sijax.register_callback('vote_proposal', vote_proposal)
         g.sijax.register_callback('confirm_proposal', confirm_proposal)
+        g.sijax.register_callback('update_notifications', update_notifications)
+        g.sijax.register_callback('toggle_subscription', toggle_subscription)
+        g.sijax.register_callback('set_law_active', set_law_active)
+        g.sijax.register_callback('set_law_premature', set_law_premature)
+        g.sijax.register_callback('set_law_impossible', set_law_impossible)
         return g.sijax.process_request()
     # non-ajax handling:
     proposal = Proposal.query.filter_by(id=proposal_id).first()
@@ -222,8 +282,6 @@ def view_proposal(proposal_id):
         abort(404)
     options = {
         'title': 'Proposal',
-        'pages': Page.query.all(),
-        'current_user': current_user,
         'proposal': proposal,
         'statuses': ['all', 'open', 'pending'],
         'posts': Post.get_more(group='topic', name=proposal.topic.name),
@@ -231,6 +289,7 @@ def view_proposal(proposal_id):
         'submit_post_form': forms.PostForm(),
         'form_init_js': form_init_js
     }
+    options.update(base_options())
     return render_template("proposal.html", **options)
 
 
@@ -249,6 +308,11 @@ def proposal_status(status):
         g.sijax.register_callback('vote_proposal', vote_proposal)
         g.sijax.register_callback('confirm_proposal', confirm_proposal)
         g.sijax.register_callback('load_more_proposals', load_more_proposals)
+        g.sijax.register_callback('update_notifications', update_notifications)
+        g.sijax.register_callback('toggle_subscription', toggle_subscription)
+        g.sijax.register_callback('set_law_active', set_law_active)
+        g.sijax.register_callback('set_law_premature', set_law_premature)
+        g.sijax.register_callback('set_law_impossible', set_law_impossible)
         return g.sijax.process_request()
     # non-ajax handling:
     proposals = []
@@ -263,13 +327,12 @@ def proposal_status(status):
         proposals = Proposal.get_more()
     options = {
         'title': ' '.join([status, 'proposals']),
-        'pages': Page.query.all(),
-        'current_user': current_user,
         'statuses': ['all', 'open', 'pending'],
         'current_status': status,
         'proposals': proposals,
         'description': description
     }
+    options.update(base_options())
     return render_template("proposals.html", **options)
 
 
@@ -281,6 +344,11 @@ def view_law(law_id):
         g.sijax.register_callback('load_more_posts', load_more_posts)
         g.sijax.register_callback('load_comments', load_comments)
         g.sijax.register_callback('vote_post', vote_post)
+        g.sijax.register_callback('update_notifications', update_notifications)
+        g.sijax.register_callback('toggle_subscription', toggle_subscription)
+        g.sijax.register_callback('set_law_active', set_law_active)
+        g.sijax.register_callback('set_law_premature', set_law_premature)
+        g.sijax.register_callback('set_law_impossible', set_law_impossible)
         return g.sijax.process_request()
     # non-ajax handling:
     law = Law.query.filter_by(id=law_id).first()
@@ -288,8 +356,6 @@ def view_law(law_id):
         abort(404)
     options = {
         'title': 'Law',
-        'pages': Page.query.all(),
-        'current_user': current_user,
         'law': law,
         'posts': Post.get_more(group='topic', name=law.topic.name),
         'topics_all': Topic.query.all(),
@@ -297,73 +363,69 @@ def view_law(law_id):
         'statuses': LawStatus.query.all(),
         'form_init_js': form_init_js
     }
+    options.update(base_options())
     return render_template("law.html", **options)
-
-
-@app.route('/laws/group/<group_name>/', methods=('GET', 'POST'))
-def law_group(group_name):
-    return redirect("/laws/group/" + group_name + "/approved/")
-
-
-@app.route('/laws/group/<group_name>/<status_name>/', methods=('GET', 'POST'))
-def law_group_status(group_name, status_name):
-    # ajax request handling
-    if g.sijax.is_sijax_request:
-        g.sijax.register_callback('load_more_laws', load_more_laws)
-        return g.sijax.process_request()
-    # non-ajax handling:
-    group = LawGroup.query.filter_by(name=group_name).first()
-    current_status = LawStatus.query.filter_by(name=status_name).first()
-    if not (group and current_status):
-        abort(404)
-    options = {
-        'title': ' '.join([group_name, 'laws -', status_name]),
-        'pages': Page.query.all(),
-        'current_user': current_user,
-        'group': group,
-        'laws': Law.get_more(group_name=group_name, status_name=status_name),
-        'current_status': current_status,
-        'statuses': LawStatus.query.all()
-    }
-    return render_template("law_group.html", **options)
 
 
 @app.route('/laws/')
 def all_laws():
-    return redirect("/laws/status/approved/")
+    return redirect("/laws/all/active/id/")
 
 
-@app.route('/laws/status/<status_name>/', methods=('GET', 'POST'))
-def law_status(status_name):
+@app.route('/laws/<group_name>/<status_name>/<order>/', methods=('GET', 'POST'))
+def view_laws(group_name, status_name, order):
     # ajax request handling
     if g.sijax.is_sijax_request:
         g.sijax.register_callback('load_more_laws', load_more_laws)
+        g.sijax.register_callback('update_notifications', update_notifications)
+        g.sijax.register_callback('toggle_subscription', toggle_subscription)
+        g.sijax.register_callback('set_law_active', set_law_active)
+        g.sijax.register_callback('set_law_premature', set_law_premature)
+        g.sijax.register_callback('set_law_impossible', set_law_impossible)
         return g.sijax.process_request()
     # non-ajax handling:
+    current_group = LawGroup.query.filter_by(name=group_name).first()
     current_status = LawStatus.query.filter_by(name=status_name).first()
-    if not current_status:
+    if not (current_status and (current_group or group_name == 'all')):
         abort(404)
+    if group_name == 'all':
+        laws = Law.get_more(status_name=status_name, order=order)
+    else:
+        laws = Law.get_more(group_name=group_name, status_name=status_name, order=order)
     options = {
-        'title': ' '.join([status_name, 'laws']),
-        'pages': Page.query.all(),
-        'current_user': current_user,
+        'title': ' '.join([group_name, 'laws', '-', status_name]),
+        'laws': laws,
+        'groups': LawGroup.query.all(),
+        'current_group': current_group,
+        'statuses': LawStatus.query.all(),
         'current_status': current_status,
-        'laws': Law.get_more(status_name=status_name),
-        'statuses': LawStatus.query.all()
+        'orders': ['id', 'date'],
+        'order': order
     }
-    return render_template("law_status.html", **options)
+    options.update(base_options())
+    return render_template("laws.html", **options)
 
 
-@app.route('/new-proposal/remove/<law_id>/')
+@app.route('/new-proposal/remove/<law_id>/', methods=('GET', 'POST'))
 def new_proposal_remove(law_id):
+    # ajax request handling
+    if g.sijax.is_sijax_request:
+        g.sijax.register_callback('update_notifications', update_notifications)
+        return g.sijax.process_request()
+    # non-ajax handling:
     form = forms.ProposalForm()
     form.remove_laws.pop_entry()
     form.remove_laws.append_entry(law_id)
     return new_proposal(form)
 
 
-@app.route('/new-proposal/change/<proposal_id>/')
+@app.route('/new-proposal/change/<proposal_id>/', methods=('GET', 'POST'))
 def new_proposal_change(proposal_id):
+    # ajax request handling
+    if g.sijax.is_sijax_request:
+        g.sijax.register_callback('update_notifications', update_notifications)
+        return g.sijax.process_request()
+    # non-ajax handling:
     form = forms.ProposalForm()
     proposal = Proposal.query.filter_by(id=proposal_id).first()
     if proposal:
@@ -381,48 +443,16 @@ def new_proposal_change(proposal_id):
 
 @app.route('/new-proposal/', methods=('GET', 'POST'))
 def submit_proposal():
+    # ajax request handling
+    if g.sijax.is_sijax_request:
+        g.sijax.register_callback('update_notifications', update_notifications)
+        return g.sijax.process_request()
+    # non-ajax handling:
     form = forms.ProposalForm()
     if current_user.is_authenticated and form.validate_on_submit():
-        proposal = Proposal(description=form.description.data, poster=current_user, poster_id=current_user.id,
-                            date=func.now())
-        db.session.add(proposal)
-        db.session.flush()
-        proposal.set_vote_day()
-        prop_tpc = Topic.query.filter_by(name="proposal-" + str(proposal.id)).first()
-        if not prop_tpc:
-            prop_tpc = Topic(name="proposal-" + str(proposal.id))
-            db.session.add(prop_tpc)
-        proposal.topic = prop_tpc
-        proposal.topic_id = prop_tpc.id
-        for content, groups in [(e.data['content'], e.data['groups']) for e in form.new_laws.entries]:
-            if content:
-                law = Law(content=content, date=func.now())
-                db.session.add(law)
-                db.session.flush()
-                law_tpc = Topic.query.filter_by(name="law-" + str(law.id)).first()
-                if not law_tpc:
-                    law_tpc = Topic(name="law-" + str(law.id))
-                    db.session.add(law_tpc)
-                law.topic = law_tpc
-                law.topic_id = law_tpc.id
-                for group_name in groups:
-                    if group_name != 'Base':
-                        group = LawGroup.query.filter_by(name=group_name).first()
-                        if group:
-                            # group must exist before
-                            law.group.append(group)
-                proposed = LawStatus.query.filter_by(name='proposed').first()
-                if proposed:
-                    law.status.append(proposed)
-                db.session.add(law)
-                proposal.add_laws.append(law)
-        for law_id in [e.data for e in form.remove_laws.entries]:
-            if law_id:
-                law = Law.query.filter_by(id=law_id).first()
-                if law:
-                    proposal.remove_laws.append(law)
-        db.session.add(proposal)
-        db.session.commit()
+        proposal = Proposal.submit(form.description.data, current_user,
+                                   [(e.data['content'], e.data['groups']) for e in form.new_laws.entries],
+                                   [e.data for e in form.remove_laws.entries])
         return redirect("/proposal/" + str(proposal.id))
     return new_proposal(form)
 
@@ -430,15 +460,19 @@ def submit_proposal():
 def new_proposal(form):
     options = {
         'title': 'propose',
-        'pages': Page.query.all(),
-        'current_user': current_user,
         'proposal_form': form
     }
+    options.update(base_options())
     return render_template("new_proposal.html", **options)
 
 
 @app.route('/subscribe/<mailing_list>/', methods=('GET', 'POST'))
 def subscribe(mailing_list):
+    # ajax request handling
+    if g.sijax.is_sijax_request:
+        g.sijax.register_callback('update_notifications', update_notifications)
+        return g.sijax.process_request()
+    # non-ajax handling:
     ml = MailingList.query.filter_by(name=mailing_list).first()
     if not ml:
         abort(404)
@@ -482,24 +516,42 @@ def security_register_processor():
 # ---------------------------------------------- ERROR PAGES
 
 @app.errorhandler(404)
-def page_not_found(error):
-    options = {
-        'code': 404,
-        'pages': Page.query.all(),
-        'message': 'The page you are looking for cannot be found',
-        'current_user': current_user
-    }
-    return render_template("error.html", **options)
+def not_found(error):
+    return redirect('/404/')
 
 
 @app.errorhandler(403)
 def permission_denied(error):
+    return redirect('/403/')
+
+
+@app.route('/404/', methods=('GET', 'POST'))
+def page_not_found():
+    # ajax request handling
+    if g.sijax.is_sijax_request:
+        g.sijax.register_callback('update_notifications', update_notifications)
+        return g.sijax.process_request()
+    # non-ajax handling:
+    options = {
+        'code': 404,
+        'message': 'The page you are looking for cannot be found'
+    }
+    options.update(base_options())
+    return render_template("error.html", **options)
+
+
+@app.route('/403/', methods=('GET', 'POST'))
+def page_permission_denied(error):
+    # ajax request handling
+    if g.sijax.is_sijax_request:
+        g.sijax.register_callback('update_notifications', update_notifications)
+        return g.sijax.process_request()
+    # non-ajax handling:
     options = {
         'code': 403,
-        'pages': Page.query.all(),
-        'message': 'Access forbidden',
-        'current_user': current_user
+        'message': 'Access forbidden'
     }
+    options.update(base_options())
     return render_template("error.html", **options)
 
 
@@ -507,43 +559,15 @@ def permission_denied(error):
 def vote_post(obj_response, post_id, up):
     post = Post.query.filter_by(id=post_id).first()
     if post and current_user.is_authenticated:
-        if up:
-            if current_user in post.upvotes:
-                post.upvotes.remove(current_user)
-            else:
-                if current_user in post.downvotes:
-                    post.downvotes.remove(current_user)
-                post.upvotes.append(current_user)
-        else:
-            if current_user in post.downvotes:
-                post.downvotes.remove(current_user)
-            else:
-                if current_user in post.upvotes:
-                    post.upvotes.remove(current_user)
-                post.downvotes.append(current_user)
-        db.session.commit()
+        post.vote(current_user, up)
         obj_response.html('#post_vote_' + post_id, str(post.points()))
         obj_response.attr('#post_vote_' + post_id, 'class', post.current_vote_style(current_user))
 
 
 def vote_proposal(obj_response, proposal_id, up):
     proposal = Proposal.query.filter_by(id=proposal_id).first()
-    if proposal and current_user.is_authenticated and proposal.is_open:
-        if up:
-            if current_user in proposal.upvotes:
-                proposal.upvotes.remove(current_user)
-            else:
-                if current_user in proposal.downvotes:
-                    proposal.downvotes.remove(current_user)
-                proposal.upvotes.append(current_user)
-        else:
-            if current_user in proposal.downvotes:
-                proposal.downvotes.remove(current_user)
-            else:
-                if current_user in proposal.upvotes:
-                    proposal.upvotes.remove(current_user)
-                proposal.downvotes.append(current_user)
-        db.session.commit()
+    if proposal and current_user.is_authenticated:
+        proposal.vote(current_user, up)
         obj_response.html('#proposal_vote_' + proposal_id, str(proposal.points()))
         obj_response.attr('#proposal_vote_' + proposal_id, 'class', proposal.current_vote_style(current_user))
 
@@ -554,7 +578,34 @@ def confirm_proposal(obj_response, proposal_id):
         proposal.confirm()
         obj_response.alert('proposal confirmed')
     else:
-        obj_response.alert('proposal not confirmed')
+        obj_response.alert('Error: something occurred')
+
+
+def set_law_active(obj_response, law_id):
+    law = Law.query.filter_by(id=law_id).first()
+    if law and current_user.has_role('admin'):
+        law.set_active()
+        obj_response.alert('law is active')
+    else:
+        obj_response.alert('Error: something occurred')
+
+
+def set_law_premature(obj_response, law_id):
+    law = Law.query.filter_by(id=law_id).first()
+    if law and current_user.has_role('admin'):
+        law.set_premature()
+        obj_response.alert('law is premature')
+    else:
+        obj_response.alert('Error: something occurred')
+
+
+def set_law_impossible(obj_response, law_id):
+    law = Law.query.filter_by(id=law_id).first()
+    if law and current_user.has_role('admin'):
+        law.set_impossible()
+        obj_response.alert('law is impossible')
+    else:
+        obj_response.alert('Error: something occurred')
 
 
 def load_more_posts(obj_response, group, name, older_than):
@@ -575,30 +626,20 @@ def load_more_posts(obj_response, group, name, older_than):
 def submit_post(obj_response, files, form_values):
     form = forms.PostForm(**form_values)
     if form.validate():
-        post = Post(content=form.content.data, poster=current_user, poster_id=current_user.id, date=func.now())
+        parent_id = None
         if form.parent_id.data:
-            post.parent_id = int(form.parent_id.data)
-        for tn in form.topics.data.split():
-            topic_name = utils.get_topic_name(tn)
-            if topic_name:
-                tpc = Topic.query.filter_by(name=topic_name).first()
-                if not tpc:
-                    tpc = Topic(name=topic_name, description='')
-                    db.session.add(tpc)
-                post.topics.append(tpc)
-        db.session.add(post)
-        db.session.commit()
-        # update the new post and it's parent edit_date (recursively)
-        post.update_edit_date()
-        db.session.commit()
-        if form.parent_id.data:
-            par_id = form.parent_id.data
+            parent_id = form.parent_id.data
+            post = Post.submit(form.content.data, current_user, int(parent_id), form.topics.data.split())
+        else:
+            post = Post.submit(form.content.data, current_user, None, form.topics.data.split())
+
+        if parent_id:
             render_comment = get_template_attribute('macros.html', 'render_comment')
-            obj_response.html_prepend(''.join(['#post-', par_id, '-comments']),
+            obj_response.html_prepend(''.join(['#post-', parent_id, '-comments']),
                                       render_comment(post, current_user).unescape())
             # update parent comments counter
-            obj_response.script(''.join(['$("#load_comment_button_', par_id, '").children(".badge").html(',
-                                         str(Post.query.filter_by(parent_id=par_id).count()), ')']))
+            obj_response.script(''.join(['$("#load_comment_button_', parent_id, '").children(".badge").html(',
+                                         str(Post.query.filter_by(parent_id=parent_id).count()), ')']))
         else:
             render_post = get_template_attribute('macros.html', 'render_post')
             obj_response.html_prepend('#post-container', render_post(post, current_user).unescape())
@@ -624,19 +665,26 @@ def load_comments(obj_response, post_id, depth):
                                      str(post_id), ',', str(depth), ')")']))
 
 
-def load_more_laws(obj_response, group_name, status_name, last_id):
-    laws = Law.get_more(group_name=group_name, status_name=status_name, last_id=last_id)
+def load_more_laws(obj_response, group_name, status_name, order, last):
+    laws = Law.get_more(group_name=group_name, status_name=status_name, order=order, last=last)
     render_law = get_template_attribute('macros.html', 'render_law')
     more_laws_panel = get_template_attribute('macros.html', 'more_laws_panel')
     if laws:
         for law in laws:
             obj_response.html_append('#laws-container', render_law(law, current_user, actions_footer=True).unescape())
-        obj_response.html('#load_more_container', more_laws_panel(group_name, status_name, laws[-1].id).unescape())
+        if order == 'id':
+            panel = more_laws_panel(group_name, status_name, order, laws[-1].id).unescape()
+        elif order == 'date':
+            panel = more_laws_panel(group_name, status_name, order, laws[-1].date).unescape()
+        obj_response.html('#load_more_container', panel)
+        # refresh masonry to load the new laws correctly
+        obj_response.script('$(".masonry-grid").masonry( "reloadItems" )')
+        obj_response.script('$(".masonry-grid").masonry()')
         # refresh and re-enable waypoint to achieve continuous loading
         obj_response.script('Waypoint.refreshAll()')
         obj_response.script('Waypoint.enableAll()')
     else:
-        obj_response.html('#load_more_container', more_laws_panel(group_name, status_name, None).unescape())
+        obj_response.html('#load_more_container', more_laws_panel().unescape())
 
 
 def load_more_proposals(obj_response, open, pending, older_than):
@@ -653,3 +701,48 @@ def load_more_proposals(obj_response, open, pending, older_than):
         obj_response.script('Waypoint.enableAll()')
     else:
         obj_response.html('#load_more_container', more_proposals_panel(None).unescape())
+
+
+def load_more_notifications(obj_response, older_than):
+    notifs = Notification.get_more(current_user, older_than=older_than)
+    render_notification = get_template_attribute('macros.html', 'render_notification')
+    more_notifications_panel = get_template_attribute('macros.html', 'more_notifications_panel')
+    if notifs:
+        for notif in notifs:
+            obj_response.html_append('#notifications-container', render_notification(notif).unescape())
+        obj_response.html('#load_more_container',
+                          more_notifications_panel(notifs[-1].date).unescape())
+        # refresh and re-enable waypoint to achieve continuous loading
+        obj_response.script('Waypoint.refreshAll()')
+        obj_response.script('Waypoint.enableAll()')
+    else:
+        obj_response.html('#load_more_container', more_notifications_panel(None).unescape())
+
+
+def update_notifications(obj_response, newer_than):
+    notifs = Notification.get_more(current_user, newer_than=newer_than)
+    render_notif = get_template_attribute('macros.html', 'render_notification_navbar')
+    if notifs:
+        # make the notifications bell green
+        obj_response.script('$("#notifications_bell").attr("class", "glyphicon glyphicon-bell notif-unseen")')
+        # play an unpleasant sound
+        obj_response.script('document.getElementById("bleep_sound").play()')
+        # show the newer notifications
+        obj_response.html_prepend('#notifications_list', "".join([render_notif(notif).unescape() for notif in notifs]))
+
+
+def toggle_subscription(obj_response, item_type, item_id):
+    render_subscription = get_template_attribute('macros.html', 'render_subscription')
+    if item_type == 'proposal':
+        query = Proposal.query
+    elif item_type == 'law':
+        query = Law.query
+    elif item_type == 'post':
+        query = Post.query
+    else:
+        return
+    item = query.filter_by(id=item_id).first()
+    if item:
+        item.toggle_subscription(current_user)
+        obj_response.html('#' + item_type + '-' + str(item_id) + '-subscription',
+                          render_subscription(current_user, item, item_type).unescape())

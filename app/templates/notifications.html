@@ -1,0 +1,20 @@
+{% extends "columned.html" %}
+{% import "macros.html" as macros %}
+
+{% block central_column %}
+    <ul class="list-group" id="notifications-container">
+        {% for notif in notifs %}
+            {{ macros.render_notification(notif) }}
+        {% endfor %}
+    </ul>
+    <div id="load_more_container">
+        {% if notifs %}
+            {{ macros.more_notifications_panel(notifs[-1].date) }}
+        {% else %}
+            {{ macros.more_notifications_panel(None) }}
+        {% endif %}
+    </div>
+    {% if notifs %}
+        {{ macros.load_more_scripts() }}
+    {% endif %}
+{% endblock %}

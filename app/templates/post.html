@@ -2,7 +2,6 @@
 {% import "macros.html" as macros %}
 
 {% block head_custom %}
-    {{ macros.sjiax_scripts(form_init_js) }}
     {{ macros.post_form_scripts(current_user, topics_all) }}
 {% endblock %}
 
@@ -12,7 +11,7 @@
         <div class="panel panel-info">
             <div class="panel-body">
                 <h4 class="pull-left">This post is a comment of a bigger discussion</h4>
-                <a class="btn btn-primary btn-lg pull-right" href="/post/{{ old_parent.id }}/">
+                <a class="btn btn-primary btn-lg pull-right" href="{{ old_parent.link_to() }}">
                     Look at it
                 </a>
             </div>

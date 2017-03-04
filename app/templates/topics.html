@@ -4,7 +4,7 @@
 {% block central_column %}
     <div class="list-group">
         {% for topic in topic_list %}
-            <a href="/topic/{{ topic.name }}/" class="list-group-item">
+            <a href="{{ topic.link_to() }}" class="list-group-item">
                 <span class="badge">{{ topic.posts.count() }}</span>
                 <h2 class="list-group-item-heading">#{{ topic.name }}</h2>
                 {% if topic.description %}
@@ -14,7 +14,3 @@
         {% endfor %}
     </div>
 {% endblock %}
-
-{% block side_column %}
-{% endblock %}
-

@@ -1,14 +1,3 @@
-{% macro sjiax_scripts(form_init_js=None) -%}
-<script type="text/javascript" src="/static/js/sijax/sijax.js"></script>
-<script type="text/javascript" src="/static/js/sijax/sijax_upload.js"></script>
-<script type="text/javascript">
-    {{ g.sijax.get_js()|safe }}
-    {% if form_init_js %}
-        {{ form_init_js|safe }}
-    {% endif %}
-</script>
-{%- endmacro %}
-
 {# --------------------------- Widgets Macros -------------------------------- #}
 
 {% macro topics_widget(topics, more_topics_number, current_topic=None) -%}
@@ -18,7 +7,7 @@
     </div>
     <div class="list-group">
         {% for topic in topics %}
-            <a class="list-group-item{% if current_topic and topic == current_topic %} active{% endif %}" href="/topic/{{ topic.name }}/">#{{ topic.name }}</a>
+            <a class="list-group-item{% if current_topic and topic == current_topic %} active{% endif %}" href="{{ topic.link_to() }}">#{{ topic.name }}</a>
         {% endfor %}
         <a class="list-group-item list-group-item-info" href="/topics/">More topics<span class="badge">{{ more_topics_number }}</span></a>
     </div>
@@ -32,22 +21,46 @@
     </div>
     <div class="list-group">
         {% for page in pages %}
-            <a class="list-group-item{% if current_page and page.name == current_page.name %} active{% endif %}" href="/page/{{ page.name }}/">{{ page.name }}</a>
+            <a class="list-group-item{% if current_page and page.name == current_page.name %} active{% endif %}" href="{{ page.link_to() }}">{{ page.name }}</a>
         {% endfor %}
     </div>
 </div>
 {%- endmacro %}
 
-{% macro law_widget(statuses, current_status=None, group=None) -%}
-<div class="panel panel-default">
-    <div class="panel-heading text-center">
-        <p class="panel-title">{% if group %}{{ group.name }}{% endif %} Status</p>
-        {% if current_status and group %}<a class="small" href="/laws/status/{{ current_status.name }}/">Also not in {{ group.name }}</a>{% endif %}
+{% macro law_widget(statuses, groups, orders, current_status=None, current_group=None, current_order="id") -%}
+<div class="btn-group btn-group-justified">
+    <div class="btn-group">
+        <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Group: {% if current_group %}{{ current_group.name }}{% else %}All{% endif %} <span class="caret"></span></button>
+        <ul class="dropdown-menu">
+            {% if current_group %}
+                <li><a href="/laws/all/{{ current_status.name }}/{{ current_order }}/">All</a></li>
+            {% endif %}
+            {% for group in groups %}
+                {% if (not current_group) or (current_group and current_group.name != group.name) %}
+                    <li><a href="/laws/{{ group.name }}/{{ current_status.name }}/{{ current_order }}/">{{ group.name }}</a></li>
+                {% endif %}
+            {% endfor %}
+        </ul>
     </div>
-    <div class="list-group">
-        {% for status in statuses %}
-            <a role="presentation" class="list-group-item{% if current_status and current_status.name == status.name %} active{% endif %}" href="/laws/{% if group %}group/{{ group.name }}{% else %}status{% endif %}/{{ status.name }}/">{{ status.name }}</a>
-        {% endfor %}
+    <div class="btn-group">
+        <button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Status: {{ current_status.name }} <span class="caret"></span></button>
+        <ul class="dropdown-menu">
+            {% for status in statuses %}
+                {% if current_status and current_status.name != status.name %}
+                    <li><a href="/laws/{% if current_group %}{{ current_group.name }}{% else %}all{% endif %}/{{ status.name }}/{{ current_order }}/">{{ status.name }}</a></li>
+                {% endif %}
+            {% endfor %}
+        </ul>
+    </div>
+    <div class="btn-group">
+        <button type="button" class="btn btn-info dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Order by: {{ current_order }} <span class="caret"></span></button>
+        <ul class="dropdown-menu">
+            {% for order in orders %}
+                {% if current_order and current_order != order %}
+                    <li><a href="/laws/{% if current_group %}{{ current_group.name }}{% else %}all{% endif %}/{{ current_status.name }}/{{ order }}/">{{ order }}</a></li>
+                {% endif %}
+            {% endfor %}
+        </ul>
     </div>
 </div>
 {%- endmacro %}
@@ -73,7 +86,7 @@
     </div>
     <ul class="panel-body nav nav-pills nav-stacked">
         {% for subpage in subpages %}
-            <li role="presentation" {% if main_subpage == subpage %}class="active"{% endif %}><a href="/user/{{ user.username }}/{{ subpage }}/">{{ subpage }}</a></li>
+            <li role="presentation" {% if main_subpage == subpage %}class="active"{% endif %}><a href="{{ user.link_to() }}/{{ subpage }}/">{{ subpage }}</a></li>
         {% endfor %}
     </ul>
 </div>
@@ -88,9 +101,25 @@
         <div class="panel-body">
             <div class="row">
                 <p class="lead col-xs-7">
-                    <a href="/proposal/{{ proposal.id }}/">Proposal n. {{ proposal.id }}</a>, by <a href="/user/{{ proposal.poster.username }}/">@{{ proposal.poster.username }}</a>
+                    <a href="{{ proposal.link_to() }}">Proposal n. {{ proposal.id }}</a>, by <a href="{{ proposal.poster.link_to() }}">@{{ proposal.poster.username }}</a>
                 </p>
-                <a href="/proposal/{{ proposal.id }}/" class="col-xs-5 text-right text-muted">{{ render_date(proposal.date) }}</a>
+                <div class="dropdown col-xs-5 text-right">
+                    <a href="{{ proposal.link_to() }}" class="text-muted">{{ render_date(proposal.date) }}</a>
+                    {% if current_user.is_authenticated %}
+                        <a class="dropdown-toggle text-muted" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <span class="glyphicon glyphicon-cog"></span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-right">
+                            <li id="proposal-{{ proposal.id }}-subscription">{{ render_subscription(current_user, proposal, 'proposal') }}</li>
+                            {% if current_user.has_role('admin') %}
+                                <li role="separator" class="divider"></li>
+                                {% if not proposal.confirmed() %}
+                                    <li><a href="javascript://" onclick="Sijax.request('confirm_proposal', ['{{ proposal.id}}']);">Confirm</a></li>
+                                {% endif %}
+                            {% endif %}
+                        </ul>
+                    {% endif %}
+                </div>
             </div>
             <div class="text-muted lead">{{ proposal.description|markdown }}</div>
             <hr>
@@ -149,14 +178,10 @@
                 <a class="btn btn-link" href="/new-proposal/change/{{ proposal.id }}/"><span class="glyphicon glyphicon-pencil"></span> change</a>
             </div>
             <div class="btn-group">
-                {% if current_user.has_role('admin') and not proposal.confirmed() %}
-                    <button class="btn btn-link" href="javascript://" onclick="Sijax.request('confirm_proposal', ['{{ proposal.id}}']);">Confirm</button>
-                {% endif %}
-
                 {% if comment_here %}
                     <a class="btn btn-link collapser" data-autofill='{"destination":"#proposal-{{ proposal.id }}_form_space","topics":"#{{ proposal.topic.name }}"}'><span class="glyphicon glyphicon-share-alt"></span> comment <span class="badge">{{ proposal.topic.posts.count() }}</span></a>
                 {% else %}
-                    <a class="btn btn-link collapser" href="/proposal/{{ proposal.id }}/"><span class="glyphicon glyphicon-share-alt"></span> comment <span class="badge">{{ proposal.topic.posts.count() }}</span></a>
+                    <a class="btn btn-link collapser" href="{{ proposal.link_to() }}"><span class="glyphicon glyphicon-share-alt"></span> comment <span class="badge">{{ proposal.topic.posts.count() }}</span></a>
                 {% endif %}
             </div>
         </div>
@@ -166,14 +191,30 @@
 {%- endmacro %}
 
 {% macro render_law(law, current_user, actions_footer=False, comment_here=False) -%}
-<div id="law-{{ law.id }}">
+<div class="law" id="law-{{ law.id }}">
     <div class="panel panel-info">
         <div class="panel-heading">
             <div class="row">
-                <div class="col-xs-7"><a href="/law/{{ law.id }}/" class="panel-title">Law n. {{ law.id }}</a>
-                    <small> in {% for group in law.group %}<a href="/laws/group/{{group.name}}/">{{group.name}}</a>{% if not loop.last %}, {% endif %}{% endfor %}</small>
+                <div class="col-xs-7"><a href="{{ law.link_to() }}" class="panel-title">Law n. {{ law.id }}</a>
+                    <small> in {% for group in law.group %}<a href="/laws/{{group.name}}/active/id">{{group.name}}</a>{% if not loop.last %}, {% endif %}{% endfor %}</small>
                 </div>
-                <div class="col-xs-5 text-right">{% for status in law.status %}<a href="/laws/status/{{status.name}}/" class="label label-success">{{status.name}}</a> {% endfor %}</div>
+                <div class="dropdown col-xs-5 text-right">
+                    {% for status in law.status %}<a href="/laws/all/{{status.name}}/id/" class="label label-success">{{status.name}}</a> {% endfor %}
+                    {% if current_user.is_authenticated %}
+                        <a class="dropdown-toggle text-muted" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <span class="glyphicon glyphicon-cog"></span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-right">
+                            <li id="law-{{ law.id }}-subscription">{{ render_subscription(current_user, law, 'law') }}</li>
+                            {% if current_user.has_role('admin') %}
+                                <li role="separator" class="divider"></li>
+                                <li><a href="javascript://" onclick="Sijax.request('set_law_active', ['{{ law.id}}']);">set active</a></li>
+                                <li><a href="javascript://" onclick="Sijax.request('set_law_premature', ['{{ law.id}}']);">set premature</a></li>
+                                <li><a href="javascript://" onclick="Sijax.request('set_law_impossible', ['{{ law.id}}']);">set impossible</a></li>
+                            {% endif %}
+                        </ul>
+                    {% endif %}
+                </div>
             </div>
         </div>
         <div class="panel-body">
@@ -181,12 +222,12 @@
         </div>
         {% if actions_footer %}
             <div class="panel-footer btn-group btn-group-justified">
-                <a class="btn btn-link" href="/law/{{ law.id }}/"><span class="glyphicon glyphicon-comment"></span> discussion <span class="badge">{{ law.topic.posts.count() }}</span></a>
+                <a class="btn btn-link" href="{{ law.link_to() }}"><span class="glyphicon glyphicon-comment"></span> discussion <span class="badge">{{ law.topic.posts.count() }}</span></a>
                 <a class="btn btn-link" href="/new-proposal/remove/{{ law.id }}/"><span class="glyphicon glyphicon-remove"></span> remove</a>
                 {% if comment_here %}
                     <a class="btn btn-link collapser" data-autofill='{"destination":"#law-{{ law.id }}_form_space","topics":"#{{ law.topic.name }}"}'><span class="glyphicon glyphicon-share-alt"></span> comment</a>
                 {% else %}
-                    <a class="btn btn-link" href="/law/{{ law.id }}/"><span class="glyphicon glyphicon-share-alt"></span> comment</a>
+                    <a class="btn btn-link" href="{{ law.link_to() }}"><span class="glyphicon glyphicon-share-alt"></span> comment</a>
                 {% endif %}
             </div>
         {% endif %}
@@ -218,7 +259,7 @@
     <div class="panel panel-default">
         <div class="row panel-body">
             <div class="col-md-2 col-xs-3">
-                <a href="/user/{{ post.poster.username }}/"><img class="img-rounded img-responsive center-block" src="{{ post.poster.email | gravatar }}"></a>
+                <a href="{{ post.poster.link_to() }}"><img class="img-rounded img-responsive center-block" src="{{ post.poster.email | gravatar }}"></a>
                 <p></p>
                 {# render vote form #}
                 <div class="btn-group-vertical btn-block">
@@ -247,8 +288,18 @@
             </div>
             <div class="col-md-10 col-xs-9">
                 <div class="row">
-                    <p class="lead text-info col-xs-5"><a href="/user/{{ post.poster.username }}/"> –@{{ post.poster.username }}</a>{% if post.poster.roles %}<small> {% for role in post.poster.roles %}<span class="label label-primary">{{ role.name }}</span>{% endfor %}</small>{% endif%}</p>
-                    <a href="/post/{{ post.id }}/" class="col-xs-7 text-right text-muted">{{ render_date(post.date) }}</a>
+                    <p class="lead text-info col-xs-5"><a href="{{ post.poster.link_to() }}"> –@{{ post.poster.username }}</a>{% if post.poster.roles %}<small> {% for role in post.poster.roles %}<span class="label label-primary">{{ role.name }}</span>{% endfor %}</small>{% endif%}</p>
+                    <div class="dropdown col-xs-7 text-right">
+                        <a href="{{ post.link_to() }}" class="text-muted">{{ render_date(post.date) }}</a>
+                        {% if current_user.is_authenticated %}
+                            <a class="dropdown-toggle text-muted" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <span class="glyphicon glyphicon-cog"></span>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-right">
+                                <li id="post-{{ post.id }}-subscription">{{ render_subscription(current_user, post, 'post') }}</li>
+                            </ul>
+                        {% endif %}
+                    </div>
                 </div>
                 <div class="text-muted lead">{{ post.content|markdown }}</div>
             </div>
@@ -280,19 +331,27 @@
     <div class="panel panel-default">
         <div class="row panel-body">
             <div class="col-md-2 col-xs-3">
-                <a href="/user/{{ post.poster.username }}/"><img class="img-rounded img-responsive center-block" src="{{ post.poster.email | gravatar }}"></a>
+                <a href="{{ post.poster.link_to() }}"><img class="img-rounded img-responsive center-block" src="{{ post.poster.email | gravatar }}"></a>
             </div>
             <div class="col-md-10 col-xs-9">
-                <p class="text-info"><a href="/user/{{ post.poster.username }}/"> –@{{ post.poster.username }}</a>{% if post.poster.roles %}<small> {% for role in post.poster.roles %}<span class="label label-primary">{{ role.name }}</span>{% endfor %}</small>{% endif%}</p>
+                <p class="text-info"><a href="{{ post.poster.link_to() }}"> –@{{ post.poster.username }}</a>{% if post.poster.roles %}<small> {% for role in post.poster.roles %}<span class="label label-primary">{{ role.name }}</span>{% endfor %}</small>{% endif%}</p>
                 <div class="text-muted lead">{{ post.content|markdown }}</div>
                 <div>
                     <span class="glyphicon glyphicon-tags"></span> -{% for topic in post.topics %}
-                    <a href="/topic/{{ topic.name }}/"> #{{ topic.name }}</a>{% endfor %}
+                    <a href="{{ topic.link_to() }}"> #{{ topic.name }}</a>{% endfor %}
                 </div>
                 <hr>
                 <div class="btn-group btn-group-justified">
-                    <div class="btn-group">
-                        <a href="/post/{{ post.id }}/" class="text-muted">{{ render_date(post.date) }}</a>
+                    <div class="btn-group dropdown">
+                        {% if current_user.is_authenticated %}
+                            <a class="dropdown-toggle text-muted" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <span class="glyphicon glyphicon-cog"></span>
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li id="post-{{ post.id }}-subscription">{{ render_subscription(current_user, post, 'post') }}</li>
+                            </ul>
+                        {% endif %}
+                        <a href="{{ post.link_to() }}" class="text-muted">{{ render_date(post.date) }}</a>
                     </div>
                     {# render vote form #}
                     <div class="btn-group text-center">
@@ -339,12 +398,34 @@
 </div>
 {%- endmacro %}
 
+{% macro render_notification_navbar(notification) -%}
+    <li {% if not notification.seen %}class="notif-unseen-back"{% endif %} data-date="'{{ notification.date }}'"><a href="{{notification.link_to()}}" ><span class="glyphicon glyphicon-chevron-right"></span> {{ notification.to_text() }}</a></li>
+{%- endmacro %}
+
+{% macro render_notification(notification) -%}
+    <li class="list-group-item{% if not notification.seen %} notif-unseen-back{% endif %}">
+        <a href="{{ notification.link_to() }}" class="lead">
+            <span class="glyphicon glyphicon-chevron-right"></span> {{ notification.to_text() }}
+        </a>
+    </li>
+{%- endmacro %}
+
+{% macro render_subscription(current_user, item, item_type) -%}
+    <a href="javascript://" onclick="Sijax.request('toggle_subscription', ['{{ item_type }}', {{ item.id }}]);">
+        {% if current_user in item.subscribed %}
+            <span class="glyphicon glyphicon-remove-circle"></span> Unsubscribe
+        {% else %}
+            <span class="glyphicon glyphicon-ok-circle"></span> Subscribe
+        {% endif %}
+    </a>
+{%- endmacro %}
+
 {% macro render_date(date) -%}
-<span class="glyphicon glyphicon-link"></span> {{ date.year }}-{{ date.month }}-{{ date.day }}<span class="hidden-xs hidden-sm"> {{ date.hour }}:{{ date.minute }}</span>
+    {{ date.year }}-{{ date.month }}-{{ date.day }}<span class="hidden-xs hidden-sm"> {{ date.hour }}:{{ date.minute }}</span>
 {%- endmacro %}
 
 {% macro render_literal_date(date) -%}
-{{ date.day }}{% if date.day == 1 %}st{% elif date.day == 2 %}nd{% elif date.day == 3 %}rd{%else%}th{% endif %} {{ date.strftime("%B") }} {{ date.year }}
+    {{ date.day }}{% if date.day == 1 %}st{% elif date.day == 2 %}nd{% elif date.day == 3 %}rd{%else%}th{% endif %} {{ date.strftime("%B") }} {{ date.year }}
 {%- endmacro %}
 
 {% macro render_field(field, label_visible=false) -%}
@@ -368,10 +449,10 @@
 {% endif %}
 {%- endmacro %}
 
-{% macro more_laws_panel(group_name, status_name, last_id=None) -%}
+{% macro more_laws_panel(group_name=None, status_name=None, order='id', last=None) -%}
 {#-----     this needs to be contained in a div with id load_more_container to work     -----#}
-{% if last_id %}
-    <div class="alert alert-info text-center lead" data-loader="load_more_laws" data-load='[{% if group_name %}"{{ group_name }}"{% else %}null{% endif %}, {% if status_name %}"{{ status_name }}"{% else %}null{% endif %}, {{ last_id }}]'></div>
+{% if last %}
+    <div class="alert alert-info text-center lead" data-loader="load_more_laws" data-load='[{% if group_name %}"{{ group_name }}"{% else %}null{% endif %}, {% if status_name %}"{{ status_name }}"{% else %}null{% endif %}, "{{ order }}", "{{ last }}"]'></div>
 {% else %}
     <div class="alert alert-info text-center lead">There are no more laws here</div>
 {% endif %}
@@ -383,6 +464,15 @@
     <div class="alert alert-info text-center lead" data-loader="load_more_posts" data-load='[{% if group %}"{{ group }}"{% else %}null{% endif %}, {% if name %}"{{ name }}"{% else %}null{% endif %}, "{{ older_than }}"]'></div>
 {% else %}
     <div class="alert alert-info text-center lead">There are no more posts here</div>
+{% endif %}
+{%- endmacro %}
+
+{% macro more_notifications_panel(older_than) -%}
+{#-----     this needs to be contained in a div with id load_more_container to work     -----#}
+{% if older_than %}
+    <div class="alert alert-info text-center lead" data-loader="load_more_notifications" data-load='["{{ older_than }}"]'></div>
+{% else %}
+    <div class="alert alert-info text-center lead">There are no more notifications</div>
 {% endif %}
 {%- endmacro %}
 
