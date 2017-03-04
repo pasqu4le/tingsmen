@@ -31,6 +31,7 @@ def home():
         g.sijax.register_callback('load_more_posts', load_more_posts)
         g.sijax.register_callback('load_comments', load_comments)
         g.sijax.register_callback('vote_post', vote_post)
+        g.sijax.register_callback('update_notifications', update_notifications)
         return g.sijax.process_request()
     # non-ajax handling:
     posts = Post.get_more()
@@ -47,13 +48,22 @@ def home():
     return render_template("home.html", **options)
 
 
-@app.route('/cookies/')
+@app.route('/cookies/', methods=('GET', 'POST'))
 def cookie_policy():
+    # ajax request handling
+    if g.sijax.is_sijax_request:
+        g.sijax.register_callback('update_notifications', update_notifications)
+        return g.sijax.process_request()
+    # non-ajax handling:
     return render_template("cookies.html", title='Cookie policy')
 
 
-@app.route('/page/<page_name>/')
+@app.route('/page/<page_name>/', methods=('GET', 'POST'))
 def view_page(page_name):
+    # ajax request handling
+    if g.sijax.is_sijax_request:
+        g.sijax.register_callback('update_notifications', update_notifications)
+        return g.sijax.process_request()
     # non-ajax handling:
     current_page = Page.query.filter_by(name=page_name).first()
     if not current_page:
@@ -74,6 +84,7 @@ def topic(topic_name):
         g.sijax.register_callback('load_more_posts', load_more_posts)
         g.sijax.register_callback('load_comments', load_comments)
         g.sijax.register_callback('vote_post', vote_post)
+        g.sijax.register_callback('update_notifications', update_notifications)
         return g.sijax.process_request()
     # non-ajax handling:
     current_topic = Topic.query.filter_by(name=topic_name).first()
@@ -94,8 +105,13 @@ def topic(topic_name):
     return render_template("topic.html", **options)
 
 
-@app.route('/topics/')
+@app.route('/topics/', methods=('GET', 'POST'))
 def topics():
+    # ajax request handling
+    if g.sijax.is_sijax_request:
+        g.sijax.register_callback('update_notifications', update_notifications)
+        return g.sijax.process_request()
+    # non-ajax handling:
     topic_list = Topic.query.all()
     options = {
         'title': 'Topics',
@@ -105,10 +121,16 @@ def topics():
     return render_template("topics.html", **options)
 
 
-@app.route('/notifications/')
+@app.route('/notifications/', methods=('GET', 'POST'))
 def notifications():
     if current_user.is_authenticated:
-        notifs = current_user.get_notifications()
+        # ajax request handling
+        if g.sijax.is_sijax_request:
+            g.sijax.register_callback('load_more_notifications', load_more_notifications)
+            g.sijax.register_callback('update_notifications', update_notifications)
+            return g.sijax.process_request()
+        # non-ajax handling:
+        notifs = Notification.get_more(current_user, num=30)
         options = {
             'title': 'Topics',
             'notifs': notifs
@@ -140,6 +162,11 @@ def view_user(username):
 def settings():
     if not current_user.is_authenticated:
         return redirect('/')
+    # ajax request handling
+    if g.sijax.is_sijax_request:
+        g.sijax.register_callback('update_notifications', update_notifications)
+        return g.sijax.process_request()
+    # non-ajax handling:
     form = forms.SettingsForm()
     messages = []
     if form.validate_on_submit():
@@ -164,6 +191,7 @@ def user_page(username, subpage):
         g.sijax.register_callback('load_more_posts', load_more_posts)
         g.sijax.register_callback('load_comments', load_comments)
         g.sijax.register_callback('vote_post', vote_post)
+        g.sijax.register_callback('update_notifications', update_notifications)
         return g.sijax.process_request()
     # non-ajax handling:
     user = User.query.filter_by(username=username).first()
@@ -201,6 +229,7 @@ def view_post(post_id):
     if g.sijax.is_sijax_request:
         g.sijax.register_callback('load_comments', load_comments)
         g.sijax.register_callback('vote_post', vote_post)
+        g.sijax.register_callback('update_notifications', update_notifications)
         return g.sijax.process_request()
     # non-ajax handling:
     main_post = Post.query.filter_by(id=post_id).first()
@@ -237,6 +266,7 @@ def view_proposal(proposal_id):
         g.sijax.register_callback('vote_post', vote_post)
         g.sijax.register_callback('vote_proposal', vote_proposal)
         g.sijax.register_callback('confirm_proposal', confirm_proposal)
+        g.sijax.register_callback('update_notifications', update_notifications)
         return g.sijax.process_request()
     # non-ajax handling:
     proposal = Proposal.query.filter_by(id=proposal_id).first()
@@ -270,6 +300,7 @@ def proposal_status(status):
         g.sijax.register_callback('vote_proposal', vote_proposal)
         g.sijax.register_callback('confirm_proposal', confirm_proposal)
         g.sijax.register_callback('load_more_proposals', load_more_proposals)
+        g.sijax.register_callback('update_notifications', update_notifications)
         return g.sijax.process_request()
     # non-ajax handling:
     proposals = []
@@ -301,6 +332,7 @@ def view_law(law_id):
         g.sijax.register_callback('load_more_posts', load_more_posts)
         g.sijax.register_callback('load_comments', load_comments)
         g.sijax.register_callback('vote_post', vote_post)
+        g.sijax.register_callback('update_notifications', update_notifications)
         return g.sijax.process_request()
     # non-ajax handling:
     law = Law.query.filter_by(id=law_id).first()
@@ -329,6 +361,7 @@ def view_laws(group_name, status_name, order):
     # ajax request handling
     if g.sijax.is_sijax_request:
         g.sijax.register_callback('load_more_laws', load_more_laws)
+        g.sijax.register_callback('update_notifications', update_notifications)
         return g.sijax.process_request()
     # non-ajax handling:
     current_group = LawGroup.query.filter_by(name=group_name).first()
@@ -353,16 +386,26 @@ def view_laws(group_name, status_name, order):
     return render_template("laws.html", **options)
 
 
-@app.route('/new-proposal/remove/<law_id>/')
+@app.route('/new-proposal/remove/<law_id>/', methods=('GET', 'POST'))
 def new_proposal_remove(law_id):
+    # ajax request handling
+    if g.sijax.is_sijax_request:
+        g.sijax.register_callback('update_notifications', update_notifications)
+        return g.sijax.process_request()
+    # non-ajax handling:
     form = forms.ProposalForm()
     form.remove_laws.pop_entry()
     form.remove_laws.append_entry(law_id)
     return new_proposal(form)
 
 
-@app.route('/new-proposal/change/<proposal_id>/')
+@app.route('/new-proposal/change/<proposal_id>/', methods=('GET', 'POST'))
 def new_proposal_change(proposal_id):
+    # ajax request handling
+    if g.sijax.is_sijax_request:
+        g.sijax.register_callback('update_notifications', update_notifications)
+        return g.sijax.process_request()
+    # non-ajax handling:
     form = forms.ProposalForm()
     proposal = Proposal.query.filter_by(id=proposal_id).first()
     if proposal:
@@ -380,6 +423,11 @@ def new_proposal_change(proposal_id):
 
 @app.route('/new-proposal/', methods=('GET', 'POST'))
 def submit_proposal():
+    # ajax request handling
+    if g.sijax.is_sijax_request:
+        g.sijax.register_callback('update_notifications', update_notifications)
+        return g.sijax.process_request()
+    # non-ajax handling:
     form = forms.ProposalForm()
     if current_user.is_authenticated and form.validate_on_submit():
         proposal = Proposal.submit(form.description.data, current_user,
@@ -400,6 +448,11 @@ def new_proposal(form):
 
 @app.route('/subscribe/<mailing_list>/', methods=('GET', 'POST'))
 def subscribe(mailing_list):
+    # ajax request handling
+    if g.sijax.is_sijax_request:
+        g.sijax.register_callback('update_notifications', update_notifications)
+        return g.sijax.process_request()
+    # non-ajax handling:
     ml = MailingList.query.filter_by(name=mailing_list).first()
     if not ml:
         abort(404)
@@ -443,7 +496,22 @@ def security_register_processor():
 # ---------------------------------------------- ERROR PAGES
 
 @app.errorhandler(404)
-def page_not_found(error):
+def not_found(error):
+    return redirect('/404/')
+
+
+@app.errorhandler(403)
+def permission_denied(error):
+    return redirect('/403/')
+
+
+@app.route('/404/', methods=('GET', 'POST'))
+def page_not_found():
+    # ajax request handling
+    if g.sijax.is_sijax_request:
+        g.sijax.register_callback('update_notifications', update_notifications)
+        return g.sijax.process_request()
+    # non-ajax handling:
     options = {
         'code': 404,
         'message': 'The page you are looking for cannot be found'
@@ -452,8 +520,13 @@ def page_not_found(error):
     return render_template("error.html", **options)
 
 
-@app.errorhandler(403)
-def permission_denied(error):
+@app.route('/403/', methods=('GET', 'POST'))
+def page_permission_denied(error):
+    # ajax request handling
+    if g.sijax.is_sijax_request:
+        g.sijax.register_callback('update_notifications', update_notifications)
+        return g.sijax.process_request()
+    # non-ajax handling:
     options = {
         'code': 403,
         'message': 'Access forbidden'
@@ -581,3 +654,31 @@ def load_more_proposals(obj_response, open, pending, older_than):
         obj_response.script('Waypoint.enableAll()')
     else:
         obj_response.html('#load_more_container', more_proposals_panel(None).unescape())
+
+
+def load_more_notifications(obj_response, older_than):
+    notifs = Notification.get_more(current_user, older_than=older_than)
+    render_notification = get_template_attribute('macros.html', 'render_notification')
+    more_notifications_panel = get_template_attribute('macros.html', 'more_notifications_panel')
+    if notifs:
+        for notif in notifs:
+            obj_response.html_append('#notifications-container', render_notification(notif).unescape())
+        obj_response.html('#load_more_container',
+                          more_notifications_panel(notifs[-1].date).unescape())
+        # refresh and re-enable waypoint to achieve continuous loading
+        obj_response.script('Waypoint.refreshAll()')
+        obj_response.script('Waypoint.enableAll()')
+    else:
+        obj_response.html('#load_more_container', more_notifications_panel(None).unescape())
+
+
+def update_notifications(obj_response, newer_than):
+    notifs = Notification.get_more(current_user, newer_than=newer_than)
+    render_notif = get_template_attribute('macros.html', 'render_notification_navbar')
+    if notifs:
+        # make the notifications bell green
+        obj_response.script('$("#notifications_bell").attr("class", "glyphicon glyphicon-bell notif-unseen")')
+        # play an unpleasant sound
+        obj_response.script('document.getElementById("bleep_sound").play()')
+        # show the newer notifications
+        obj_response.html_prepend('#notifications_list', "".join([render_notif(notif).unescape() for notif in notifs]))

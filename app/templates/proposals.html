@@ -1,10 +1,6 @@
 {% extends "columned.html" %}
 {% import "macros.html" as macros %}
 
-{% block head_custom %}
-    {{ macros.sjiax_scripts() }}
-{% endblock %}
-
 {% block central_column %}
     <div class="jumbotron">
         <h3>{{ current_status }} proposals{% if description %}: <small>{{ description }}</small>{% endif %}</h3>

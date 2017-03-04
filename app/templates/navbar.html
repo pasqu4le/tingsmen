@@ -1,3 +1,4 @@
+{% import "macros.html" as macros %}
 <nav class="navbar navbar-default navbar-inverse navbar-fixed-top">
     <div class="container">
         <div class="navbar-header">
@@ -37,11 +38,11 @@
                 </li>
                 <li class="dropdown">
                     <a class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
-                        <span class="visible-xs-inline">Notifications </span><span class="glyphicon glyphicon-bell{% if current_user.has_new_notifications() %} notif-unseen{% endif %}"></span>
+                        <span class="visible-xs-inline">Notifications </span><span id="notifications_bell" class="glyphicon glyphicon-bell{% if current_user.has_new_notifications() %} notif-unseen{% endif %}"></span>
                     </a>
-                    <ul class="dropdown-menu">
-                        {% for notification in current_user.get_notifications(10) %}
-                            <li {% if not notification.seen %}class="notif-unseen-back"{% endif %}><a href="{{notification.link_to()}}" ><span class="glyphicon glyphicon-chevron-right"></span> {{ notification.to_text() }}</a></li>
+                    <ul class="dropdown-menu" id="notifications_list" data>
+                        {% for notification in current_user.get_latest_notifications() %}
+                            {{ macros.render_notification_navbar(notification) }}
                         {% endfor %}
                         <li role="separator" class="divider"></li>
                         <li><a href="/notifications/" class="text-center">See All</a></li>

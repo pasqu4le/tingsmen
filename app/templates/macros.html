@@ -1,14 +1,3 @@
-{% macro sjiax_scripts(form_init_js=None) -%}
-<script type="text/javascript" src="/static/js/sijax/sijax.js"></script>
-<script type="text/javascript" src="/static/js/sijax/sijax_upload.js"></script>
-<script type="text/javascript">
-    {{ g.sijax.get_js()|safe }}
-    {% if form_init_js %}
-        {{ form_init_js|safe }}
-    {% endif %}
-</script>
-{%- endmacro %}
-
 {# --------------------------- Widgets Macros -------------------------------- #}
 
 {% macro topics_widget(topics, more_topics_number, current_topic=None) -%}
@@ -363,6 +352,18 @@
 </div>
 {%- endmacro %}
 
+{% macro render_notification_navbar(notification) -%}
+    <li {% if not notification.seen %}class="notif-unseen-back"{% endif %} data-date="'{{ notification.date }}'"><a href="{{notification.link_to()}}" ><span class="glyphicon glyphicon-chevron-right"></span> {{ notification.to_text() }}</a></li>
+{%- endmacro %}
+
+{% macro render_notification(notification) -%}
+    <li class="list-group-item{% if not notification.seen %} notif-unseen-back{% endif %}">
+        <a href="{{ notification.link_to() }}" class="lead">
+            <span class="glyphicon glyphicon-chevron-right"></span> {{ notification.to_text() }}
+        </a>
+    </li>
+{%- endmacro %}
+
 {% macro render_date(date) -%}
 <span class="glyphicon glyphicon-link"></span> {{ date.year }}-{{ date.month }}-{{ date.day }}<span class="hidden-xs hidden-sm"> {{ date.hour }}:{{ date.minute }}</span>
 {%- endmacro %}
@@ -407,6 +408,15 @@
     <div class="alert alert-info text-center lead" data-loader="load_more_posts" data-load='[{% if group %}"{{ group }}"{% else %}null{% endif %}, {% if name %}"{{ name }}"{% else %}null{% endif %}, "{{ older_than }}"]'></div>
 {% else %}
     <div class="alert alert-info text-center lead">There are no more posts here</div>
+{% endif %}
+{%- endmacro %}
+
+{% macro more_notifications_panel(older_than) -%}
+{#-----     this needs to be contained in a div with id load_more_container to work     -----#}
+{% if older_than %}
+    <div class="alert alert-info text-center lead" data-loader="load_more_notifications" data-load='["{{ older_than }}"]'></div>
+{% else %}
+    <div class="alert alert-info text-center lead">There are no more notifications</div>
 {% endif %}
 {%- endmacro %}
 

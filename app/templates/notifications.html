@@ -2,13 +2,19 @@
 {% import "macros.html" as macros %}
 
 {% block central_column %}
-    <ul class="list-group">
+    <ul class="list-group" id="notifications-container">
         {% for notif in notifs %}
-            <li class="list-group-item{% if not notif.seen %} notif-unseen-back{% endif %}">
-                <a href="{{ notif.link_to() }}" class="lead">
-                    <span class="glyphicon glyphicon-chevron-right"></span> {{ notif.to_text() }}
-                </a>
-            </li>
+            {{ macros.render_notification(notif) }}
         {% endfor %}
     </ul>
+    <div id="load_more_container">
+        {% if notifs %}
+            {{ macros.more_notifications_panel(notifs[-1].date) }}
+        {% else %}
+            {{ macros.more_notifications_panel(None) }}
+        {% endif %}
+    </div>
+    {% if notifs %}
+        {{ macros.load_more_scripts() }}
+    {% endif %}
 {% endblock %}

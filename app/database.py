@@ -66,11 +66,9 @@ class User(db.Model, UserMixin):
     def has_new_notifications(self):
         return Notification.query.filter_by(user=self).filter_by(seen=False).count() > 0
 
-    def get_notifications(self, num=0):
-        query = Notification.query.filter_by(user=self).order_by(Notification.date.desc())
-        if num:
-            return query[:num]
-        return query.all()
+    def get_latest_notifications(self):
+        # small useful method, used by the navbar
+        return Notification.get_more(self)
 
     def change_settings(self, username=None):
         if username:
@@ -120,6 +118,15 @@ class Notification(db.Model):
         notif.authors.append(author)
         db.session.add(notif)
         db.session.commit()
+
+    @staticmethod
+    def get_more(user, num=10, older_than=None, newer_than=None):
+        query = Notification.query.filter_by(user=user)
+        if older_than:
+            query = query.filter(Notification.date < older_than)
+        elif newer_than:
+            query = query.filter(Notification.date > newer_than)
+        return query.order_by(Notification.date.desc())[:num]
 
     def to_text(self):
         if len(self.authors) == 1:
