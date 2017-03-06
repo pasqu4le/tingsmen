@@ -111,6 +111,10 @@
                         </a>
                         <ul class="dropdown-menu dropdown-menu-right">
                             <li id="proposal-{{ proposal.id }}-subscription">{{ render_subscription(current_user, proposal, 'proposal') }}</li>
+                            {% if proposal.poster == current_user and proposal.is_pending %}
+                                <li role="separator" class="divider"></li>
+                                <li><a href="/edit/proposal/{{ proposal.id }}"><span class="glyphicon glyphicon-pencil"></span> Edit</a></li>
+                            {% endif %}
                             {% if current_user.has_role('admin') %}
                                 <li role="separator" class="divider"></li>
                                 {% if not proposal.confirmed() %}
@@ -206,6 +210,10 @@
                         </a>
                         <ul class="dropdown-menu dropdown-menu-right">
                             <li id="law-{{ law.id }}-subscription">{{ render_subscription(current_user, law, 'law') }}</li>
+                            {% if law.add_by[-1].poster == current_user and law.add_by[-1].is_pending %}
+                                <li role="separator" class="divider"></li>
+                                <li><a href="/edit/law/{{ law.id }}"><span class="glyphicon glyphicon-pencil"></span> Edit</a></li>
+                            {% endif %}
                             {% if current_user.has_role('admin') %}
                                 <li role="separator" class="divider"></li>
                                 <li><a href="javascript://" onclick="Sijax.request('set_law_active', ['{{ law.id}}']);">set active</a></li>
@@ -297,6 +305,10 @@
                             </a>
                             <ul class="dropdown-menu dropdown-menu-right">
                                 <li id="post-{{ post.id }}-subscription">{{ render_subscription(current_user, post, 'post') }}</li>
+                                {% if post.poster == current_user %}
+                                    <li role="separator" class="divider"></li>
+                                    <li><a href="/edit/post/{{ post.id }}"><span class="glyphicon glyphicon-pencil"></span> Edit</a></li>
+                                {% endif %}
                             </ul>
                         {% endif %}
                     </div>
@@ -349,6 +361,10 @@
                             </a>
                             <ul class="dropdown-menu">
                                 <li id="post-{{ post.id }}-subscription">{{ render_subscription(current_user, post, 'post') }}</li>
+                                {% if post.poster == current_user %}
+                                    <li role="separator" class="divider"></li>
+                                    <li><a href="/edit/post/{{ post.id }}"><span class="glyphicon glyphicon-pencil"></span> Edit</a></li>
+                                {% endif %}
                             </ul>
                         {% endif %}
                         <a href="{{ post.link_to() }}" class="text-muted">{{ render_date(post.date) }}</a>
@@ -568,12 +584,19 @@
 
 {# --------------------------- Macros for the proposal form -------------------------------- #}
 
-{% macro render_proposal_form(proposal_form, current_user) -%}
-<form class="panel panel-default form" action="/new-proposal/" enctype="multipart/form-data" method="POST" name="proposal_form" id="proposal_form">
+{% macro proposal_form_scripts() -%}
+    {{ law_form_scripts() }}
+    <script type="text/javascript" src="/static/js/proposal_forms.js"></script>
+{%- endmacro %}
+
+{% macro render_proposal_form(proposal_form, current_user, editing=False) -%}
+<form class="panel panel-default form" {% if not editing %}action="/new-proposal/"{% endif %} enctype="multipart/form-data" method="POST" name="proposal_form" id="proposal_form">
     {{ proposal_form.hidden_tag() }}
     <div class="panel-body">
         <div class="text-center">
-            <strong class="h2">New Proposal</strong>
+            {% if not editing %}
+                <strong class="h2">New Proposal</strong>
+            {% endif %}
             {{ render_field(proposal_form.description) }}
         </div>
         <hr>
@@ -623,5 +646,30 @@
     <div class="panel-footer">
         {{ render_field(proposal_form.submit) }}
     </div>
+</form>
+{%- endmacro %}
+
+{% macro law_form_scripts() -%}
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/css/select2.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2-bootstrap-theme/0.1.0-beta.6/select2-bootstrap.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/js/select2.min.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function() {
+            $(".group_form").select2();
+        });
+    </script>
+{%- endmacro %}
+
+{% macro render_law_form(law_form) -%}
+<form class="well form" enctype="multipart/form-data" method="POST" name="law_form" id="law_form">
+    {{ law_form.hidden_tag() }}
+    <div class="row">
+        <strong class="col-xs-4">Law in:</strong>
+        <div class="col-xs-8">
+            {{ render_field(law_form.groups) }}
+        </div>
+    </div>
+    {{ render_field(law_form.content) }}
+    {{ render_field(law_form.submit) }}
 </form>
 {%- endmacro %}

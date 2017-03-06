@@ -1,0 +1,26 @@
+{% extends "columned.html" %}
+{% import "macros.html" as macros %}
+
+{% block head_custom %}
+    {% if form_type == 'proposal' %}
+        {{ macros.proposal_form_scripts() }}
+    {% elif form_type == 'law' %}
+        {{ macros.law_form_scripts() }}
+    {% endif %}
+{% endblock %}
+
+{% block central_column %}
+    <h1 class="page-header">{{ title }}</h1>
+    {% if message %}
+        <div class="alert alert-info">{{ message }}</div>
+    {% endif %}
+    {% if form %}
+        {% if form_type == 'post' %}
+            {{ macros.render_post_form(form, current_user) }}
+        {% elif form_type == 'proposal' %}
+            {{ macros.render_proposal_form(form, current_user, True) }}
+        {% elif form_type == 'law' %}
+            {{ macros.render_law_form(form) }}
+        {% endif %}
+    {% endif %}
+{% endblock %}

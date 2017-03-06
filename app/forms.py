@@ -44,6 +44,8 @@ class LawForm(FlaskForm):
     content = TextAreaField(render_kw={'placeholder': 'Content', 'rows': '5'})
     groups = SelectMultipleField(choices=[(g.name, g.name) for g in LawGroup.query.all() if g.name != 'Base'],
                                  render_kw={'placeholder': 'Groups', 'class': 'form-control group_form'})
+    submit = InlineSubmitField('Submit',
+                               render_kw={'placeholder': 'Submit', 'class': 'btn btn-lg btn-primary btn-block'})
 
 
 class ProposalForm(FlaskForm):
