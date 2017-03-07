@@ -58,6 +58,9 @@ class ProposalForm(FlaskForm):
 class SettingsForm(FlaskForm):
     username = StringField('username', validators=[unique_user_email],
                            render_kw={'placeholder': 'Username (leave blank to avoid changes)'})
+    delete = BooleanField('Delete my account', render_kw={'class': 'form-inline'})
+    del_confirm = BooleanField('Confirm deletion', render_kw={'class': 'form-inline'})
+    del_posts = BooleanField('Delete my posts as well', render_kw={'class': 'form-inline'})
     submit = InlineSubmitField('Save', render_kw={'placeholder': 'Post', 'class': 'btn btn-lg btn-primary'})
 
 

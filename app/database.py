@@ -63,6 +63,20 @@ class User(db.Model, UserMixin):
     def get_admin():
         return Role.query.filter_by(name='admin').first().users[0]
 
+    @staticmethod
+    def wipe(user, wipe_posts):
+        del_user = User.query.filter_by(username='DELETED').first()
+        for post in user.posts:
+            if wipe_posts:
+                post.wipe()
+            user.posts.remove(post)
+            del_user.posts.append(post)
+        for proposal in user.proposals:
+            user.proposals.remove(proposal)
+            del_user.proposals.append(proposal)
+        db.session.delete(user)
+        db.session.commit()
+
     def has_new_notifications(self):
         return Notification.query.filter_by(user=self).filter_by(seen=False).count() > 0
 
@@ -280,7 +294,12 @@ class Post(db.Model):
             if topic_name:
                 tpc = Topic.retrieve(topic_name)
                 self.topics.append(tpc)
-        self.date = func.now()
+        self.last_edit_date = func.now()
+        db.session.commit()
+
+    def wipe(self):
+        self.content = '--DELETED--'
+        self.topics = []
         self.last_edit_date = func.now()
         db.session.commit()
 

@@ -12,6 +12,13 @@
         {{ settings_form.hidden_tag() }}
         {{ macros.render_field(settings_form.username) }}
         <hr>
+        <h4 class="text-danger">Warning: the following options are here to allow you to delete your account, there is no way to undo this operation.</h4>
+        {{ macros.render_field(settings_form.delete, label_visible=true) }}
+        <ul>
+            <li>{{ macros.render_field(settings_form.del_confirm, label_visible=true) }}</li>
+            <li>{{ macros.render_field(settings_form.del_posts, label_visible=true) }}</li>
+        </ul>
+        <hr>
         {{ macros.render_field(settings_form.submit) }}
     </form>
 {% endblock %}

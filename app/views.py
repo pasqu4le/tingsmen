@@ -1,5 +1,5 @@
 from app import app, security
-from flask import g, render_template, abort, redirect, url_for, request, get_template_attribute
+from flask import g, render_template, abort, redirect, url_for, request, get_template_attribute, flash
 from flask_security import current_user
 from flask_admin.contrib import sqla
 from database import *
@@ -172,7 +172,17 @@ def settings():
     form = forms.SettingsForm()
     messages = []
     if form.validate_on_submit():
-        if form.username.data:
+        if form.delete.data:
+            if form.del_confirm.data:
+                if form.del_posts.data:
+                    User.wipe(current_user, True)
+                else:
+                    User.wipe(current_user, False)
+                flash('Your user has been successfully deleted, farewell!')
+                return redirect('/')
+            else:
+                form.del_confirm.errors.append('You need to check this if you want to delete yourself')
+        elif form.username.data:
             current_user.change_settings(username=form.username.data)
             messages.append('You username was correctly changed')
         messages.append('Settings saved!')
@@ -183,6 +193,23 @@ def settings():
     }
     options.update(base_options())
     return render_template("settings.html", **options)
+
+
+@app.route('/delete/post/<post_id>/', methods=('GET', 'POST'))
+def delete_post(post_id):
+    if current_user.is_authenticated:
+        # ajax request handling
+        if g.sijax.is_sijax_request:
+            g.sijax.register_callback('update_notifications', update_notifications)
+            return g.sijax.process_request()
+        # non-ajax handling:
+        post = Post.query.filter_by(id=post_id).first()
+        if post and post.poster == current_user:
+            post.wipe()
+        else:
+            flash('You cannot delete a post that does not exists or is not yours')
+        return redirect(post.link_to())
+    return redirect('/')
 
 
 @app.route('/edit/post/<post_id>/', methods=('GET', 'POST'))
