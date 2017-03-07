@@ -44,6 +44,8 @@ class LawForm(FlaskForm):
     content = TextAreaField(render_kw={'placeholder': 'Content', 'rows': '5'})
     groups = SelectMultipleField(choices=[(g.name, g.name) for g in LawGroup.query.all() if g.name != 'Base'],
                                  render_kw={'placeholder': 'Groups', 'class': 'form-control group_form'})
+    submit = InlineSubmitField('Submit',
+                               render_kw={'placeholder': 'Submit', 'class': 'btn btn-lg btn-primary btn-block'})
 
 
 class ProposalForm(FlaskForm):
@@ -56,6 +58,9 @@ class ProposalForm(FlaskForm):
 class SettingsForm(FlaskForm):
     username = StringField('username', validators=[unique_user_email],
                            render_kw={'placeholder': 'Username (leave blank to avoid changes)'})
+    delete = BooleanField('Delete my account', render_kw={'class': 'form-inline'})
+    del_confirm = BooleanField('Confirm deletion', render_kw={'class': 'form-inline'})
+    del_posts = BooleanField('Delete my posts as well', render_kw={'class': 'form-inline'})
     submit = InlineSubmitField('Save', render_kw={'placeholder': 'Post', 'class': 'btn btn-lg btn-primary'})
 
 

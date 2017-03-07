@@ -63,6 +63,20 @@ class User(db.Model, UserMixin):
     def get_admin():
         return Role.query.filter_by(name='admin').first().users[0]
 
+    @staticmethod
+    def wipe(user, wipe_posts):
+        del_user = User.query.filter_by(username='DELETED').first()
+        for post in user.posts:
+            if wipe_posts:
+                post.wipe()
+            user.posts.remove(post)
+            del_user.posts.append(post)
+        for proposal in user.proposals:
+            user.proposals.remove(proposal)
+            del_user.proposals.append(proposal)
+        db.session.delete(user)
+        db.session.commit()
+
     def has_new_notifications(self):
         return Notification.query.filter_by(user=self).filter_by(seen=False).count() > 0
 
@@ -273,6 +287,22 @@ class Post(db.Model):
         post.notify_mentions(poster, mentions, notified)
         return post
 
+    def edit(self, content, topic_names):
+        self.content = content
+        self.topics = []
+        for topic_name in topic_names:
+            if topic_name:
+                tpc = Topic.retrieve(topic_name)
+                self.topics.append(tpc)
+        self.last_edit_date = func.now()
+        db.session.commit()
+
+    def wipe(self):
+        self.content = '--DELETED--'
+        self.topics = []
+        self.last_edit_date = func.now()
+        db.session.commit()
+
     def toggle_subscription(self, user):
         if user in self.subscribed:
             self.subscribed.remove(user)
@@ -479,6 +509,32 @@ class Proposal(db.Model):
             query = query.filter(Proposal.date < older_than)
         return query.order_by(Proposal.date.desc())[:num]
 
+    def edit(self, description, new_laws, remove_laws):
+        # change the description
+        self.description = description
+        old_laws = self.add_laws[:]
+        # status for the newly added laws
+        proposed = LawStatus.query.filter_by(name='proposed').first()
+        # change or create and link new laws
+        for content, groups in new_laws:
+            if content:
+                if old_laws:
+                    law = old_laws.pop()
+                    law.edit(content, groups)
+                else:
+                    law = Law.submit(content, groups, proposed, self.poster)
+                    # insert the law in the proposal
+                    self.add_laws.append(law)
+        # re-link laws to remove
+        self.remove_laws = []
+        for law_id in remove_laws:
+            if law_id:
+                law = Law.query.filter_by(id=law_id).first()
+                if law:
+                    self.remove_laws.append(law)
+        # commit everything and return
+        db.session.commit()
+
     def set_vote_day(self):
         self.vote_day = self.date.date() + timedelta(days=7-self.date.weekday())
 
@@ -672,6 +728,19 @@ class Law(db.Model):
                     Notification.notify(user, str(law.id), 'law', 'post', law.link_to(), poster)
                     notified.add(user)
         return notified
+
+    def edit(self, content, groups):
+        # set content
+        self.content = content
+        # set groups
+        self.group = []
+        for group_name in groups:
+            # new laws cannot be in the Base group
+            if group_name != 'Base':
+                group = LawGroup.query.filter_by(name=group_name).first()
+                if group:
+                    # group must already exist
+                    self.group.append(group)
 
     def toggle_subscription(self, user):
         if user in self.subscribed:

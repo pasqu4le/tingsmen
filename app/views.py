@@ -1,5 +1,5 @@
 from app import app, security
-from flask import g, render_template, abort, redirect, url_for, request, get_template_attribute
+from flask import g, render_template, abort, redirect, url_for, request, get_template_attribute, flash
 from flask_security import current_user
 from flask_admin.contrib import sqla
 from database import *
@@ -172,7 +172,17 @@ def settings():
     form = forms.SettingsForm()
     messages = []
     if form.validate_on_submit():
-        if form.username.data:
+        if form.delete.data:
+            if form.del_confirm.data:
+                if form.del_posts.data:
+                    User.wipe(current_user, True)
+                else:
+                    User.wipe(current_user, False)
+                flash('Your user has been successfully deleted, farewell!')
+                return redirect('/')
+            else:
+                form.del_confirm.errors.append('You need to check this if you want to delete yourself')
+        elif form.username.data:
             current_user.change_settings(username=form.username.data)
             messages.append('You username was correctly changed')
         messages.append('Settings saved!')
@@ -183,6 +193,125 @@ def settings():
     }
     options.update(base_options())
     return render_template("settings.html", **options)
+
+
+@app.route('/delete/post/<post_id>/', methods=('GET', 'POST'))
+def delete_post(post_id):
+    if current_user.is_authenticated:
+        # ajax request handling
+        if g.sijax.is_sijax_request:
+            g.sijax.register_callback('update_notifications', update_notifications)
+            return g.sijax.process_request()
+        # non-ajax handling:
+        post = Post.query.filter_by(id=post_id).first()
+        if post and post.poster == current_user:
+            post.wipe()
+        else:
+            flash('You cannot delete a post that does not exists or is not yours')
+        return redirect(post.link_to())
+    return redirect('/')
+
+
+@app.route('/edit/post/<post_id>/', methods=('GET', 'POST'))
+def edit_post(post_id):
+    if current_user.is_authenticated:
+        # ajax request handling
+        if g.sijax.is_sijax_request:
+            g.sijax.register_callback('update_notifications', update_notifications)
+            return g.sijax.process_request()
+        # non-ajax handling:
+        options = {
+            'title': 'Edit post',
+            'form_type': 'post'
+        }
+        form = forms.PostForm()
+        post = Post.query.filter_by(id=post_id).first()
+        if not post:
+            options['message'] = 'You are trying to edit a post that does not exists'
+        elif post.poster != current_user:
+            options['message'] = 'You are trying to modify a post that is not yours'
+        elif form.validate_on_submit():
+            post.edit(form.content.data, form.topics.data.split())
+            options['message'] = 'Your post has been successfully modified'
+        else:
+            form.content.data = post.content
+            form.topics.data = " ".join(['#' + topic.name for topic in post.topics])
+            options['form'] = form
+        options.update(base_options())
+        return render_template("edit.html", **options)
+    return redirect('/')
+
+
+@app.route('/edit/proposal/<proposal_id>/', methods=('GET', 'POST'))
+def edit_proposal(proposal_id):
+    if current_user.is_authenticated:
+        # ajax request handling
+        if g.sijax.is_sijax_request:
+            g.sijax.register_callback('update_notifications', update_notifications)
+            return g.sijax.process_request()
+        # non-ajax handling:
+        options = {
+            'title': 'Edit proposal',
+            'form_type': 'proposal'
+        }
+        form = forms.ProposalForm()
+        proposal = Proposal.query.filter_by(id=proposal_id).first()
+        if not proposal:
+            options['message'] = 'You are trying to edit a proposal that does not exists'
+        elif proposal.poster != current_user:
+            options['message'] = 'You are trying to modify a proposal that is not yours'
+        elif not proposal.is_pending:
+            options['message'] = "You can modify a proposal only before it's vote day"
+        elif form.validate_on_submit():
+            proposal.edit(form.description.data, [(e.data['content'], e.data['groups']) for e in form.new_laws.entries],
+                          [e.data for e in form.remove_laws.entries])
+            options['message'] = 'Your proposal has been successfully modified'
+        else:
+            form.description.data = proposal.description
+            if proposal.add_laws.count():
+                form.new_laws.pop_entry()
+                for law in proposal.add_laws:
+                    form.new_laws.append_entry({'content': law.content, 'groups': [gr.name for gr in law.group]})
+            if proposal.remove_laws.count():
+                form.remove_laws.pop_entry()
+                for law in proposal.remove_laws:
+                    form.remove_laws.append_entry(law.id)
+            options['form'] = form
+        options.update(base_options())
+        return render_template("edit.html", **options)
+    return redirect('/')
+
+
+@app.route('/edit/law/<law_id>/', methods=('GET', 'POST'))
+def edit_law(law_id):
+    if current_user.is_authenticated:
+        # ajax request handling
+        if g.sijax.is_sijax_request:
+            g.sijax.register_callback('update_notifications', update_notifications)
+            return g.sijax.process_request()
+        # non-ajax handling:
+        options = {
+            'title': 'Edit law',
+            'form_type': 'law'
+        }
+        form = forms.LawForm()
+        law = Law.query.filter_by(id=law_id).first()
+        if not law:
+            options['message'] = 'You are trying to edit a law that does not exists'
+        elif law.add_by[-1].poster != current_user:
+            options['message'] = 'You are trying to modify a law that is not yours'
+        elif not law.add_by[-1].is_pending:
+            options['message'] = "You can modify a law only before it's vote day"
+        elif form.validate_on_submit():
+            law.edit(form.content.data, form.groups.data)
+            options['message'] = 'Your law has been successfully modified'
+        else:
+            form.content.data = law.content
+            form.groups.data = [gr.name for gr in law.group]
+            options['form'] = form
+        options.update(base_options())
+        return render_template("edit.html", **options)
+    return redirect('/')
 
 
 @app.route('/user/<username>/<subpage>/', methods=('GET', 'POST'))
