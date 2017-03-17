@@ -418,6 +418,17 @@
 </div>
 {%- endmacro %}
 
+{% macro render_notifications_dropdown(current_user) -%}
+    {% for notification in current_user.get_latest_notifications() %}
+        {{ render_notification_navbar(notification) }}
+    {% endfor %}
+    {% if current_user.has_unseen_notifications() %}
+        <li class="dropdown-header text-right"><a class="" href="javascript://" onclick="Sijax.request('set_all_notifications_seen');">set all as seen</a></li>
+    {% endif %}
+    <li role="separator" class="divider"></li>
+    <li><a href="/notifications/" class="text-center">See All</a></li>
+{%- endmacro %}
+
 {% macro render_notification_navbar(notification) -%}
     <li {% if not notification.seen %}class="notif-unseen-back"{% endif %} data-date="'{{ notification.date }}'"><a href="{{notification.link_to()}}" ><span class="glyphicon glyphicon-chevron-right"></span> {{ notification.to_text() }}</a></li>
 {%- endmacro %}

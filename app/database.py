@@ -77,12 +77,21 @@ class User(db.Model, UserMixin):
         db.session.delete(user)
         db.session.commit()
 
-    def has_new_notifications(self):
+    def has_unseen_notifications(self):
         return Notification.query.filter_by(user=self).filter_by(seen=False).count() > 0
+
+    def has_new_notifications(self, newer_than):
+        return Notification.query.filter_by(user=self).filter(Notification.date > newer_than).count() > 0
 
     def get_latest_notifications(self):
         # small useful method, used by the navbar
         return Notification.get_more(self)
+
+    def set_all_notifications_seen(self):
+        unseen = Notification.query.filter_by(user=self).filter_by(seen=False).all()
+        for notif in unseen:
+            notif.seen = True
+        db.session.commit()
 
     def change_settings(self, username=None):
         if username:
@@ -134,12 +143,10 @@ class Notification(db.Model):
         db.session.commit()
 
     @staticmethod
-    def get_more(user, num=10, older_than=None, newer_than=None):
+    def get_more(user, num=10, older_than=None):
         query = Notification.query.filter_by(user=user)
         if older_than:
             query = query.filter(Notification.date < older_than)
-        elif newer_than:
-            query = query.filter(Notification.date > newer_than)
         return query.order_by(Notification.date.desc())[:num]
 
     def to_text(self):

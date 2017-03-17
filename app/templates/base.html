@@ -29,7 +29,7 @@
         {% if current_user.is_authenticated %}
             <script>
                 setInterval(function(){
-                    first_child = $('#notifications_list').children().first();
+                    first_child = $('#notifications_dropdown').children().first();
                     if (first_child != null){
                         newer_than = first_child.data('date');
                     } else {

@@ -32,6 +32,7 @@ def home():
         g.sijax.register_callback('load_comments', load_comments)
         g.sijax.register_callback('vote_post', vote_post)
         g.sijax.register_callback('update_notifications', update_notifications)
+        g.sijax.register_callback('set_all_notifications_seen', set_all_notifications_seen)
         g.sijax.register_callback('toggle_subscription', toggle_subscription)
         return g.sijax.process_request()
     # non-ajax handling:
@@ -849,15 +850,25 @@ def load_more_notifications(obj_response, older_than):
 
 
 def update_notifications(obj_response, newer_than):
-    notifs = Notification.get_more(current_user, newer_than=newer_than)
-    render_notif = get_template_attribute('macros.html', 'render_notification_navbar')
-    if notifs:
+    if current_user.is_authenticated and current_user.has_new_notifications(newer_than):
         # make the notifications bell green
         obj_response.script('$("#notifications_bell").attr("class", "glyphicon glyphicon-bell notif-unseen")')
         # play an unpleasant sound
         obj_response.script('document.getElementById("bleep_sound").play()')
-        # show the newer notifications
-        obj_response.html_prepend('#notifications_list', "".join([render_notif(notif).unescape() for notif in notifs]))
+        # update the notifications dropdown
+        render_dropdown = get_template_attribute('macros.html', 'render_notifications_dropdown')
+        obj_response.html('#notifications_dropdown', render_dropdown(current_user).unescape())
+
+
+def set_all_notifications_seen(obj_response):
+    if current_user.is_authenticated:
+        # set all as seen in the database:
+        current_user.set_all_notifications_seen()
+        # make the notifications bell white
+        obj_response.script('$("#notifications_bell").attr("class", "glyphicon glyphicon-bell")')
+        # update the notifications dropdown
+        render_dropdown = get_template_attribute('macros.html', 'render_notifications_dropdown')
+        obj_response.html('#notifications_dropdown', render_dropdown(current_user).unescape())
 
 
 def toggle_subscription(obj_response, item_type, item_id):
