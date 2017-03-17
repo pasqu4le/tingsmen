@@ -423,7 +423,7 @@
         {{ render_notification_navbar(notification) }}
     {% endfor %}
     {% if current_user.has_unseen_notifications() %}
-        <li class="dropdown-header text-right"><a class="" href="javascript://" onclick="Sijax.request('set_all_notifications_seen');">set all as seen</a></li>
+        <li class="dropdown-header text-right"><a class="" href="javascript://" onclick="Sijax.request('set_all_notifications_seen');">mark all as seen</a></li>
     {% endif %}
     <li role="separator" class="divider"></li>
     <li><a href="/notifications/" class="text-center">See All</a></li>
