@@ -490,7 +490,7 @@ class Proposal(db.Model):
         # create and link new laws
         for content, groups in new_laws:
             if content:
-                law = Law.submit(content,groups, proposed, poster)
+                law = Law.submit(content, groups, proposed, poster)
                 # insert the law in the proposal
                 proposal.add_laws.append(law)
         # create and link laws to remove
