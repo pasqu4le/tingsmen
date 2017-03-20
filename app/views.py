@@ -1,5 +1,5 @@
 from app import app, security
-from flask import g, render_template, abort, redirect, url_for, request, get_template_attribute, flash
+from flask import g, render_template, abort, redirect, url_for, request, get_template_attribute, flash, jsonify
 from flask_security import current_user
 from flask_admin.contrib import sqla
 from database import *
@@ -32,6 +32,7 @@ def home():
         g.sijax.register_callback('load_comments', load_comments)
         g.sijax.register_callback('vote_post', vote_post)
         g.sijax.register_callback('update_notifications', update_notifications)
+        g.sijax.register_callback('set_all_notifications_seen', set_all_notifications_seen)
         g.sijax.register_callback('toggle_subscription', toggle_subscription)
         return g.sijax.process_request()
     # non-ajax handling:
@@ -231,11 +232,10 @@ def edit_post(post_id):
         elif post.poster != current_user:
             options['message'] = 'You are trying to modify a post that is not yours'
         elif form.validate_on_submit():
-            post.edit(form.content.data, form.topics.data.split())
+            post.edit(form.content.data)
             options['message'] = 'Your post has been successfully modified'
         else:
             form.content.data = post.content
-            form.topics.data = " ".join(['#' + topic.name for topic in post.topics])
             options['form'] = form
         options.update(base_options())
         return render_template("edit.html", **options)
@@ -684,6 +684,18 @@ def page_permission_denied(error):
     return render_template("error.html", **options)
 
 
+# ---------------------------------------------- APIs
+
+@app.route('/api/topics/search/<value>/')
+def api_search_topics(value):
+    return jsonify({'topics': [t.to_dict() for t in Topic.query.filter(Topic.name.ilike("%" + value + "%")).all()]})
+
+
+@app.route('/api/users/search/<value>/')
+def api_search_users(value):
+    return jsonify({'users': [u.to_dict() for u in User.query.filter(User.username.ilike("%" + value + "%")).all()]})
+
+
 # ---------------------------------------------- SIJAX FUNCTIONS
 def vote_post(obj_response, post_id, up):
     post = Post.query.filter_by(id=post_id).first()
@@ -758,9 +770,7 @@ def submit_post(obj_response, files, form_values):
         parent_id = None
         if form.parent_id.data:
             parent_id = form.parent_id.data
-            post = Post.submit(form.content.data, current_user, int(parent_id), form.topics.data.split())
-        else:
-            post = Post.submit(form.content.data, current_user, None, form.topics.data.split())
+        post = Post.submit(form.content.data, current_user, parent_id)
 
         if parent_id:
             render_comment = get_template_attribute('macros.html', 'render_comment')
@@ -849,15 +859,25 @@ def load_more_notifications(obj_response, older_than):
 
 
 def update_notifications(obj_response, newer_than):
-    notifs = Notification.get_more(current_user, newer_than=newer_than)
-    render_notif = get_template_attribute('macros.html', 'render_notification_navbar')
-    if notifs:
+    if current_user.is_authenticated and current_user.has_new_notifications(newer_than):
         # make the notifications bell green
         obj_response.script('$("#notifications_bell").attr("class", "glyphicon glyphicon-bell notif-unseen")')
         # play an unpleasant sound
         obj_response.script('document.getElementById("bleep_sound").play()')
-        # show the newer notifications
-        obj_response.html_prepend('#notifications_list', "".join([render_notif(notif).unescape() for notif in notifs]))
+        # update the notifications dropdown
+        render_dropdown = get_template_attribute('macros.html', 'render_notifications_dropdown')
+        obj_response.html('#notifications_dropdown', render_dropdown(current_user).unescape())
+
+
+def set_all_notifications_seen(obj_response):
+    if current_user.is_authenticated:
+        # set all as seen in the database:
+        current_user.set_all_notifications_seen()
+        # make the notifications bell white
+        obj_response.script('$("#notifications_bell").attr("class", "glyphicon glyphicon-bell")')
+        # update the notifications dropdown
+        render_dropdown = get_template_attribute('macros.html', 'render_notifications_dropdown')
+        obj_response.html('#notifications_dropdown', render_dropdown(current_user).unescape())
 
 
 def toggle_subscription(obj_response, item_type, item_id):

@@ -11,16 +11,16 @@ $(document).on("click", ".collapser", function(event) {
     post_form.prependTo(autofill.destination);
 
     // reset or set data:
-    post_form.find('#content').val("");
+
     if (autofill.id != null){
         post_form.find('#parent_id').val(autofill.id);
     } else {
         post_form.find('#parent_id').val("");
     }
     if (autofill.topics != null){
-        post_form.find('#topics').val(autofill.topics);
+        post_form.find('#content').val("\n\n " + autofill.topics);
     } else {
-        post_form.find('#topics').val("");
+        post_form.find('#content').val("");
     }
 
     // finally de-collapse
