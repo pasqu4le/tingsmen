@@ -1,4 +1,5 @@
 # a collection of utility classes and functions
+import re
 import flask_misaka
 
 
@@ -7,7 +8,7 @@ class CustomMisaka(flask_misaka.Misaka):
     def render(self, text, **overrides):
         # this method is a copy of the original one, except the input text is preprocessed
         preprocessed = []
-        for word in text.split(' '):
+        for word in re.findall(r"[\w%$@#-]+|[^\w]", text):
             if len(word) > 1:
                 if word.startswith('@'):
                     preprocessed.append('[{0}](/user/{1})'.format(word, word[1:]))
@@ -26,7 +27,7 @@ class CustomMisaka(flask_misaka.Misaka):
         if overrides:
             options = flask_misaka.copy(options)
             options.update(overrides)
-        return flask_misaka.markdown(' '.join(preprocessed), self.renderer, **options)
+        return flask_misaka.markdown(''.join(preprocessed), self.renderer, **options)
 
 
 def sane_topic_name(name):
