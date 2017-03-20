@@ -427,7 +427,9 @@ def view_proposals():
     # show open proposals if there is at least one
     if Proposal.query.filter_by(is_open=True).count():
         return redirect("/proposals/open/")
-    return redirect("/proposals/pending/")
+    if Proposal.query.filter_by(is_pending=True).count():
+        return redirect("/proposals/pending/")
+    return redirect("/proposals/all/")
 
 
 @app.route('/proposals/<status>/', methods=('GET', 'POST'))
