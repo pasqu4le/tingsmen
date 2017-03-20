@@ -1,4 +1,5 @@
 from app import db
+import utils
 from datetime import timedelta, date
 from flask_security import UserMixin, RoleMixin
 from sqlalchemy.sql import func
@@ -98,6 +99,12 @@ class User(db.Model, UserMixin):
             self.username = username
             db.session.add(self)
             db.session.commit()
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'username': self.username
+        }
 
     def link_to(self):
         return '/user/' + self.username
@@ -256,25 +263,21 @@ class Post(db.Model):
         return query.order_by(Post.last_edit_date.desc())[:num]
 
     @staticmethod
-    def submit(content, poster, parent_id, topic_names):
+    def submit(content, poster, parent_id):
         post = Post(content=content, poster=poster, poster_id=poster.id, date=func.now())
         if parent_id:
             post.parent_id = parent_id
-        # set topics
-        lnkd_laws = []
-        lnkd_prop = []
-        for topic_name in topic_names:
-            if topic_name:
-                tpc = Topic.retrieve(topic_name)
-                post.topics.append(tpc)
-                # check if the post is in a topic of a law or proposal
-                lw = Law.query.filter_by(topic=tpc).first()
-                if lw:
-                    lnkd_laws.append(lw)
-                else:
-                    prp = Proposal.query.filter_by(topic=tpc).first()
-                    if prp:
-                        lnkd_prop.append(prp)
+        # gather mentions, topics, linked laws and proposal
+        mentions = []
+        topic_names = []
+        for word in content.split():
+            if word.startswith('@'):
+                mentions.append(word[1:])
+            elif word.startswith('#'):
+                topic_names.append(word)
+        # set the topics
+        lnkd_laws, lnkd_prop = post.set_topics(topic_names)
+        # add the post to the database
         db.session.add(post)
         post.last_edit_date = post.date
         post.subscribed.append(poster)
@@ -290,19 +293,31 @@ class Post(db.Model):
         notified = Law.notify_post(lnkd_laws, poster, notified)
         notified = Proposal.notify_post(lnkd_prop, poster, notified)
         # notify mentions
-        mentions = [word[1:] for word in content.split() if word.startswith('@')]
         post.notify_mentions(poster, mentions, notified)
         return post
 
-    def edit(self, content, topic_names):
+    def edit(self, content):
         self.content = content
-        self.topics = []
-        for topic_name in topic_names:
-            if topic_name:
-                tpc = Topic.retrieve(topic_name)
-                self.topics.append(tpc)
+        self.set_topics([word for word in content.split() if word.startswith('#')])
         self.last_edit_date = func.now()
         db.session.commit()
+
+    def set_topics(self, topic_names):
+        self.topics = []
+        lnkd_laws = []
+        lnkd_prop = []
+        for topic_name in topic_names:
+            tpc = Topic.retrieve(topic_name)
+            self.topics.append(tpc)
+            # check if the post is in a topic of a law or proposal
+            lw = Law.query.filter_by(topic=tpc).first()
+            if lw:
+                lnkd_laws.append(lw)
+            else:
+                prp = Proposal.query.filter_by(topic=tpc).first()
+                if prp:
+                    lnkd_prop.append(prp)
+        return lnkd_laws, lnkd_prop
 
     def wipe(self):
         self.content = '--DELETED--'
@@ -395,22 +410,9 @@ class Topic(db.Model):
     description = db.Column(db.String(500))
 
     @staticmethod
-    def sane_name(name):
-        topic_name = []
-        after_hyphens = False
-        for l in name:
-            if l.isalnum():
-                topic_name.append(l)
-                after_hyphens = False
-            elif l == '-' and not after_hyphens:
-                topic_name.append(l)
-                after_hyphens = True
-        return ''.join(topic_name).strip('-').lower()
-
-    @staticmethod
     def retrieve(name):
         # sanitize the name
-        name = Topic.sane_name(name)
+        name = utils.sane_topic_name(name)
         # make if does not exists and return:
         topic = Topic.query.filter_by(name=name).first()
         if not topic:
@@ -418,6 +420,13 @@ class Topic(db.Model):
             db.session.add(topic)
             db.session.commit()
         return topic
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'description': self.description
+        }
 
     def link_to(self):
         return '/topic/' + self.name

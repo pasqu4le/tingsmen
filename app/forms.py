@@ -30,8 +30,8 @@ class InlineSubmitField(BooleanField):
 
 class PostForm(FlaskForm):
     parent_id = HiddenField('parent_id')
-    content = TextAreaField('content', validators=[DataRequired()], render_kw={'placeholder': 'Content', 'rows': '5'})
-    topics = StringField('topics', render_kw={'placeholder': 'Topics', 'autocomplete': 'off'})
+    content = TextAreaField('content', validators=[DataRequired()], render_kw={'placeholder': 'Content', 'rows': '5',
+                                                                               'autocomplete': 'off'})
     submit = InlineSubmitField('Post', render_kw={'placeholder': 'Post', 'class': 'btn btn-lg btn-primary btn-block'})
 
     def reset(self):

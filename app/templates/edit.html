@@ -2,7 +2,9 @@
 {% import "macros.html" as macros %}
 
 {% block head_custom %}
-    {% if form_type == 'proposal' %}
+    {% if form_type == 'post' %}
+        {{ macros.post_form_scripts(current_user, topics_all) }}
+    {% elif form_type == 'proposal' %}
         {{ macros.proposal_form_scripts() }}
     {% elif form_type == 'law' %}
         {{ macros.law_form_scripts() }}

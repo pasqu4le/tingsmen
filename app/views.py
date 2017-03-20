@@ -1,5 +1,5 @@
 from app import app, security
-from flask import g, render_template, abort, redirect, url_for, request, get_template_attribute, flash
+from flask import g, render_template, abort, redirect, url_for, request, get_template_attribute, flash, jsonify
 from flask_security import current_user
 from flask_admin.contrib import sqla
 from database import *
@@ -232,11 +232,10 @@ def edit_post(post_id):
         elif post.poster != current_user:
             options['message'] = 'You are trying to modify a post that is not yours'
         elif form.validate_on_submit():
-            post.edit(form.content.data, form.topics.data.split())
+            post.edit(form.content.data)
             options['message'] = 'Your post has been successfully modified'
         else:
             form.content.data = post.content
-            form.topics.data = " ".join(['#' + topic.name for topic in post.topics])
             options['form'] = form
         options.update(base_options())
         return render_template("edit.html", **options)
@@ -685,6 +684,18 @@ def page_permission_denied(error):
     return render_template("error.html", **options)
 
 
+# ---------------------------------------------- APIs
+
+@app.route('/api/topics/search/<value>/')
+def api_search_topics(value):
+    return jsonify({'topics': [t.to_dict() for t in Topic.query.filter(Topic.name.ilike("%" + value + "%")).all()]})
+
+
+@app.route('/api/users/search/<value>/')
+def api_search_users(value):
+    return jsonify({'users': [u.to_dict() for u in User.query.filter(User.username.ilike("%" + value + "%")).all()]})
+
+
 # ---------------------------------------------- SIJAX FUNCTIONS
 def vote_post(obj_response, post_id, up):
     post = Post.query.filter_by(id=post_id).first()
@@ -759,9 +770,7 @@ def submit_post(obj_response, files, form_values):
         parent_id = None
         if form.parent_id.data:
             parent_id = form.parent_id.data
-            post = Post.submit(form.content.data, current_user, int(parent_id), form.topics.data.split())
-        else:
-            post = Post.submit(form.content.data, current_user, None, form.topics.data.split())
+        post = Post.submit(form.content.data, current_user, parent_id)
 
         if parent_id:
             render_comment = get_template_attribute('macros.html', 'render_comment')

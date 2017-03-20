@@ -16,9 +16,11 @@ new function($) {
     }
 }(jQuery);
 
+// now using andrewsnowden's version for ajax handling and multiple token
+
 (function ($, window, undefined) {
 	// Create the defaults once
-	var elementFactory = function (element, value) {
+	var elementFactory = function (element, value, token) {
 		element.text(value.val);
 	};
 
@@ -28,21 +30,28 @@ new function($) {
 			elementFactory: elementFactory,
 			values: [],
 			unique: false,
-			repeat: true
+			repeat: true,
+			onFilterChanged: undefined,
+			preload: false
 		};
 
 	function Plugin(element, options) {
 		this.element = element;
 		this.$element = $(element);
 		this.$itemList = $(Plugin.MENU_TEMPLATE);
+		this.currentToken = undefined;
 
 		this.options = $.extend({}, defaults, options);
+		if (!$.isArray(this.options.token)) {
+			this.options.token = [this.options.token];
+		}
 		this.reset();
 
 		this._defaults = defaults;
 		this._name = pluginName;
 
-		this.expression = new RegExp('(^|\\b|\\s)' + this.options.token + '([\\w.]*)$');
+		var tokens = this.options.token.join("");
+		this.expression = new RegExp('(^|\\b|\\s)([' + tokens + '])([\\w.]*)$');
 		this.cleanupHandle = null;
 
 		this.init();
@@ -55,7 +64,13 @@ new function($) {
 	Plugin.KEYS = [40, 38, 13, 27, 9];
 
 	Plugin.prototype.init = function () {
-		if(this.options.values.length < 1) return;
+		if (this.options.values.length < 1 && !this.options.onFilterChanged) {
+			return;
+		}
+
+		if (this.options.preload && this.options.onFilterChanged) {
+			this.options.onFilterChanged(this);
+		}
 
 		this.$element
 									.bind('keyup', $.proxy(this.onKeyUp, this))
@@ -74,6 +89,29 @@ new function($) {
 		this.dontFilter = false;
 		this.lastFilter = undefined;
 		this.filtered = this.options.values.slice(0);
+	};
+
+	Plugin.prototype.setValues = function (values) {
+		this.options.values = values;
+
+		var listVisible = this.$itemList.is(":visible");
+		this.reset();
+
+		if (values.length > 0) {
+			if (!listVisible) {
+				this.displayList();
+			}
+
+			var filter = this.lastFilter;
+			if (!filter) {
+				filter = "";
+			}
+			this.lastFilter = "\n";
+			this.filterList(filter);
+		}
+		else {
+			this.hideList();
+		}
 	};
 
 	Plugin.prototype.next = function () {
@@ -105,7 +143,7 @@ new function($) {
 
 		var fullStuff = this.getText();
 		var val = fullStuff.substring(0, startpos);
-		val = val.replace(this.expression, '$1' + this.options.token + replacement);
+		val = val.replace(this.expression, '$1' + '$2' + replacement);
 
 		var posfix = fullStuff.substring(startpos, fullStuff.length);
 		var separator = posfix.match(/^\s/) ? '' : ' ';
@@ -116,6 +154,10 @@ new function($) {
 	};
 
 	Plugin.prototype.hightlightItem = function () {
+		if (this.filtered.length === 0) {
+			return;
+		}
+
 		this.$itemList.find(".-sew-list-item").removeClass("selected");
 
 		var container = this.$itemList.find(".-sew-list-item").parent();
@@ -126,13 +168,15 @@ new function($) {
 	};
 
 	Plugin.prototype.renderElements = function (values) {
+		window.sew = this;
+
 		$("body").append(this.$itemList);
 
 		var container = this.$itemList.find('ul').empty();
 		values.forEach($.proxy(function (e, i) {
 			var $item = $(Plugin.ITEM_TEMPLATE);
 
-			this.options.elementFactory($item, e);
+			this.options.elementFactory($item, e, this.currentToken);
 
 			e.element = $item.appendTo(container).bind('click', $.proxy(this.onItemClick, this, e)).bind('mouseover', $.proxy(this.onItemHover, this, i));
 		}, this));
@@ -166,7 +210,6 @@ new function($) {
 		this.lastFilter = val;
 		this.$itemList.find(".-sew-list-item").remove();
 		var values = this.options.values;
-
 
 		var vals = this.filtered = values.filter($.proxy(function (e) {
 			var exp = new RegExp('\\W*' + this.options.token + e.val + '(\\W|$)');
@@ -223,14 +266,33 @@ new function($) {
 			return;
 		}
 
-		if(matches && !this.matched) {
-			this.displayList();
-			this.lastFilter = "\n";
-			this.matched = true;
-		}
+		if (matches) {
+			this.currentToken = matches[2];
 
-		if(matches && !this.dontFilter) {
-			this.filterList(matches[2]);
+			if (this.currentToken != matches[2] && this.currentToken) {
+				this.currentToken = matches[2];
+
+				if (this.options.onFilterChanged) {
+					this.options.values = [];
+					this.reset();
+				}
+			}
+
+			if (this.options.onFilterChanged) {
+				if (this.options.onFilterChanged) {
+					this.options.onFilterChanged(this, matches[3], matches[2]);
+				}
+			}
+
+			if (!this.matched) {
+				this.displayList();
+				this.lastFilter = "\n";
+				this.matched = true;
+			}
+
+			if (!this.dontFilter) {
+				this.filterList(matches[3]);
+			}
 		}
 	};
 
