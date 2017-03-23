@@ -87,6 +87,7 @@ def topic(topic_name):
         g.sijax.register_callback('load_comments', load_comments)
         g.sijax.register_callback('vote_post', vote_post)
         g.sijax.register_callback('update_notifications', update_notifications)
+        g.sijax.register_callback('set_all_notifications_seen', set_all_notifications_seen)
         g.sijax.register_callback('toggle_subscription', toggle_subscription)
         return g.sijax.process_request()
     # non-ajax handling:
@@ -113,6 +114,7 @@ def topics():
     # ajax request handling
     if g.sijax.is_sijax_request:
         g.sijax.register_callback('update_notifications', update_notifications)
+        g.sijax.register_callback('set_all_notifications_seen', set_all_notifications_seen)
         return g.sijax.process_request()
     # non-ajax handling:
     topic_list = Topic.query.all()
@@ -131,6 +133,7 @@ def notifications():
         if g.sijax.is_sijax_request:
             g.sijax.register_callback('load_more_notifications', load_more_notifications)
             g.sijax.register_callback('update_notifications', update_notifications)
+            g.sijax.register_callback('set_all_notifications_seen', set_all_notifications_seen)
             return g.sijax.process_request()
         # non-ajax handling:
         notifs = Notification.get_more(current_user, num=30)
@@ -168,6 +171,7 @@ def settings():
     # ajax request handling
     if g.sijax.is_sijax_request:
         g.sijax.register_callback('update_notifications', update_notifications)
+        g.sijax.register_callback('set_all_notifications_seen', set_all_notifications_seen)
         return g.sijax.process_request()
     # non-ajax handling:
     form = forms.SettingsForm()
@@ -202,6 +206,7 @@ def delete_post(post_id):
         # ajax request handling
         if g.sijax.is_sijax_request:
             g.sijax.register_callback('update_notifications', update_notifications)
+            g.sijax.register_callback('set_all_notifications_seen', set_all_notifications_seen)
             return g.sijax.process_request()
         # non-ajax handling:
         post = Post.query.filter_by(id=post_id).first()
@@ -219,6 +224,7 @@ def edit_post(post_id):
         # ajax request handling
         if g.sijax.is_sijax_request:
             g.sijax.register_callback('update_notifications', update_notifications)
+            g.sijax.register_callback('set_all_notifications_seen', set_all_notifications_seen)
             return g.sijax.process_request()
         # non-ajax handling:
         options = {
@@ -248,6 +254,7 @@ def edit_proposal(proposal_id):
         # ajax request handling
         if g.sijax.is_sijax_request:
             g.sijax.register_callback('update_notifications', update_notifications)
+            g.sijax.register_callback('set_all_notifications_seen', set_all_notifications_seen)
             return g.sijax.process_request()
         # non-ajax handling:
         options = {
@@ -288,6 +295,7 @@ def edit_law(law_id):
         # ajax request handling
         if g.sijax.is_sijax_request:
             g.sijax.register_callback('update_notifications', update_notifications)
+            g.sijax.register_callback('set_all_notifications_seen', set_all_notifications_seen)
             return g.sijax.process_request()
         # non-ajax handling:
         options = {
@@ -323,6 +331,7 @@ def user_page(username, subpage):
         g.sijax.register_callback('load_comments', load_comments)
         g.sijax.register_callback('vote_post', vote_post)
         g.sijax.register_callback('update_notifications', update_notifications)
+        g.sijax.register_callback('set_all_notifications_seen', set_all_notifications_seen)
         g.sijax.register_callback('toggle_subscription', toggle_subscription)
         return g.sijax.process_request()
     # non-ajax handling:
@@ -362,6 +371,7 @@ def view_post(post_id):
         g.sijax.register_callback('load_comments', load_comments)
         g.sijax.register_callback('vote_post', vote_post)
         g.sijax.register_callback('update_notifications', update_notifications)
+        g.sijax.register_callback('set_all_notifications_seen', set_all_notifications_seen)
         g.sijax.register_callback('toggle_subscription', toggle_subscription)
         return g.sijax.process_request()
     # non-ajax handling:
@@ -400,6 +410,7 @@ def view_proposal(proposal_id):
         g.sijax.register_callback('vote_proposal', vote_proposal)
         g.sijax.register_callback('confirm_proposal', confirm_proposal)
         g.sijax.register_callback('update_notifications', update_notifications)
+        g.sijax.register_callback('set_all_notifications_seen', set_all_notifications_seen)
         g.sijax.register_callback('toggle_subscription', toggle_subscription)
         g.sijax.register_callback('set_law_active', set_law_active)
         g.sijax.register_callback('set_law_premature', set_law_premature)
@@ -440,6 +451,7 @@ def proposal_status(status):
         g.sijax.register_callback('confirm_proposal', confirm_proposal)
         g.sijax.register_callback('load_more_proposals', load_more_proposals)
         g.sijax.register_callback('update_notifications', update_notifications)
+        g.sijax.register_callback('set_all_notifications_seen', set_all_notifications_seen)
         g.sijax.register_callback('toggle_subscription', toggle_subscription)
         g.sijax.register_callback('set_law_active', set_law_active)
         g.sijax.register_callback('set_law_premature', set_law_premature)
@@ -476,6 +488,7 @@ def view_law(law_id):
         g.sijax.register_callback('load_comments', load_comments)
         g.sijax.register_callback('vote_post', vote_post)
         g.sijax.register_callback('update_notifications', update_notifications)
+        g.sijax.register_callback('set_all_notifications_seen', set_all_notifications_seen)
         g.sijax.register_callback('toggle_subscription', toggle_subscription)
         g.sijax.register_callback('set_law_active', set_law_active)
         g.sijax.register_callback('set_law_premature', set_law_premature)
@@ -509,6 +522,7 @@ def view_laws(group_name, status_name, order):
     if g.sijax.is_sijax_request:
         g.sijax.register_callback('load_more_laws', load_more_laws)
         g.sijax.register_callback('update_notifications', update_notifications)
+        g.sijax.register_callback('set_all_notifications_seen', set_all_notifications_seen)
         g.sijax.register_callback('toggle_subscription', toggle_subscription)
         g.sijax.register_callback('set_law_active', set_law_active)
         g.sijax.register_callback('set_law_premature', set_law_premature)
@@ -542,6 +556,7 @@ def new_proposal_remove(law_id):
     # ajax request handling
     if g.sijax.is_sijax_request:
         g.sijax.register_callback('update_notifications', update_notifications)
+        g.sijax.register_callback('set_all_notifications_seen', set_all_notifications_seen)
         return g.sijax.process_request()
     # non-ajax handling:
     form = forms.ProposalForm()
@@ -555,6 +570,7 @@ def new_proposal_change(proposal_id):
     # ajax request handling
     if g.sijax.is_sijax_request:
         g.sijax.register_callback('update_notifications', update_notifications)
+        g.sijax.register_callback('set_all_notifications_seen', set_all_notifications_seen)
         return g.sijax.process_request()
     # non-ajax handling:
     form = forms.ProposalForm()
@@ -577,6 +593,7 @@ def submit_proposal():
     # ajax request handling
     if g.sijax.is_sijax_request:
         g.sijax.register_callback('update_notifications', update_notifications)
+        g.sijax.register_callback('set_all_notifications_seen', set_all_notifications_seen)
         return g.sijax.process_request()
     # non-ajax handling:
     form = forms.ProposalForm()
@@ -602,6 +619,7 @@ def subscribe(mailing_list):
     # ajax request handling
     if g.sijax.is_sijax_request:
         g.sijax.register_callback('update_notifications', update_notifications)
+        g.sijax.register_callback('set_all_notifications_seen', set_all_notifications_seen)
         return g.sijax.process_request()
     # non-ajax handling:
     ml = MailingList.query.filter_by(name=mailing_list).first()
@@ -661,6 +679,7 @@ def page_not_found():
     # ajax request handling
     if g.sijax.is_sijax_request:
         g.sijax.register_callback('update_notifications', update_notifications)
+        g.sijax.register_callback('set_all_notifications_seen', set_all_notifications_seen)
         return g.sijax.process_request()
     # non-ajax handling:
     options = {
@@ -676,6 +695,7 @@ def page_permission_denied(error):
     # ajax request handling
     if g.sijax.is_sijax_request:
         g.sijax.register_callback('update_notifications', update_notifications)
+        g.sijax.register_callback('set_all_notifications_seen', set_all_notifications_seen)
         return g.sijax.process_request()
     # non-ajax handling:
     options = {
