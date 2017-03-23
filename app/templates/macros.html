@@ -410,6 +410,13 @@
 </div>
 {%- endmacro %}
 
+{% macro render_message(message, category) -%}
+    <div class="alert alert-dismissible alert-{% if not category or category=='message' %}info{% else %}{{ category }}{% endif %}">
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <p>{{ message }}</p>
+    </div>
+{%- endmacro %}
+
 {% macro render_notifications_dropdown(current_user) -%}
     {% for notification in current_user.get_latest_notifications() %}
         {{ render_notification_navbar(notification) }}
@@ -521,6 +528,23 @@
     </script>
 {%- endmacro %}
 
+{% macro notifications_script(current_user) -%}
+    {% if current_user.is_authenticated %}
+        <script>
+            setInterval(function(){
+                first_child = $('#notifications_dropdown').children().first();
+                if (first_child != null){
+                    newer_than = first_child.data('date');
+                } else {
+                    newer_than = null;
+                }
+                Sijax.request('update_notifications', [newer_than]);
+            }, 10000);
+        </script>
+    {% endif %}
+{%- endmacro %}
+
+
 {# --------------------------- Macros for the collapsable post form -------------------------------- #}
 
 {% macro post_form_scripts(current_user, topics_all) -%}
@@ -577,9 +601,9 @@
             })
         });
     </script>
-    <script type="text/javascript" src="/static/js/post_forms.js"></script>
-    <script type="text/javascript" src="/static/js/hide_comments.js"></script>
 {% endif %}
+<script type="text/javascript" src="/static/js/post_forms.js"></script>
+<script type="text/javascript" src="/static/js/hide_comments.js"></script>
 {%- endmacro %}
 
 {% macro new_post_panel(current_user, topic=None) -%}
@@ -601,22 +625,28 @@
 {%- endmacro %}
 
 {% macro render_post_form(submit_post_form, current_user) -%}
-<form class="well form" enctype="multipart/form-data" method="POST" name="post_form" id="post_form">
-    {{ submit_post_form.hidden_tag() }}
-    <div class="row">
-        <div class="col-md-2 col-xs-3">
-            <img class="img-rounded img-responsive center-block" src="{{ current_user.email | gravatar }}">
+{% if current_user.is_authenticated %}
+    <form class="well form" enctype="multipart/form-data" method="POST" name="post_form" id="post_form">
+        {{ submit_post_form.hidden_tag() }}
+        <div class="row">
+            <div class="col-md-2 col-xs-3">
+                <img class="img-rounded img-responsive center-block" src="{{ current_user.email | gravatar }}">
+            </div>
+            <div class="col-md-10 col-xs-9">
+                {{ render_field(submit_post_form.content) }}
+            </div>
         </div>
-        <div class="col-md-10 col-xs-9">
-            {{ render_field(submit_post_form.content) }}
+        <div class="row">
+            <div class="pull-right">
+                {{ render_field(submit_post_form.submit) }}
+            </div>
         </div>
+    </form>
+{% else %}
+    <div class="alert alert-warning">
+        <h4 class="strong">You need to be logged in to post something! <a class="btn btn-primary" href="/login">Login</a></h4>
     </div>
-    <div class="row">
-        <div class="pull-right">
-            {{ render_field(submit_post_form.submit) }}
-        </div>
-    </div>
-</form>
+{% endif %}
 {%- endmacro %}
 
 {# --------------------------- Macros for the proposal form -------------------------------- #}

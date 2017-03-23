@@ -1,6 +1,6 @@
 from app import app, security
 from flask import g, render_template, abort, redirect, url_for, request, get_template_attribute, flash, jsonify
-from flask_security import current_user
+from flask_security import current_user, login_required, roles_required
 from flask_admin.contrib import sqla
 from database import *
 import forms
@@ -57,7 +57,11 @@ def cookie_policy():
         g.sijax.register_callback('update_notifications', update_notifications)
         return g.sijax.process_request()
     # non-ajax handling:
-    return render_template("cookies.html", title='Cookie policy')
+    options = {
+        'title': 'Cookie policy',
+    }
+    options.update(base_options())
+    return render_template("cookies.html", **options)
 
 
 @app.route('/page/<page_name>/', methods=('GET', 'POST'))
@@ -127,35 +131,34 @@ def topics():
 
 
 @app.route('/notifications/', methods=('GET', 'POST'))
+@login_required
 def notifications():
-    if current_user.is_authenticated:
-        # ajax request handling
-        if g.sijax.is_sijax_request:
-            g.sijax.register_callback('load_more_notifications', load_more_notifications)
-            g.sijax.register_callback('update_notifications', update_notifications)
-            g.sijax.register_callback('set_all_notifications_seen', set_all_notifications_seen)
-            return g.sijax.process_request()
-        # non-ajax handling:
-        notifs = Notification.get_more(current_user, num=30)
-        options = {
-            'title': 'Topics',
-            'notifs': notifs
-        }
-        options.update(base_options())
-        return render_template("notifications.html", **options)
-    return redirect('/')
+    # ajax request handling
+    if g.sijax.is_sijax_request:
+        g.sijax.register_callback('load_more_notifications', load_more_notifications)
+        g.sijax.register_callback('update_notifications', update_notifications)
+        g.sijax.register_callback('set_all_notifications_seen', set_all_notifications_seen)
+        return g.sijax.process_request()
+    # non-ajax handling:
+    notifs = Notification.get_more(current_user, num=30)
+    options = {
+        'title': 'Topics',
+        'notifs': notifs
+    }
+    options.update(base_options())
+    return render_template("notifications.html", **options)
 
 
 @app.route('/notification/<notif_id>/')
+@login_required
 def open_notification(notif_id):
-    if current_user.is_authenticated:
-        notif = Notification.query.filter_by(id=notif_id).first()
-        # check if the notification exists and is for current_user
-        if notif and notif.user == current_user:
-            if not notif.seen:
-                notif.seen = True
-                db.session.commit()
-            return redirect(notif.link)
+    notif = Notification.query.filter_by(id=notif_id).first()
+    # check if the notification exists and is for current_user
+    if notif and notif.user == current_user:
+        if not notif.seen:
+            notif.seen = True
+            db.session.commit()
+        return redirect(notif.link)
     return redirect('/')
 
 
@@ -165,9 +168,8 @@ def view_user(username):
 
 
 @app.route('/settings/', methods=('GET', 'POST'))
+@login_required
 def settings():
-    if not current_user.is_authenticated:
-        return redirect('/')
     # ajax request handling
     if g.sijax.is_sijax_request:
         g.sijax.register_callback('update_notifications', update_notifications)
@@ -183,7 +185,7 @@ def settings():
                     User.wipe(current_user, True)
                 else:
                     User.wipe(current_user, False)
-                flash('Your user has been successfully deleted, farewell!')
+                flash('Your user has been successfully deleted, farewell!', category='warning')
                 return redirect('/')
             else:
                 form.del_confirm.errors.append('You need to check this if you want to delete yourself')
@@ -201,125 +203,121 @@ def settings():
 
 
 @app.route('/delete/post/<post_id>/', methods=('GET', 'POST'))
+@login_required
 def delete_post(post_id):
-    if current_user.is_authenticated:
-        # ajax request handling
-        if g.sijax.is_sijax_request:
-            g.sijax.register_callback('update_notifications', update_notifications)
-            g.sijax.register_callback('set_all_notifications_seen', set_all_notifications_seen)
-            return g.sijax.process_request()
-        # non-ajax handling:
-        post = Post.query.filter_by(id=post_id).first()
-        if post and post.poster == current_user:
-            post.wipe()
-        else:
-            flash('You cannot delete a post that does not exists or is not yours')
+    # ajax request handling
+    if g.sijax.is_sijax_request:
+        g.sijax.register_callback('update_notifications', update_notifications)
+        g.sijax.register_callback('set_all_notifications_seen', set_all_notifications_seen)
+        return g.sijax.process_request()
+    # non-ajax handling:
+    post = Post.query.filter_by(id=post_id).first()
+    if post and post.poster == current_user:
+        post.wipe()
         return redirect(post.link_to())
+    flash('You cannot delete a post that does not exists or is not yours', category='danger')
     return redirect('/')
 
 
 @app.route('/edit/post/<post_id>/', methods=('GET', 'POST'))
+@login_required
 def edit_post(post_id):
-    if current_user.is_authenticated:
-        # ajax request handling
-        if g.sijax.is_sijax_request:
-            g.sijax.register_callback('update_notifications', update_notifications)
-            g.sijax.register_callback('set_all_notifications_seen', set_all_notifications_seen)
-            return g.sijax.process_request()
-        # non-ajax handling:
-        options = {
-            'title': 'Edit post',
-            'form_type': 'post'
-        }
-        form = forms.PostForm()
-        post = Post.query.filter_by(id=post_id).first()
-        if not post:
-            options['message'] = 'You are trying to edit a post that does not exists'
-        elif post.poster != current_user:
-            options['message'] = 'You are trying to modify a post that is not yours'
-        elif form.validate_on_submit():
-            post.edit(form.content.data)
-            options['message'] = 'Your post has been successfully modified'
-        else:
-            form.content.data = post.content
-            options['form'] = form
-        options.update(base_options())
-        return render_template("edit.html", **options)
-    return redirect('/')
+    # ajax request handling
+    if g.sijax.is_sijax_request:
+        g.sijax.register_callback('update_notifications', update_notifications)
+        g.sijax.register_callback('set_all_notifications_seen', set_all_notifications_seen)
+        return g.sijax.process_request()
+    # non-ajax handling:
+    options = {
+        'title': 'Edit post',
+        'form_type': 'post'
+    }
+    form = forms.PostForm()
+    post = Post.query.filter_by(id=post_id).first()
+    if not post:
+        flash('You are trying to edit a post that does not exists', category='danger')
+    elif post.poster != current_user:
+        flash('You are trying to modify a post that is not yours', category='danger')
+    elif form.validate_on_submit():
+        post.edit(form.content.data)
+        flash('Your post has been successfully modified', category='success')
+    else:
+        form.content.data = post.content
+        options['form'] = form
+    options.update(base_options())
+    return render_template("edit.html", **options)
 
 
 @app.route('/edit/proposal/<proposal_id>/', methods=('GET', 'POST'))
+@login_required
 def edit_proposal(proposal_id):
-    if current_user.is_authenticated:
-        # ajax request handling
-        if g.sijax.is_sijax_request:
-            g.sijax.register_callback('update_notifications', update_notifications)
-            g.sijax.register_callback('set_all_notifications_seen', set_all_notifications_seen)
-            return g.sijax.process_request()
-        # non-ajax handling:
-        options = {
-            'title': 'Edit proposal',
-            'form_type': 'proposal'
-        }
-        form = forms.ProposalForm()
-        proposal = Proposal.query.filter_by(id=proposal_id).first()
-        if not proposal:
-            options['message'] = 'You are trying to edit a proposal that does not exists'
-        elif proposal.poster != current_user:
-            options['message'] = 'You are trying to modify a proposal that is not yours'
-        elif not proposal.is_pending:
-            options['message'] = "You can modify a proposal only before it's vote day"
-        elif form.validate_on_submit():
-            proposal.edit(form.description.data, [(e.data['content'], e.data['groups']) for e in form.new_laws.entries],
-                          [e.data for e in form.remove_laws.entries])
-            options['message'] = 'Your proposal has been successfully modified'
-        else:
-            form.description.data = proposal.description
-            if proposal.add_laws.count():
-                form.new_laws.pop_entry()
-                for law in proposal.add_laws:
-                    form.new_laws.append_entry({'content': law.content, 'groups': [gr.name for gr in law.group]})
-            if proposal.remove_laws.count():
-                form.remove_laws.pop_entry()
-                for law in proposal.remove_laws:
-                    form.remove_laws.append_entry(law.id)
-            options['form'] = form
-        options.update(base_options())
-        return render_template("edit.html", **options)
-    return redirect('/')
+    # ajax request handling
+    if g.sijax.is_sijax_request:
+        g.sijax.register_callback('update_notifications', update_notifications)
+        g.sijax.register_callback('set_all_notifications_seen', set_all_notifications_seen)
+        return g.sijax.process_request()
+    # non-ajax handling:
+    options = {
+        'title': 'Edit proposal',
+        'form_type': 'proposal'
+    }
+    form = forms.ProposalForm()
+    proposal = Proposal.query.filter_by(id=proposal_id).first()
+    if not proposal:
+        options['message'] = 'You are trying to edit a proposal that does not exists'
+    elif proposal.poster != current_user:
+        options['message'] = 'You are trying to modify a proposal that is not yours'
+    elif not proposal.is_pending:
+        options['message'] = "You can modify a proposal only before it's vote day"
+    elif form.validate_on_submit():
+        proposal.edit(form.description.data, [(e.data['content'], e.data['groups']) for e in form.new_laws.entries],
+                      [e.data for e in form.remove_laws.entries])
+        options['message'] = 'Your proposal has been successfully modified'
+    else:
+        form.description.data = proposal.description
+        if proposal.add_laws.count():
+            form.new_laws.pop_entry()
+            for law in proposal.add_laws:
+                form.new_laws.append_entry({'content': law.content, 'groups': [gr.name for gr in law.group]})
+        if proposal.remove_laws.count():
+            form.remove_laws.pop_entry()
+            for law in proposal.remove_laws:
+                form.remove_laws.append_entry(law.id)
+        options['form'] = form
+    options.update(base_options())
+    return render_template("edit.html", **options)
 
 
 @app.route('/edit/law/<law_id>/', methods=('GET', 'POST'))
+@login_required
 def edit_law(law_id):
-    if current_user.is_authenticated:
-        # ajax request handling
-        if g.sijax.is_sijax_request:
-            g.sijax.register_callback('update_notifications', update_notifications)
-            g.sijax.register_callback('set_all_notifications_seen', set_all_notifications_seen)
-            return g.sijax.process_request()
-        # non-ajax handling:
-        options = {
-            'title': 'Edit law',
-            'form_type': 'law'
-        }
-        form = forms.LawForm()
-        law = Law.query.filter_by(id=law_id).first()
-        if not law:
-            options['message'] = 'You are trying to edit a law that does not exists'
-        elif law.add_by[-1].poster != current_user:
-            options['message'] = 'You are trying to modify a law that is not yours'
-        elif not law.add_by[-1].is_pending:
-            options['message'] = "You can modify a law only before it's vote day"
-        elif form.validate_on_submit():
-            law.edit(form.content.data, form.groups.data)
-            options['message'] = 'Your law has been successfully modified'
-        else:
-            form.content.data = law.content
-            form.groups.data = [gr.name for gr in law.group]
-            options['form'] = form
-        options.update(base_options())
-        return render_template("edit.html", **options)
-    return redirect('/')
+    # ajax request handling
+    if g.sijax.is_sijax_request:
+        g.sijax.register_callback('update_notifications', update_notifications)
+        g.sijax.register_callback('set_all_notifications_seen', set_all_notifications_seen)
+        return g.sijax.process_request()
+    # non-ajax handling:
+    options = {
+        'title': 'Edit law',
+        'form_type': 'law'
+    }
+    form = forms.LawForm()
+    law = Law.query.filter_by(id=law_id).first()
+    if not law:
+        options['message'] = 'You are trying to edit a law that does not exists'
+    elif law.add_by[-1].poster != current_user:
+        options['message'] = 'You are trying to modify a law that is not yours'
+    elif not law.add_by[-1].is_pending:
+        options['message'] = "You can modify a law only before it's vote day"
+    elif form.validate_on_submit():
+        law.edit(form.content.data, form.groups.data)
+        options['message'] = 'Your law has been successfully modified'
+    else:
+        form.content.data = law.content
+        form.groups.data = [gr.name for gr in law.group]
+        options['form'] = form
+    options.update(base_options())
+    return render_template("edit.html", **options)
 
 
 @app.route('/user/<username>/<subpage>/', methods=('GET', 'POST'))
@@ -552,6 +550,7 @@ def view_laws(group_name, status_name, order):
 
 
 @app.route('/new-proposal/remove/<law_id>/', methods=('GET', 'POST'))
+@login_required
 def new_proposal_remove(law_id):
     # ajax request handling
     if g.sijax.is_sijax_request:
@@ -566,6 +565,7 @@ def new_proposal_remove(law_id):
 
 
 @app.route('/new-proposal/change/<proposal_id>/', methods=('GET', 'POST'))
+@login_required
 def new_proposal_change(proposal_id):
     # ajax request handling
     if g.sijax.is_sijax_request:
@@ -589,6 +589,7 @@ def new_proposal_change(proposal_id):
 
 
 @app.route('/new-proposal/', methods=('GET', 'POST'))
+@login_required
 def submit_proposal():
     # ajax request handling
     if g.sijax.is_sijax_request:
@@ -597,7 +598,7 @@ def submit_proposal():
         return g.sijax.process_request()
     # non-ajax handling:
     form = forms.ProposalForm()
-    if current_user.is_authenticated and form.validate_on_submit():
+    if form.validate_on_submit():
         proposal = Proposal.submit(form.description.data, current_user,
                                    [(e.data['content'], e.data['groups']) for e in form.new_laws.entries],
                                    [e.data for e in form.remove_laws.entries])
@@ -719,52 +720,58 @@ def api_search_users(value):
 
 
 # ---------------------------------------------- SIJAX FUNCTIONS
+@login_required
 def vote_post(obj_response, post_id, up):
     post = Post.query.filter_by(id=post_id).first()
-    if post and current_user.is_authenticated:
+    if post:
         post.vote(current_user, up)
         obj_response.html('#post_vote_' + post_id, str(post.points()))
         obj_response.attr('#post_vote_' + post_id, 'class', post.current_vote_style(current_user))
 
 
+@login_required
 def vote_proposal(obj_response, proposal_id, up):
     proposal = Proposal.query.filter_by(id=proposal_id).first()
-    if proposal and current_user.is_authenticated:
+    if proposal:
         proposal.vote(current_user, up)
         obj_response.html('#proposal_vote_' + proposal_id, str(proposal.points()))
         obj_response.attr('#proposal_vote_' + proposal_id, 'class', proposal.current_vote_style(current_user))
 
 
+@roles_required('admin')
 def confirm_proposal(obj_response, proposal_id):
     proposal = Proposal.query.filter_by(id=proposal_id).first()
-    if proposal and current_user.has_role('admin'):
+    if proposal:
         proposal.confirm()
         obj_response.alert('proposal confirmed')
     else:
         obj_response.alert('Error: something occurred')
 
 
+@roles_required('admin')
 def set_law_active(obj_response, law_id):
     law = Law.query.filter_by(id=law_id).first()
-    if law and current_user.has_role('admin'):
+    if law:
         law.set_active()
         obj_response.alert('law is active')
     else:
         obj_response.alert('Error: something occurred')
 
 
+@roles_required('admin')
 def set_law_premature(obj_response, law_id):
     law = Law.query.filter_by(id=law_id).first()
-    if law and current_user.has_role('admin'):
+    if law:
         law.set_premature()
         obj_response.alert('law is premature')
     else:
         obj_response.alert('Error: something occurred')
 
 
+@roles_required('admin')
 def set_law_impossible(obj_response, law_id):
     law = Law.query.filter_by(id=law_id).first()
-    if law and current_user.has_role('admin'):
+    if law:
         law.set_impossible()
         obj_response.alert('law is impossible')
     else:
@@ -786,6 +793,7 @@ def load_more_posts(obj_response, group, name, older_than):
         obj_response.html('#load_more_container', more_posts_panel(group, name, None).unescape())
 
 
+@login_required
 def submit_post(obj_response, files, form_values):
     form = forms.PostForm(**form_values)
     if form.validate():
@@ -837,6 +845,8 @@ def load_more_laws(obj_response, group_name, status_name, order, last):
             panel = more_laws_panel(group_name, status_name, order, laws[-1].id).unescape()
         elif order == 'date':
             panel = more_laws_panel(group_name, status_name, order, laws[-1].date).unescape()
+        else:
+            return
         obj_response.html('#load_more_container', panel)
         # refresh masonry to load the new laws correctly
         obj_response.script('$(".masonry-grid").masonry( "reloadItems" )')
@@ -864,6 +874,7 @@ def load_more_proposals(obj_response, open, pending, older_than):
         obj_response.html('#load_more_container', more_proposals_panel(None).unescape())
 
 
+@login_required
 def load_more_notifications(obj_response, older_than):
     notifs = Notification.get_more(current_user, older_than=older_than)
     render_notification = get_template_attribute('macros.html', 'render_notification')
@@ -871,8 +882,7 @@ def load_more_notifications(obj_response, older_than):
     if notifs:
         for notif in notifs:
             obj_response.html_append('#notifications-container', render_notification(notif).unescape())
-        obj_response.html('#load_more_container',
-                          more_notifications_panel(notifs[-1].date).unescape())
+        obj_response.html('#load_more_container', more_notifications_panel(notifs[-1].date).unescape())
         # refresh and re-enable waypoint to achieve continuous loading
         obj_response.script('Waypoint.refreshAll()')
         obj_response.script('Waypoint.enableAll()')
@@ -880,8 +890,9 @@ def load_more_notifications(obj_response, older_than):
         obj_response.html('#load_more_container', more_notifications_panel(None).unescape())
 
 
+@login_required
 def update_notifications(obj_response, newer_than):
-    if current_user.is_authenticated and current_user.has_new_notifications(newer_than):
+    if current_user.has_new_notifications(newer_than):
         # make the notifications bell green
         obj_response.script('$("#notifications_bell").attr("class", "glyphicon glyphicon-bell notif-unseen")')
         # play an unpleasant sound
@@ -891,17 +902,18 @@ def update_notifications(obj_response, newer_than):
         obj_response.html('#notifications_dropdown', render_dropdown(current_user).unescape())
 
 
+@login_required
 def set_all_notifications_seen(obj_response):
-    if current_user.is_authenticated:
-        # set all as seen in the database:
-        current_user.set_all_notifications_seen()
-        # make the notifications bell white
-        obj_response.script('$("#notifications_bell").attr("class", "glyphicon glyphicon-bell")')
-        # update the notifications dropdown
-        render_dropdown = get_template_attribute('macros.html', 'render_notifications_dropdown')
-        obj_response.html('#notifications_dropdown', render_dropdown(current_user).unescape())
+    # set all as seen in the database:
+    current_user.set_all_notifications_seen()
+    # make the notifications bell white
+    obj_response.script('$("#notifications_bell").attr("class", "glyphicon glyphicon-bell")')
+    # update the notifications dropdown
+    render_dropdown = get_template_attribute('macros.html', 'render_notifications_dropdown')
+    obj_response.html('#notifications_dropdown', render_dropdown(current_user).unescape())
 
 
+@login_required
 def toggle_subscription(obj_response, item_type, item_id):
     render_subscription = get_template_attribute('macros.html', 'render_subscription')
     if item_type == 'proposal':
