@@ -1,3 +1,4 @@
+{% import "macros.html" as macros %}
 <!DOCTYPE html>
 <html lang="en">
     <head>
@@ -22,23 +23,11 @@
         <script type="text/javascript" src="/static/js/sijax/sijax_upload.js"></script>
         <script type="text/javascript">
             {{ g.sijax.get_js()|safe }}
-            {% if form_init_js %}
+            {% if form_init_js and current_user.is_authenticated %}
                 {{ form_init_js|safe }}
             {% endif %}
         </script>
-        {% if current_user.is_authenticated %}
-            <script>
-                setInterval(function(){
-                    first_child = $('#notifications_dropdown').children().first();
-                    if (first_child != null){
-                        newer_than = first_child.data('date');
-                    } else {
-                        newer_than = null;
-                    }
-                    Sijax.request('update_notifications', [newer_than]);
-                }, 10000);
-            </script>
-        {% endif %}
+        {{ macros.notifications_script(current_user) }}
         <!-- cookie policy banner -->
         <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.0.3/cookieconsent.min.css">
         <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.0.3/cookieconsent.min.js"></script>
@@ -49,16 +38,11 @@
     </head>
     <body>
         {% include "navbar.html" %}
-        <div class="base-content">
-            {% with messages = get_flashed_messages() %}
-                {% if messages %}
-                    {% for message in messages %}
-                        <div class="alert alert-info alert-dismissible">
-                            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                            <p>{{ message }}</p>
-                        </div>
-                    {% endfor %}
-                {% endif %}
+        <div class="base-content container">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% for category, message in messages %}
+                    {{ macros.render_message(message, category) }}
+                {% endfor %}
             {% endwith %}
             {% block content %}{% endblock %}
         </div>

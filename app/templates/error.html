@@ -9,10 +9,8 @@
 {% endblock %}
 
 {% block content %}
-    <div class="container">
-        <div class="jumbotron">
-            <h1 class="text-center"><strong>{{ code }}</strong></h1>
-            <p class="text-center"><span class="glyphicon glyphicon-warning-sign"></span> {{ message }}, <a onclick="goBack()">go back</a>.</p>
-        </div>
+    <div class="jumbotron">
+        <h1 class="text-center"><strong>{{ code }}</strong></h1>
+        <p class="text-center"><span class="glyphicon glyphicon-warning-sign"></span> {{ message }}, <a onclick="goBack()">go back</a>.</p>
     </div>
 {% endblock %}
