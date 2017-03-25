@@ -14,6 +14,29 @@
 </div>
 {%- endmacro %}
 
+{% macro security_widget(currently) -%}
+<div class="panel panel-default">
+    <div class="list-group">
+        <a href="/register" class="list-group-item{% if currently == 'register' %} active{% endif %}">
+            <p class="list-group-item-text">Not registered yet?</p>
+            <h4 class="list-group-item-heading">Join us</h4>
+        </a>
+        <a href="/login" class="list-group-item{% if currently == 'login' %} active{% endif %}">
+            <p class="list-group-item-text">Already registered?</p>
+            <h4 class="list-group-item-heading">Log in</h4>
+        </a>
+        <a href="/reset" class="list-group-item{% if currently == 'reset' %} active{% endif %}">
+            <p class="list-group-item-text">Forgot your password?</p>
+            <h4 class="list-group-item-heading">Reset it!</h4>
+        </a>
+        <a href="/confirm" class="list-group-item{% if currently == 'confirm' %} active{% endif %}">
+            <p class="list-group-item-text">Lost confirmation email?</p>
+            <h4 class="list-group-item-heading">Send it again</h4>
+        </a>
+    </div>
+</div>
+{%- endmacro %}
+
 {% macro pages_widget(pages, current_page=None) -%}
 <div class="panel panel-default">
     <div class="panel-heading">
@@ -429,13 +452,17 @@
 {%- endmacro %}
 
 {% macro render_notification_navbar(notification) -%}
-    <li {% if not notification.seen %}class="notif-unseen-back"{% endif %} data-date="'{{ notification.date }}'"><a href="{{notification.link_to()}}" ><span class="glyphicon glyphicon-chevron-right"></span> {{ notification.to_text() }}</a></li>
+    <li class="{% if not notification.seen %} notif-unseen-back{% endif %}" data-date="'{{ notification.date }}'">
+        <a href="{{notification.link_to()}}">
+            <img class="notif-img img-rounded" src="{{ notification.authors[-1].email | gravatar }}">  {{ notification.to_text() }}
+        </a>
+    </li>
 {%- endmacro %}
 
 {% macro render_notification(notification) -%}
     <li class="list-group-item{% if not notification.seen %} notif-unseen-back{% endif %}">
-        <a href="{{ notification.link_to() }}" class="lead">
-            <span class="glyphicon glyphicon-chevron-right"></span> {{ notification.to_text() }}
+        <a href="{{notification.link_to()}}" class="lead">
+            <img class="notif-img img-rounded" src="{{ notification.authors[-1].email | gravatar }}">  {{ notification.to_text() }}
         </a>
     </li>
 {%- endmacro %}

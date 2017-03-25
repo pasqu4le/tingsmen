@@ -1,8 +1,8 @@
 {% import "macros.html" as macros %}
-<nav class="navbar navbar-default navbar-inverse navbar-fixed-top">
+<nav class="navbar navbar-default navbar-fixed-top">
     <div class="container">
         <div class="navbar-header">
-            <button type="button" class="navbar-toggle btn-primary collapsed" data-toggle="collapse" data-target="#navbar-collapse-1" aria-expanded="false">
+            <button type="button" class="navbar-toggle btn-default collapsed" data-toggle="collapse" data-target="#navbar-collapse" aria-expanded="false">
                 <span class="sr-only">Toggle navigation</span>
                 <span class="glyphicon glyphicon-menu-hamburger"></span>
             </button>
@@ -12,7 +12,7 @@
             <a class="navbar-brand" href="/">TINGSMEN <small>BETA</small></a>
         </div>
         <!-- Collect the nav links, forms, and other content for toggling -->
-        <div class="collapse navbar-collapse" id="navbar-collapse-1">
+        <div class="collapse navbar-collapse" id="navbar-collapse">
             <p class="nav navbar-nav navbar-left navbar-text hidden-xs hidden-sm">The democratic social network</p>
             <ul class="nav navbar-nav navbar-right">
                 {% if pages %}
@@ -44,24 +44,20 @@
                             {{ macros.render_notifications_dropdown(current_user) }}
                         </ul>
                     </li>
-                    <li>
-                        <a href="/user/{{ current_user.username }}/">
+                    <li class="dropdown">
+                        <a class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
                             <img style="float:left" class="img-rounded img-responsive" src="{{ current_user.email | gravatar(size=25) }}">
                             <span class="navbar-username">@{{ current_user.username }}</span>
                         </a>
-                    </li>
-                    <li class="dropdown">
-                        <a class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
-                            <span class="visible-xs-inline">Options </span><span class="caret"></span>
-                        </a>
                         <ul class="dropdown-menu">
+                            <li><a href="/user/{{ current_user.username }}/"><span class="glyphicon glyphicon-user"></span> Profile</a></li>
                             <li><a href="/settings/"><span class="glyphicon glyphicon-wrench"></span> Settings</a></li>
                             <li role="separator" class="divider"></li>
                             <li><a href="/logout"><span class="glyphicon glyphicon-log-out"></span> Logout</a></li>
                         </ul>
                     </li>
                 {% else %}
-                    <li><a href="/login"><span class="glyphicon glyphicon-user"></span><span class="navbar-username">Login</span></a></li>
+                    <li><a href="/login">Login</a></li>
                 {% endif %}
             </ul>
         </div>
