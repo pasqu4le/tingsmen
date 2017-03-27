@@ -1,0 +1,108 @@
+/* Bootstrap customizations */
+
+.navbar-default .navbar-nav>li>a:hover {
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.panel {
+    border-radius: 0px;
+	-webkit-animation: shadow-drop-br 0.2s cubic-bezier(0.250, 0.460, 0.450, 0.940) 0.4s both;
+	-moz-animation: shadow-drop-br 0.2s cubic-bezier(0.250, 0.460, 0.450, 0.940) 0.4s both;
+	animation: shadow-drop-br 0.2s cubic-bezier(0.250, 0.460, 0.450, 0.940) 0.4s both;
+}
+
+.panel-footer {
+    border-top: 0px;
+}
+
+.panel-heading {
+    border-bottom: 0px;
+}
+
+.well {
+    border-radius: 0px;
+}
+
+hr {
+    margin-top: 5px;
+    margin-bottom: 10px;
+}
+
+.pull-right {
+    padding-right: 10px;
+}
+
+.list-group-item {
+    padding: 8px 15px;
+    border: 0px;
+}
+
+/* Animista's animations */
+
+@-webkit-keyframes shadow-drop-br{0%{box-shadow:0 0 0 0 transparent}to{box-shadow:12px 12px 20px -12px rgba(0,0,0,.35)}}
+@keyframes shadow-drop-br{0%{box-shadow:0 0 0 0 transparent}to{box-shadow:12px 12px 20px -12px rgba(0,0,0,.35)}}
+
+/* Tingsmen-specific classes */
+
+.base-content {
+    padding-top: 70px;
+}
+
+.autolink-url {
+    font-size: 50%;
+    overflow: hidden;
+    padding-left: 10px;
+}
+
+.autolink-icon {
+    max-width: 16px;
+    max-height: 16px;
+}
+
+.navbar-username {
+    padding-left: 10px;
+}
+
+.notif-img {
+    max-width: 80px;
+}
+
+.dropdown .notif-img {
+    max-width: 50px;
+}
+
+.notif-unseen {
+    color: green;
+}
+
+.notif-unseen-back {
+    background-color: LimeGreen;
+}
+
+.notif-unseen-back>a {
+    color: white !important;
+}
+
+.notif-unseen-back>a:hover {
+    color: black !important;
+}
+
+.post-comments.comment_dep_1 {
+    margin-left: 8%;
+}
+
+.post-comments.comment_dep_2 {
+    margin-left: 5%;
+}
+
+.post-comments.comment_dep_3 {
+    margin-left: 3%;
+}
+
+.post-comments.comment_dep_4 {
+    margin-left: 2%;
+}
+
+.post-comments.comment_dep_5 {
+    margin-left: 1%;
+}

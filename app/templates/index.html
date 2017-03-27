@@ -1,16 +1,45 @@
 {% extends "base.html" %}
 
+{% block head_custom %}
+    <script type="text/javascript" src="/static/js/jquery.pagepiling.min.js"></script>
+    <script type="text/javascript">
+		$(document).ready(function() {
+	    	$('#base-content').pagepiling({
+			    sectionsColor: ['#51bec4', '#2ebe21', '#bfda00'],
+			    navigation: {
+			    	'position': 'right',
+			   		'tooltips': ['Page 1', 'Page 2', 'Page 3']
+			   	}
+			});
+	    });
+    </script>
+{% endblock %}
+
 {% block content %}
-    <div class="panel panel-default jumbotron">
-        <div class="panel-title">
-            <h1 class="text-center">Welcome to Tingsmen</h1>
-        </div>
-        <div class="panel-body text-center">
-            <h3 class="text-justified">Tingsmen ['tɪŋzmɛn] is a community-centered social network. Here every feature and design of the website can be changed, removed or added by users with a voting system.</h3>
-            <hr>
-            <p>Wanna know how? <a href="/page/Laws" class="btn btn-default">Read more</a></p>
-            <p>The website is currently in BETA and opened to a 1000 user <a href="/register" class="btn btn-default">Sign up</a></p>
-            <p>This project is still in a very early phase of development. You can check how things are going on the <a href="https://github.com/pasqu4le/tingmen">Github page</a>, or you can register into our mailing list: <a href="/subscribe/news/" class="btn btn-primary">Subscribe</a></p>
-        </div>
-    </div>
+	<div class="section text-center jumbotron" id="section1">
+		<h1>Welcome to Tingsmen</h1>
+		<p>Tingsmen ['tɪŋzmɛn] is a community-centered social network.</p>
+		<p>Here every feature and design of the website can be changed, removed or added by any user.</p>
+        <p><a href="/register" class="btn btn-success btn-lg">Join us now</a></p>
+	</div>
+	<div class="section text-center jumbotron" id="section2">
+		<div class="intro">
+			<h1>How does this work?</h1>
+			<p>Anyone can propose a change and everyone can vote on it on the first available Monday</p>
+            <p>If the community approves it, the website will change accordingly</p>
+			<p><a href="/page/Laws" class="btn btn-default btn-lg">Read more</a></p>
+		</div>
+	</div>
+	<div class="section text-center jumbotron" id="section4">
+		<div class="intro">
+			<h1>Currently in BETA and opened to 1000 user</h1>
+            <p>This project is still in a very early phase of development.</p>
+            <p>You can check how things are going on the <a href="https://github.com/pasqu4le/tingmen">Github page</a>, or you can register into our mailing list:</p>
+			<p><a href="/subscribe/news/" class="btn btn-primary btn-lg">Subscribe</a></p>
+		</div>
+	</div>
+{% endblock %}
+
+{% block bottom_custom %}
+    <link rel="stylesheet" type="text/css" href="/static/css/jquery.pagepiling.css" />
 {% endblock %}

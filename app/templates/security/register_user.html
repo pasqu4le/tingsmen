@@ -1,34 +1,32 @@
-{% extends "base.html" %}
+{% extends "columned.html" %}
 {% import "macros.html" as macros %}
+
 {% block head_custom %}
     <link href="/static/css/form.css" rel="stylesheet">
 {% endblock %}
-{% block content %}
-    <div class="container top-container">
-        {% if register_available %}
-        <form class="form" action="{{ url_for_security('register') }}" method="POST" name="register_user_form">
-            <h2 class="form-heading">Register</h2>
-            {{ register_user_form.hidden_tag() }}
-            {{ macros.render_field(register_user_form.email) }}
-            {{ macros.render_field(register_user_form.username) }}
-            {{ macros.render_field(register_user_form.password) }}
-            {% if register_user_form.password_confirm %}
-                {{ macros.render_field(register_user_form.password_confirm) }}
-            {% endif %}
-            {{ macros.render_field(register_user_form.submit) }}
-        </form>
-        {% else %}
-        <div class="text-center">
-            <h2>Sorry, registrations are closed at the moment</h2>
-            <p>You can subscribe to our news mailing list to be notified of the reopening</p>
-            <a class="btn btn-lg btn-primary" href="/subscribe/news/">Keep me updated</a>
-            <p></p><p></p>
-        </div>
-        {% endif%}
-        <div class="text-center">
-            <p>Forgot your password? <a href="/reset">reset it!</a></p>
-            <p>Already registered? <a href="/login">Log in</a></p>
-            <p>You didn't receive the confirmation email? <a href="/confirm">Send it again</a></p>
-        </div>
+
+{% block central_column %}
+    {% if register_available %}
+    <form class="form" action="{{ url_for_security('register') }}" method="POST" name="register_user_form">
+        <h2 class="form-heading">Register</h2>
+        {{ register_user_form.hidden_tag() }}
+        {{ macros.render_field(register_user_form.email) }}
+        {{ macros.render_field(register_user_form.username) }}
+        {{ macros.render_field(register_user_form.password) }}
+        {% if register_user_form.password_confirm %}
+            {{ macros.render_field(register_user_form.password_confirm) }}
+        {% endif %}
+        {{ macros.render_field(register_user_form.submit) }}
+    </form>
+    {% else %}
+    <div class="text-center">
+        <h2>Sorry, registrations are closed at the moment</h2>
+        <p>You can subscribe to our news mailing list to be notified of the reopening</p>
+        <a class="btn btn-lg btn-primary" href="/subscribe/news/">Keep me updated</a>
     </div>
+    {% endif%}
+{% endblock %}
+
+{% block side_column %}
+    {{ macros.security_widget('register') }}
 {% endblock %}
