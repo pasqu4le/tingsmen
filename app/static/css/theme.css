@@ -48,6 +48,17 @@ hr {
     padding-top: 70px;
 }
 
+.autolink-url {
+    font-size: 50%;
+    overflow: hidden;
+    padding-left: 10px;
+}
+
+.autolink-icon {
+    max-width: 16px;
+    max-height: 16px;
+}
+
 .navbar-username {
     padding-left: 10px;
 }

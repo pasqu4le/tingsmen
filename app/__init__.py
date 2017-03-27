@@ -7,6 +7,7 @@ from flask_security import Security, SQLAlchemyUserDatastore
 from flask_admin import Admin
 from flask_migrate import Migrate
 from flask_gravatar import Gravatar
+from misaka import HTML_SKIP_HTML
 from flask_mail import Mail
 from flask_compress import Compress
 from flask_sijax import Sijax
@@ -35,8 +36,8 @@ app.config['MAIL_USE_TLS'] = True
 # Mail creation
 mail = Mail(app)
 # use misaka for markdown
-utils.CustomMisaka(app, skip_html=True, autolink=True, underline=True, smartypants=True, strikethrough=True,
-                   space_headers=True)
+utils.CustomMisaka(app, renderer=utils.CustomMisakaRenderer(flags=HTML_SKIP_HTML), autolink=True, underline=True,
+                   smartypants=True, space_headers=True)
 # use sijax for ajax requests
 Sijax(app)
 # Gravatar setup
