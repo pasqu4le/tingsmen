@@ -6,7 +6,7 @@
 {% endblock %}
 
 {% block central_column %}
-    {{ macros.render_post_group(posts, current_user, submit_post_form, new_post=True, load_more=True, posts_group=posts_group) }}
+    {{ macros.render_post_group(posts, current_user, submit_post_form, new_post=True, load_more=True, posts_group=posts_group, posts_name=user.username) }}
 {% endblock %}
 
 {% block side_column %}
