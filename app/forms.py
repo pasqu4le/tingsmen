@@ -58,6 +58,11 @@ class ProposalForm(FlaskForm):
 class SettingsForm(FlaskForm):
     username = StringField('username', validators=[unique_user_email],
                            render_kw={'placeholder': 'Username (leave blank to avoid changes)'})
+    new_password = PasswordField('new_password', render_kw={'placeholder': 'New Password (leave blank to avoid changes)'})
+    new_pass_confirm = PasswordField('new_pass_confirm',
+                                     validators=[EqualTo('new_password', message='Passwords do not match')],
+                                     render_kw={'placeholder': 'Retype new Password'})
+    current_password = PasswordField('current_password', render_kw={'placeholder': 'Your current Password'})
     delete = BooleanField('Delete my account', render_kw={'class': 'form-inline'})
     del_confirm = BooleanField('Confirm deletion', render_kw={'class': 'form-inline'})
     del_posts = BooleanField('Delete my posts as well', render_kw={'class': 'form-inline'})

@@ -3,6 +3,7 @@ from flask_mail import Message
 import utils
 from datetime import timedelta, date
 from flask_security import UserMixin, RoleMixin
+from flask_security.utils import verify_password, encrypt_password
 from sqlalchemy.sql import func
 from sqlalchemy.ext.hybrid import hybrid_property
 
@@ -77,6 +78,13 @@ class User(db.Model, UserMixin):
             user.proposals.remove(proposal)
             del_user.proposals.append(proposal)
         db.session.delete(user)
+        db.session.commit()
+
+    def has_password(self, password):
+        return verify_password(password, self.password)
+
+    def set_password(self, password):
+        self.password = encrypt_password(password)
         db.session.commit()
 
     def has_unseen_notifications(self):

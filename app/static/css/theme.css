@@ -48,6 +48,10 @@ hr {
     padding-top: 70px;
 }
 
+.list-no-style {
+    list-style: none;
+}
+
 .autolink-url {
     font-size: 50%;
     overflow: hidden;

@@ -177,7 +177,6 @@ def settings():
         return g.sijax.process_request()
     # non-ajax handling:
     form = forms.SettingsForm()
-    messages = []
     if form.validate_on_submit():
         if form.delete.data:
             if form.del_confirm.data:
@@ -189,14 +188,23 @@ def settings():
                 return redirect('/')
             else:
                 form.del_confirm.errors.append('You need to check this if you want to delete yourself')
-        elif form.username.data:
-            current_user.change_settings(username=form.username.data)
-            messages.append('You username was correctly changed')
-        messages.append('Settings saved!')
+        else:
+            if form.username.data:
+                current_user.change_settings(username=form.username.data)
+                flash('You username was correctly changed', category='success')
+            if form.new_password.data:
+                if form.current_password.data:
+                    if current_user.has_password(form.current_password.data):
+                        # new password matching is already checked by a validator
+                        current_user.set_password(form.new_password.data)
+                        flash('You password was correctly changed', category='success')
+                    else:
+                        form.current_password.errors.append('This is not your current password')
+                else:
+                    form.current_password.errors.append('You need to write your current password to set a new one')
     options = {
         'title': 'settings',
         'settings_form': form,
-        'messages': messages
     }
     options.update(base_options())
     return render_template("settings.html", **options)
