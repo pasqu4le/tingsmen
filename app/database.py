@@ -1,4 +1,5 @@
-from app import db
+from app import db, cronmail
+from flask_mail import Message
 import utils
 from datetime import timedelta, date
 from flask_security import UserMixin, RoleMixin
@@ -141,13 +142,19 @@ class Notification(db.Model):
             notif.date = func.now()
             notif.seen = False
             db.session.commit()
-            return
-        # if not, a new notification is needed:
-        notif = Notification(user=user, user_id=user.id, source_id=source_id, source_type=source_type,
-                             source_action=source_action, link=link, date=func.now(), seen=False)
-        notif.authors.append(author)
-        db.session.add(notif)
-        db.session.commit()
+        else:
+            # if not, a new notification is needed:
+            notif = Notification(user=user, user_id=user.id, source_id=source_id, source_type=source_type,
+                                 source_action=source_action, link=link, date=func.now(), seen=False)
+            notif.authors.append(author)
+            db.session.add(notif)
+            db.session.commit()
+        # anyway, send an email to the interested user
+        msg = Message('Update on ' + notif.source_type + ' ' + str(notif.source_id), recipients=[notif.user.email])
+        msg.body = notif.to_text() + '\n\n' + 'see it here: ' + notif.link
+        msg.html = '<p>' + notif.to_text() + '</p><a href="tingsmen.herokuapp.com' + notif.link + '">see it now</a>'
+        cronmail.messages.append(msg)
+
 
     @staticmethod
     def get_more(user, num=10, older_than=None):

@@ -1,5 +1,6 @@
 import os
 import utils
+import cron
 from flask import Flask
 
 from flask_sqlalchemy import SQLAlchemy
@@ -29,12 +30,15 @@ app.config['SECURITY_RECOVERABLE'] = True
 app.config['SECURITY_CHANGEABLE'] = True
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
+app.config['MAIL_DEFAULT_SENDER'] = ('Tingsmen', 'tingsmen@gmail.com')
 app.config['MAIL_USERNAME'] = 'tingsmen@gmail.com'
 app.config['MAIL_PASSWORD'] = os.environ['MAIL_PASSWORD']
 app.config['MAIL_USE_TLS'] = True
 
 # Mail creation
 mail = Mail(app)
+# Mail cronjob  creation
+cronmail = cron.CronMail(app, mail)
 # use misaka for markdown
 utils.CustomMisaka(app, renderer=utils.CustomMisakaRenderer(flags=HTML_SKIP_HTML), autolink=True, underline=True,
                    smartypants=True, space_headers=True)
