@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import "macros.html" as macros %}
 
 {% block head_custom %}
     <script>
@@ -9,6 +10,7 @@
 {% endblock %}
 
 {% block content %}
+    {{ macros.flashed_messages_widget() }}
     <div class="jumbotron">
         <h1 class="text-center"><strong>{{ code }}</strong></h1>
         <p class="text-center"><span class="glyphicon glyphicon-warning-sign"></span> {{ message }}, <a onclick="goBack()">go back</a>.</p>

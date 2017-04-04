@@ -38,11 +38,6 @@
     <body>
         {% include "navbar.html" %}
         <div class="base-content container" id="base-content">
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% for category, message in messages %}
-                    {{ macros.render_message(message, category) }}
-                {% endfor %}
-            {% endwith %}
             {% block content %}{% endblock %}
         </div>
         <!-- Core CSS and JavaScript -  Placed at the end of the document so the pages load faster -->

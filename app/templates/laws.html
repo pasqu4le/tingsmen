@@ -17,6 +17,7 @@
 {% endblock %}
 
 {% block content %}
+    {% import "macros.html" as macros %}
     {{ macros.law_widget(statuses, groups, orders, current_status=current_status, current_group=current_group, current_order=order) }}
     <div class="jumbotron">
         {% if current_group %}
