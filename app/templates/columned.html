@@ -1,5 +1,8 @@
+{% import "macros.html" as macros %}
 {% extends "base.html" %}
+
 {% block content %}
+    {{ macros.flashed_messages_widget() }}
     <div class="row">
         <div class="col-md-3">
             {% block side_column %}{% endblock %}

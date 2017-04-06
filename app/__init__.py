@@ -1,8 +1,11 @@
 import os
 import utils
+import cron
 from flask import Flask
 
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.orm import configure_mappers
+from sqlalchemy_searchable import make_searchable
 from flask_security import Security, SQLAlchemyUserDatastore
 from flask_admin import Admin
 from flask_migrate import Migrate
@@ -29,12 +32,15 @@ app.config['SECURITY_RECOVERABLE'] = True
 app.config['SECURITY_CHANGEABLE'] = True
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
+app.config['MAIL_DEFAULT_SENDER'] = ('Tingsmen', 'tingsmen@gmail.com')
 app.config['MAIL_USERNAME'] = 'tingsmen@gmail.com'
 app.config['MAIL_PASSWORD'] = os.environ['MAIL_PASSWORD']
 app.config['MAIL_USE_TLS'] = True
 
 # Mail creation
 mail = Mail(app)
+# Mail cronjob  creation
+cronmail = cron.CronMail(app, mail)
 # use misaka for markdown
 utils.CustomMisaka(app, renderer=utils.CustomMisakaRenderer(flags=HTML_SKIP_HTML), autolink=True, underline=True,
                    smartypants=True, space_headers=True)
@@ -43,8 +49,10 @@ Sijax(app)
 # Gravatar setup
 gravatar = Gravatar(app, size=150, rating='x', default='retro', force_default=False, force_lower=False, use_ssl=False,
                     base_url=None)
-# SQLAlchemy and migration setup
+# SQLAlchemy, searchable and migration setup
 db = SQLAlchemy(app)
+make_searchable()
+configure_mappers()
 migrate = Migrate(app, db)
 
 # imported after app and db creation because of dependencies

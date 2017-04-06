@@ -1,5 +1,13 @@
 {# --------------------------- Widgets Macros -------------------------------- #}
 
+{% macro flashed_messages_widget() -%}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+            {{ render_message(message, category) }}
+        {% endfor %}
+    {% endwith %}
+{%- endmacro %}
+
 {% macro topics_widget(topics, more_topics_number, current_topic=None) -%}
 <div class="panel panel-default">
     <div class="panel-heading">

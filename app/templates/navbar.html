@@ -29,6 +29,16 @@
                 {% endif %}
                 <li><a href="/laws/">Laws</a></li>
                 <li><a href="/proposals/">Proposals</a></li>
+                <li class="navbar-search">
+                    {# --- manually rendered to support classes, icon, tooltip and behaviour --- #}
+                    <form class="navbar-form" action="/search/" method="POST" name="search_form">
+                        {{ search_form.hidden_tag() }}
+                        <div class="form-group has-feedback">
+                            <input class="form-control navbar-search-input" id="interrogation" name="interrogation" placeholder="Search" type="text" title="Start a research" value="">
+                            <i class="glyphicon glyphicon-search form-control-feedback"></i>
+                        </div>
+                    </form>
+                </li>
                 {% if current_user.is_authenticated %}
                     <li>
                         <a href="/new-proposal/">
@@ -36,6 +46,7 @@
                             <span class="glyphicon glyphicon-plus-sign"></span>
                         </a>
                     </li>
+
                     <li class="dropdown">
                         <a class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
                             <span class="visible-xs-inline">Notifications </span><span id="notifications_bell" class="glyphicon glyphicon-bell{% if current_user.has_unseen_notifications() %} notif-unseen{% endif %}"></span>

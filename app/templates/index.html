@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import "macros.html" as macros %}
 
 {% block head_custom %}
     <script type="text/javascript" src="/static/js/jquery.pagepiling.min.js"></script>
@@ -17,6 +18,7 @@
 
 {% block content %}
 	<div class="section text-center jumbotron" id="section1">
+        {{ macros.flashed_messages_widget() }}
 		<h1>Welcome to Tingsmen</h1>
 		<p>Tingsmen ['tɪŋzmɛn] is a community-centered social network.</p>
 		<p>Here every feature and design of the website can be changed, removed or added by any user.</p>

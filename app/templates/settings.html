@@ -3,14 +3,14 @@
 
 {% block central_column %}
     <h1 class="page-header">Settings</h1>
-    {% if messages %}
-        {% for message in messages %}
-            <div class="alert alert-success">{{ message }}</div>
-        {% endfor %}
-    {% endif %}
     <form class="form" enctype="multipart/form-data" method="POST" name="settings_form" id="settings_form">
         {{ settings_form.hidden_tag() }}
         {{ macros.render_field(settings_form.username) }}
+        {{ macros.render_field(settings_form.new_password) }}
+        <ul class="list-no-style">
+            <li>{{ macros.render_field(settings_form.new_pass_confirm) }}</li>
+            <li>{{ macros.render_field(settings_form.current_password) }}</li>
+        </ul>
         <hr>
         <h4 class="text-danger">Warning: the following options are here to allow you to delete your account, there is no way to undo this operation.</h4>
         {{ macros.render_field(settings_form.delete, label_visible=true) }}
