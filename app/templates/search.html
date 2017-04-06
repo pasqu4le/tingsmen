@@ -1,0 +1,76 @@
+{% extends "columned.html" %}
+{% import "macros.html" as macros %}
+
+{% block head_custom %}
+<script>
+    $(document).ready(function() {
+        $('input[type=radio]').change(function(){
+            $('form').submit();
+        });
+    });
+</script>
+{% endblock %}
+
+{% block central_column %}
+    <form class="well form" enctype="multipart/form-data" method="POST" name="search_form" id="search_form">
+        {{ search_form.hidden_tag() }}
+        {{ macros.render_field(search_form.interrogation) }}
+        <div class="form-group text-justify">
+            {% for subfield in search_form.filter %}
+                <span class="radio-item">{{ subfield }}{{ subfield.label }}</span>
+            {% endfor %}
+        </div>
+    </form>
+    <div class="panel panel-success">
+        <div class="panel-heading">
+            <p class="panel-title">Results</p>
+        </div>
+        <div class="list-group">
+            {% if users %}
+                {% for user in users %}
+                    <a class="list-group-item lead" href="{{ user.link_to() }}">
+                        <img class="notif-img img-rounded" src="{{ user.email | gravatar }}"> @{{ user.username }}</a>
+                {% endfor %}
+            {% endif %}
+            {% if topics %}
+                {% for topic in topics %}
+                    <a class="list-group-item" href="{{ topic.link_to() }}">
+                        <h3><strong>Topic: </strong>#{{ topic.name }}{% if topic.description %} <small>{{ topic.description }}</small>{% endif %}</h3>
+                    </a>
+                {% endfor %}
+            {% endif %}
+            {% if posts %}
+                {% for post in posts %}
+                    <a class="list-group-item" href="{{ post.link_to() }}">
+                        <h3>Post n. {{ post.id }} by @{{ post.poster.username }}</h3>
+                        <small>&#x275E; {{ post.content[:100] }} &#x275D;</small>
+                    </a>
+                {% endfor %}
+            {% endif %}
+            {% if s_pages %}
+                {% for page in s_pages %}
+                    <a class="list-group-item" href="{{ page.link_to() }}">
+                        <h3><strong>About: </strong>{{ page.name }} <small>{{ page.title }}</small></h3>
+                    </a>
+                {% endfor %}
+            {% endif %}
+            {% if proposals %}
+                {% for proposal in proposals %}
+                    <a class="list-group-item" href="{{ proposal.link_to() }}">
+                        <h3>Proposal n. {{ proposal.id }} by @{{ proposal.poster.username }}</h3>
+                        <small>&#x275E; {{ proposal.description[:100] }} &#x275D;</small>
+                    </a>
+                {% endfor %}
+            {% endif %}
+            {% if laws %}
+                {% for law in laws %}
+                    <a class="list-group-item" href="{{ law.link_to() }}">
+                        <h3>Law n. {{ law.id }} in {% for group in law.group %}{{group.name}}{% if not loop.last %}, {% endif %}{% endfor %}</h3>
+                        <small>&#x275E; {{ law.content[:100] }} &#x275D;</small>
+                    </a>
+                {% endfor %}
+            {% endif %}
+        </div>
+        <div class="panel-footer text-center">Nothing more here, filtering your research may give you more results</div>
+    </div>
+{% endblock %}

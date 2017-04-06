@@ -5,7 +5,7 @@ from flask_wtf import FlaskForm
 from flask_wtf.csrf import generate_csrf
 from werkzeug.datastructures import MultiDict
 from wtforms import StringField, PasswordField, BooleanField, TextAreaField, HiddenField, FieldList, FormField,\
-    SelectMultipleField
+    SelectMultipleField, RadioField
 from wtforms.validators import DataRequired, EqualTo
 from wtforms.widgets.core import html_params
 from wtforms.widgets import HTMLString
@@ -67,6 +67,13 @@ class SettingsForm(FlaskForm):
     del_confirm = BooleanField('Confirm deletion', render_kw={'class': 'form-inline'})
     del_posts = BooleanField('Delete my posts as well', render_kw={'class': 'form-inline'})
     submit = InlineSubmitField('Save', render_kw={'placeholder': 'Post', 'class': 'btn btn-lg btn-primary'})
+
+
+class SearchForm(FlaskForm):
+    interrogation = StringField('interrogation', render_kw={'placeholder': 'Search'})
+    filter = RadioField(u'Label', choices=[('all', u'All'), ('posts', u'Posts'), ('users', u'Users'), ('laws', u'Laws'),
+                                           ('proposals', u'Proposals'), ('topics', u'Topics'), ('pages', u'Pages')],
+                        default='all', validators=[DataRequired()], render_kw={'class': 'form-inline'})
 
 
 # ---------- custom flask-security forms

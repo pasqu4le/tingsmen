@@ -6,6 +6,35 @@ from flask_security import UserMixin, RoleMixin
 from flask_security.utils import verify_password, encrypt_password
 from sqlalchemy.sql import func
 from sqlalchemy.ext.hybrid import hybrid_property
+from flask_sqlalchemy import BaseQuery
+from sqlalchemy_searchable import SearchQueryMixin
+from sqlalchemy_utils.types import TSVectorType
+
+
+# search classes
+
+class PageSearch(BaseQuery, SearchQueryMixin):
+    pass
+
+
+class UserSearch(BaseQuery, SearchQueryMixin):
+    pass
+
+
+class PostSearch(BaseQuery, SearchQueryMixin):
+    pass
+
+
+class TopicSearch(BaseQuery, SearchQueryMixin):
+    pass
+
+
+class ProposalSearch(BaseQuery, SearchQueryMixin):
+    pass
+
+
+class LawSearch(BaseQuery, SearchQueryMixin):
+    pass
 
 
 class MailingList(db.Model):
@@ -27,10 +56,13 @@ class Globals(db.Model):
 
 
 class Page(db.Model):
+    query_class = PageSearch
+
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(20), unique=True)
-    title = db.Column(db.String(50))
-    content = db.Column(db.String(1000))
+    title = db.Column(db.Unicode(50))
+    content = db.Column(db.UnicodeText)
+    search_vector = db.Column(TSVectorType('title', 'content'))
 
     def link_to(self):
         return '/page/' + self.name
@@ -54,13 +86,16 @@ class Role(db.Model, RoleMixin):
 
 
 class User(db.Model, UserMixin):
+    query_class = UserSearch
+
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(255), unique=True)
+    username = db.Column(db.Unicode(255), unique=True)
     email = db.Column(db.String(255), unique=True)
     password = db.Column(db.String(255))
     active = db.Column(db.Boolean())
     confirmed_at = db.Column(db.DateTime())
     roles = db.relationship('Role', secondary=roles_users, backref=db.backref('users', lazy='dynamic'))
+    search_vector = db.Column(TSVectorType('username'))
 
     @staticmethod
     def get_admin():
@@ -149,20 +184,18 @@ class Notification(db.Model):
             notif.authors.append(author)
             notif.date = func.now()
             notif.seen = False
-            db.session.commit()
         else:
             # if not, a new notification is needed:
             notif = Notification(user=user, user_id=user.id, source_id=source_id, source_type=source_type,
                                  source_action=source_action, link=link, date=func.now(), seen=False)
             notif.authors.append(author)
             db.session.add(notif)
-            db.session.commit()
+        db.session.commit()
         # anyway, send an email to the interested user
         msg = Message('Update on ' + notif.source_type + ' ' + str(notif.source_id), recipients=[notif.user.email])
         msg.body = notif.to_text() + '\n\n' + 'see it here: ' + notif.link
         msg.html = '<p>' + notif.to_text() + '</p><a href="tingsmen.herokuapp.com' + notif.link + '">see it now</a>'
         cronmail.messages.append(msg)
-
 
     @staticmethod
     def get_more(user, num=10, older_than=None):
@@ -245,8 +278,10 @@ post_subscription = db.Table('post_subscription',
 
 
 class Post(db.Model):
+    query_class = PostSearch
+
     id = db.Column(db.Integer, primary_key=True)
-    content = db.Column(db.String(1000))
+    content = db.Column(db.UnicodeText)
     date = db.Column(db.DateTime())
     last_edit_date = db.Column(db.DateTime())
     poster_id = db.Column(db.Integer, db.ForeignKey('user.id'))
@@ -258,6 +293,7 @@ class Post(db.Model):
     topics = db.relationship('Topic', secondary=post_topic, backref=db.backref('posts', lazy='dynamic'))
     subscribed = db.relationship('User', secondary=post_subscription, backref=db.backref('subscribed_posts',
                                                                                          lazy='dynamic'))
+    search_vector = db.Column(TSVectorType('content'))
 
     # static method to get a list of following posts (by date) in a 'group'
     @staticmethod
@@ -420,9 +456,12 @@ class Post(db.Model):
 
 
 class Topic(db.Model):
+    query_class = TopicSearch
+
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), unique=True)
-    description = db.Column(db.String(500))
+    name = db.Column(db.Unicode(100), unique=True)
+    description = db.Column(db.Unicode(500))
+    search_vector = db.Column(TSVectorType('name', 'description'))
 
     @staticmethod
     def retrieve(name):
@@ -463,8 +502,10 @@ proposal_subscription = db.Table('proposal_subscription',
 
 
 class Proposal(db.Model):
+    query_class = ProposalSearch
+
     id = db.Column(db.Integer, primary_key=True)
-    description = db.Column(db.String(2000))
+    description = db.Column(db.UnicodeText)
     date = db.Column(db.DateTime())
     vote_day = db.Column(db.Date())
     poster_id = db.Column(db.Integer, db.ForeignKey('user.id'))
@@ -476,6 +517,7 @@ class Proposal(db.Model):
                                                                                         lazy='dynamic'))
     subscribed = db.relationship('User', secondary=proposal_subscription, backref=db.backref('subscribed_prop',
                                                                                              lazy='dynamic'))
+    search_vector = db.Column(TSVectorType('description'))
 
     @hybrid_property
     def is_open(self):
@@ -700,15 +742,18 @@ law_subscription = db.Table('law_subscription',
 
 
 class Law(db.Model):
+    query_class = LawSearch
+
     id = db.Column(db.Integer, primary_key=True)
     date = db.Column(db.DateTime())
-    content = db.Column(db.String(1000))
+    content = db.Column(db.UnicodeText)
     topic_id = db.Column(db.Integer, db.ForeignKey('topic.id'))
     topic = db.relationship("Topic")
     add_by = db.relationship('Proposal', secondary=law_add, backref=db.backref('add_laws', lazy='dynamic'))
     remove_by = db.relationship('Proposal', secondary=law_remove, backref=db.backref('remove_laws', lazy='dynamic'))
     subscribed = db.relationship('User', secondary=law_subscription, backref=db.backref('subscribed_laws',
                                                                                         lazy='dynamic'))
+    search_vector = db.Column(TSVectorType('content'))
 
     @staticmethod
     def submit(content, groups, proposed, poster):

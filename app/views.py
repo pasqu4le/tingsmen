@@ -11,7 +11,8 @@ def base_options():
     # a function for the options required by every page
     return {
         'pages': Page.query.all(),
-        'current_user': current_user
+        'current_user': current_user,
+        'search_form': forms.SearchForm()
     }
 
 
@@ -55,6 +56,7 @@ def cookie_policy():
     # ajax request handling
     if g.sijax.is_sijax_request:
         g.sijax.register_callback('update_notifications', update_notifications)
+        g.sijax.register_callback('set_all_notifications_seen', set_all_notifications_seen)
         return g.sijax.process_request()
     # non-ajax handling:
     options = {
@@ -64,11 +66,54 @@ def cookie_policy():
     return render_template("cookies.html", **options)
 
 
+@app.route('/search/', methods=('GET', 'POST'))
+def search():
+    # ajax request handling
+    if g.sijax.is_sijax_request:
+        g.sijax.register_callback('update_notifications', update_notifications)
+        g.sijax.register_callback('set_all_notifications_seen', set_all_notifications_seen)
+        return g.sijax.process_request()
+    # non-ajax handling:
+    # posts = Post.query.search(interrogation).all()
+    form = forms.SearchForm()
+    options = {
+        'title': 'Search',
+        'search_form': form,
+    }
+    if form.validate_on_submit():
+        selection = form.filter.data
+        interrogation = form.interrogation.data
+        if not selection or selection == 'all':
+            options.update({
+                'users': User.query.search(interrogation, sort=True)[:5],
+                'topics': Topic.query.search(interrogation, sort=True)[:5],
+                'posts': Post.query.search(interrogation, sort=True)[:5],
+                's_pages': Page.query.search(interrogation, sort=True)[:5],
+                'proposals': Proposal.query.search(interrogation, sort=True)[:5],
+                'laws': Law.query.search(interrogation, sort=True)[:5]
+            })
+        elif selection == 'users':
+            options['users'] = User.query.search(interrogation, sort=True)[:20]
+        elif selection == 'topics':
+            options['topics'] = Topic.query.search(interrogation, sort=True)[:20]
+        elif selection == 'posts':
+            options['posts'] = Post.query.search(interrogation, sort=True)[:20]
+        elif selection == 'pages':
+            options['s_pages'] = Page.query.search(interrogation, sort=True)[:20]
+        elif selection == 'proposals':
+            options['proposals'] = Proposal.query.search(interrogation, sort=True)[:20]
+        elif selection == 'laws':
+            options['laws'] = Law.query.search(interrogation, sort=True)[:20]
+    options.update(base_options())
+    return render_template("search.html", **options)
+
+
 @app.route('/page/<page_name>/', methods=('GET', 'POST'))
 def view_page(page_name):
     # ajax request handling
     if g.sijax.is_sijax_request:
         g.sijax.register_callback('update_notifications', update_notifications)
+        g.sijax.register_callback('set_all_notifications_seen', set_all_notifications_seen)
         return g.sijax.process_request()
     # non-ajax handling:
     current_page = Page.query.filter_by(name=page_name).first()

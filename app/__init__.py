@@ -4,6 +4,8 @@ import cron
 from flask import Flask
 
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.orm import configure_mappers
+from sqlalchemy_searchable import make_searchable
 from flask_security import Security, SQLAlchemyUserDatastore
 from flask_admin import Admin
 from flask_migrate import Migrate
@@ -47,8 +49,10 @@ Sijax(app)
 # Gravatar setup
 gravatar = Gravatar(app, size=150, rating='x', default='retro', force_default=False, force_lower=False, use_ssl=False,
                     base_url=None)
-# SQLAlchemy and migration setup
+# SQLAlchemy, searchable and migration setup
 db = SQLAlchemy(app)
+make_searchable()
+configure_mappers()
 migrate = Migrate(app, db)
 
 # imported after app and db creation because of dependencies
