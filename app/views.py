@@ -707,6 +707,11 @@ class AdminModelView(sqla.ModelView):
 
 # ---------------------------------------------- SECURITY CONTEXT PROCESSORS
 
+@security.context_processor
+def security_context_processor():
+    return base_options()
+
+
 @security.register_context_processor
 def security_register_processor():
     limit = int(Globals.query.filter_by(key='user_limit').first().value)
