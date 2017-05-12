@@ -1,0 +1,4 @@
+
+Please confirm your email address through the link below:
+
+{{ confirmation_link }}

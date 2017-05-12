@@ -1,0 +1,9 @@
+{% extends "email/base.html" %}
+{% import "email/macros.html" as macros %}
+
+{% block content %}
+    {{ macros.header("Password Reset") }}
+    {{ macros.paragraph("Click the button below to reset your password") }}
+    {{ macros.large_button("Reset password", reset_link) }}
+    {{ macros.footer("If you didn't ask to reset your password, please ignore this email") }}
+{% endblock %}

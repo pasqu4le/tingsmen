@@ -1,0 +1,8 @@
+{% extends "email/base.html" %}
+{% import "email/macros.html" as macros %}
+
+{% block content %}
+    {{ macros.paragraph(notif.to_text()) }}
+    {{ macros.large_button("see it now", "tingsmen.herokuapp.com" + notif.link) }}
+    {{ macros.footer("you can stop receiving updates from this " + notif.source_type + " by clicking the unsubscribe button in the " + notif.source_type + " page") }}
+{% endblock %}

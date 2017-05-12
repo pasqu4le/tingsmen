@@ -1,0 +1,9 @@
+{% extends "email/base.html" %}
+{% import "email/macros.html" as macros %}
+
+{% block content %}
+    {{ macros.header("Confirm your email") }}
+    {{ macros.paragraph("Please confirm your email address through the button below:") }}
+    {{ macros.large_button("Confirm my account", confirmation_link) }}
+    {{ macros.footer("If you didn't register with this email address, please ignore this message") }}
+{% endblock %}

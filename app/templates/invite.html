@@ -1,0 +1,18 @@
+{% extends "columned.html" %}
+{% import "macros.html" as macros %}
+
+{% block head_custom %}
+    <link href="/static/css/form.css" rel="stylesheet">
+{% endblock %}
+
+{% block central_column %}
+    <form class="form"  method="POST" name="invite">
+        <h2 class="form-heading">Send and invitation email</h2>
+        {{ invite_form.hidden_tag() }}
+        {{ macros.render_field(invite_form.email) }}
+        {% if not current_user.is_authenticated %}
+            {{ macros.render_field(invite_form.sender) }}
+        {% endif %}
+        {{ macros.render_field(invite_form.submit) }}
+    </form>
+{% endblock %}
