@@ -1,0 +1,6 @@
+{% extends "email/base.html" %}
+{% import "email/macros.html" as macros %}
+
+{% block content %}
+    {{ macros.header("Your password has been reset") }}
+{% endblock %}

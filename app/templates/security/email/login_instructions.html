@@ -1,0 +1,8 @@
+{% extends "email/base.html" %}
+{% import "email/macros.html" as macros %}
+
+{% block content %}
+    {{ macros.header("Welcome " + user.email) }}
+    {{ macros.paragraph("You can log into your account:") }}
+    {{ macros.large_button("Login", login_link) }}
+{% endblock %}

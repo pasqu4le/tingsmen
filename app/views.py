@@ -14,6 +14,7 @@ def base_options():
         'current_user': current_user,
         'search_form': forms.SearchForm()
     }
+    # TODO: try to use: app.jinja_env.globals['func_name'] = func
 
 
 # ---------------------------------------------- ROUTING FUNCTIONS
@@ -64,6 +65,28 @@ def cookie_policy():
     }
     options.update(base_options())
     return render_template("cookies.html", **options)
+
+
+@app.route('/invite/', methods=('GET', 'POST'))
+def invite():
+    # ajax request handling
+    if g.sijax.is_sijax_request:
+        g.sijax.register_callback('update_notifications', update_notifications)
+        g.sijax.register_callback('set_all_notifications_seen', set_all_notifications_seen)
+        return g.sijax.process_request()
+    # non-ajax handling:
+    form = forms.InviteForm()
+    if current_user.is_authenticated:
+        form.sender.data = '@' + current_user.username
+    if form.validate_on_submit():
+        cronmail.send_invite_message(form.email.data, form.sender.data)
+        flash('An invitation email will be sent soon, thank you!', category='success')
+    options = {
+        'title': 'Invite',
+        'invite_form': form
+    }
+    options.update(base_options())
+    return render_template("invite.html", **options)
 
 
 @app.route('/search/', methods=('GET', 'POST'))

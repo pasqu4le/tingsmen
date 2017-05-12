@@ -1,0 +1,9 @@
+{% extends "email/base.html" %}
+{% import "email/macros.html" as macros %}
+
+{% block content %}
+    {{ macros.header(sender + " invited you to join Tingsmen") }}
+    {{ macros.paragraph("Tingsmen is a social network where you can propose any change to the platform and, supposing the community is ok with it, it will be developed") }}
+    {{ macros.large_button("Know more", "https://tingsmen.herokuapp.com") }}
+    {{ macros.footer("if you are not interested or have no idea who " + sender + " is just ignore this email") }}
+{% endblock %}

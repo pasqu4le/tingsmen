@@ -1,0 +1,10 @@
+{% extends "email/base.html" %}
+{% import "email/macros.html" as macros %}
+
+{% block content %}
+    {{ macros.header("Your password has been changed.") }}
+    {% if security.recoverable %}
+        {{ macros.paragraph("If you did not change your password, reset it:") }}
+        {{ macros.large_button("Reset password", url_for_security('forgot_password', _external=True)) }}
+    {% endif %}
+{% endblock %}

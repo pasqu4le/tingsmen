@@ -64,6 +64,7 @@ sec_options = {
     'login_form': forms.CustomLoginForm,
     'confirm_register_form': forms.CustomRegisterForm,
     'forgot_password_form': forms.CustomForgotPasswordForm,
+    'reset_password_form': forms.CustomResetPasswordForm,
     'send_confirmation_form': forms.CustomSendConfirmationForm
 }
 security = Security(app, user_datastore, **sec_options)
